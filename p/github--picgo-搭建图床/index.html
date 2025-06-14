@@ -1,23 +1,24 @@
 <!DOCTYPE html>
 <html lang="zh-cn" dir="ltr">
-    <head>
-	<meta name="generator" content="Hugo 0.147.7"><meta charset='utf-8'>
-<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="">
-<title></title>
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="创建public仓库用来存放照片 创建token token将来PicGo操作你的github仓库来上传图片时要用到，在 GitHub 账户下 Setting - Developer setting - Personal access tokens(classic) 下创建一个不过期(no expiration)的 Token，权限需要开启 repo.这个我们在用Github action 来部署博客仓库时已经创建了，用那个就好.token 在创建时只显示一次，要保存好哦！\n配置PicGo github 搜索PicGo 然后安装 图床具体参数配置 仓库名 分支名 对应于之前你创建的GitHub仓库\nToken就是前面创建的Token,被PicGo用来上传照片到长仓库\n路径可以自定义\n自定义域名格式:https://cdn.jsdelivr.net/gh/用户名/仓库名@分支名\nTypora Typora 可搭配PicGo使用\n若PicGo显示unable to verify the first certificate at TLS,无法上传，则可能是你的网络加速工具造成的某些网络加速工具可能会修改网络流量，可能与 SSL证书验证机制发生冲突。这可能导致 SSL 证书验证失败，因为服务器的证书无法正常验证，从而出现类似 &ldquo;unable to verify the first certificate&rdquo; 的错误。例如我之前用Watt Toolkit就出现了：\n如果Typora显示failed to fetch ；检查PicGo server 设置的监听地址是否一致（点击Typora图片设置中的验证图片上传）\n">
+<title>Github &#43; PicGo 搭建图床</title>
 
-<link rel='canonical' href='https://charles-7777.github.io/hugo-stack/'>
+<link rel='canonical' href='https://charles-7777.github.io/hugo-stack/p/github--picgo-%E6%90%AD%E5%BB%BA%E5%9B%BE%E5%BA%8A/'>
 
-<link rel="stylesheet" href="/hugo-stack/scss/style.min.f697464f34bef58081c0d16d942296c942006e0d951fed4e6729cb35fa7c2740.css"><meta property='og:title' content="">
-<meta property='og:description' content="">
-<meta property='og:url' content='https://charles-7777.github.io/hugo-stack/'>
+<link rel="stylesheet" href="/hugo-stack/scss/style.min.f697464f34bef58081c0d16d942296c942006e0d951fed4e6729cb35fa7c2740.css"><meta property='og:title' content="Github + PicGo 搭建图床">
+<meta property='og:description' content="创建public仓库用来存放照片 创建token token将来PicGo操作你的github仓库来上传图片时要用到，在 GitHub 账户下 Setting - Developer setting - Personal access tokens(classic) 下创建一个不过期(no expiration)的 Token，权限需要开启 repo.这个我们在用Github action 来部署博客仓库时已经创建了，用那个就好.token 在创建时只显示一次，要保存好哦！\n配置PicGo github 搜索PicGo 然后安装 图床具体参数配置 仓库名 分支名 对应于之前你创建的GitHub仓库\nToken就是前面创建的Token,被PicGo用来上传照片到长仓库\n路径可以自定义\n自定义域名格式:https://cdn.jsdelivr.net/gh/用户名/仓库名@分支名\nTypora Typora 可搭配PicGo使用\n若PicGo显示unable to verify the first certificate at TLS,无法上传，则可能是你的网络加速工具造成的某些网络加速工具可能会修改网络流量，可能与 SSL证书验证机制发生冲突。这可能导致 SSL 证书验证失败，因为服务器的证书无法正常验证，从而出现类似 &ldquo;unable to verify the first certificate&rdquo; 的错误。例如我之前用Watt Toolkit就出现了：\n如果Typora显示failed to fetch ；检查PicGo server 设置的监听地址是否一致（点击Typora图片设置中的验证图片上传）\n">
+<meta property='og:url' content='https://charles-7777.github.io/hugo-stack/p/github--picgo-%E6%90%AD%E5%BB%BA%E5%9B%BE%E5%BA%8A/'>
 <meta property='og:site_name' content=''>
-<meta property='og:type' content='website'><meta property='og:updated_time' content=' 2025-06-15T00:10:35&#43;08:00 '/>
-<meta name="twitter:title" content="">
-<meta name="twitter:description" content=""><link rel="alternate" type="application/rss&#43;xml" href="https://charles-7777.github.io/hugo-stack/index.xml">
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='hugo' /><meta property='article:tag' content='imagebed' /><meta property='article:published_time' content='2025-06-12T19:33:46&#43;08:00'/><meta property='article:modified_time' content='2025-06-15T00:10:35&#43;08:00'/>
+<meta name="twitter:title" content="Github + PicGo 搭建图床">
+<meta name="twitter:description" content="创建public仓库用来存放照片 创建token token将来PicGo操作你的github仓库来上传图片时要用到，在 GitHub 账户下 Setting - Developer setting - Personal access tokens(classic) 下创建一个不过期(no expiration)的 Token，权限需要开启 repo.这个我们在用Github action 来部署博客仓库时已经创建了，用那个就好.token 在创建时只显示一次，要保存好哦！\n配置PicGo github 搜索PicGo 然后安装 图床具体参数配置 仓库名 分支名 对应于之前你创建的GitHub仓库\nToken就是前面创建的Token,被PicGo用来上传照片到长仓库\n路径可以自定义\n自定义域名格式:https://cdn.jsdelivr.net/gh/用户名/仓库名@分支名\nTypora Typora 可搭配PicGo使用\n若PicGo显示unable to verify the first certificate at TLS,无法上传，则可能是你的网络加速工具造成的某些网络加速工具可能会修改网络流量，可能与 SSL证书验证机制发生冲突。这可能导致 SSL 证书验证失败，因为服务器的证书无法正常验证，从而出现类似 &ldquo;unable to verify the first certificate&rdquo; 的错误。例如我之前用Watt Toolkit就出现了：\n如果Typora显示failed to fetch ；检查PicGo server 设置的监听地址是否一致（点击Typora图片设置中的验证图片上传）\n">
     <link rel="shortcut icon" href="/hugo-stack/favicon2.ico" />
 
     </head>
-    <body class="">
+    <body class="
+    article-page
+    ">
     <script>
         (function() {
             const colorSchemeKey = 'StackColorScheme';
@@ -125,7 +126,7 @@
         
         
         
-        <li  class='current' >
+        <li >
             <a href='/hugo-stack/' >
                 
                 
@@ -253,61 +254,10 @@
     <aside class="sidebar right-sidebar sticky">
         
             
-                <form action="/hugo-stack/search/" class="search-form widget" >
-        <p>
-            <label>搜索</label>
-            <input name="keyword" required placeholder="输入关键词..." />
-        
-            <button title="搜索">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-  <path stroke="none" d="M0 0h24v24H0z"/>
-  <circle cx="10" cy="10" r="7" />
-  <line x1="21" y1="21" x2="15" y2="15" />
-</svg>
-
-
-
-            </button>
-        </p>
-    </form>
-            
-        
-            
-                <section class="widget archives">
+                
+    <section class="widget archives">
         <div class="widget-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-infinity" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-  <path stroke="none" d="M0 0h24v24H0z"/>
-  <path d="M9.828 9.172a4 4 0 1 0 0 5.656 a10 10 0 0 0 2.172 -2.828a10 10 0 0 1 2.172 -2.828 a4 4 0 1 1 0 5.656a10 10 0 0 1 -2.172 -2.828a10 10 0 0 0 -2.172 -2.828" />
-</svg>
-
-
-
-        </div>
-        <h2 class="widget-title section-title">归档</h2>
-
-        
-        
-        
-        
-        
-        <div class="widget-archive--list">
-            <div class="archives-year">
-                    <a href="/hugo-stack/archives/#2025">
-                        
-                            <span class="year">2025</span>
-                            <span class="count">2</span>
-                        
-                    </a> 
-                </div>
-            
-        </div>
-    </section>
-            
-        
-            
-                <section class="widget tagCloud">
-    <div class="widget-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
   <path stroke="none" d="M0 0h24v24H0z"/>
   <line x1="5" y1="9" x2="19" y2="9" />
   <line x1="5" y1="15" x2="19" y2="15" />
@@ -317,65 +267,33 @@
 
 
 
-    </div>
-    <h2 class="widget-title section-title">分类</h2>
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ol>
+    <li><a href="#创建public仓库用来存放照片">创建public仓库用来存放照片</a></li>
+    <li><a href="#创建token">创建token</a></li>
+    <li><a href="#配置picgo">配置PicGo</a>
+      <ol>
+        <li><a href="#github-搜索picgo-然后安装">github 搜索<a href="https://github.com/Molunerfinn/PicGo">PicGo</a> 然后安装</a></li>
+        <li><a href="#图床具体参数配置">图床具体参数配置</a></li>
+      </ol>
+    </li>
+    <li><a href="#typora">Typora</a></li>
+  </ol>
+</nav>
+        </div>
+    </section>
 
-    <div class="tagCloud-tags">
-        
-            <a href="/hugo-stack/categories/hugo/" class="font_size_2">
-                Hugo
-            </a>
-        
-    </div>
-</section>
-
-            
-        
-            
-                <section class="widget tagCloud">
-    <div class="widget-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-tag" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-  <path stroke="none" d="M0 0h24v24H0z"/>
-  <path d="M11 3L20 12a1.5 1.5 0 0 1 0 2L14 20a1.5 1.5 0 0 1 -2 0L3 11v-4a4 4 0 0 1 4 -4h4" />
-  <circle cx="9" cy="9" r="2" />
-</svg>
-
-
-
-    </div>
-    <h2 class="widget-title section-title">标签云</h2>
-
-    <div class="tagCloud-tags">
-        
-            <a href="/hugo-stack/tags/hugo/" class="font_size_2">
-                Hugo
-            </a>
-        
-            <a href="/hugo-stack/tags/imagebed/" class="font_size_1">
-                Imagebed
-            </a>
-        
-            <a href="/hugo-stack/tags/stack/" class="font_size_1">
-                Stack
-            </a>
-        
-    </div>
-</section>
             
         
     </aside>
 
 
             <main class="main full-width">
-    
-    
-    
-    
-
-    <section class="article-list">
-        
-            
-<article class="">
+    <article class="main-article">
     <header class="article-header">
 
     <div class="article-details">
@@ -457,70 +375,117 @@
 
 
 </header>
-</article>
-        
-            
-<article class="has-image">
-    <header class="article-header">
-        <div class="article-image">
-            <a href="/hugo-stack/p/hugo-stack-blog-%E6%90%AD%E5%BB%BA%E8%AE%B0%E5%BD%95/">
-                
-                    <img src="https://cdn.jsdelivr.net/gh/charles-7777/ImageBed@main/blog/hugo.png" loading="lazy" alt="Featured image of post hugo stack blog 搭建记录" />
-                
-            </a>
-        </div>
-    
 
-    <div class="article-details">
+    <section class="article-content">
     
-    <header class="article-category">
-        
-            <a href="/hugo-stack/categories/hugo/" >
-                Hugo
-            </a>
-        
-    </header>
     
+    <h2 id="创建public仓库用来存放照片">创建public仓库用来存放照片
+</h2><p><img src="https://cdn.jsdelivr.net/gh/charles-7777/ImageBed@main/blog/image-20250612194003078.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20250612194003078"
+	
+	
+></p>
+<h2 id="创建token">创建token
+</h2><p>token将来PicGo操作你的github仓库来上传图片时要用到，在 GitHub 账户下 <code>Setting - Developer setting - Personal access tokens(classic)</code> 下创建一个不过期(no expiration)的 Token，权限需要开启 <code>repo</code>.这个我们在用Github action 来部署博客仓库时已经创建了，用那个就好.token 在创建时只显示一次，要保存好哦！</p>
+<p><img src="https://cdn.jsdelivr.net/gh/charles-7777/ImageBed@main/blog/image-20250612194911382.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20250612194911382"
+	
+	
+></p>
+<h2 id="配置picgo">配置PicGo
+</h2><h3 id="github-搜索picgo-然后安装">github 搜索<a class="link" href="https://github.com/Molunerfinn/PicGo"  target="_blank" rel="noopener"
+    >PicGo</a> 然后安装
+</h3><h3 id="图床具体参数配置">图床具体参数配置
+</h3><p><img src="https://cdn.jsdelivr.net/gh/charles-7777/ImageBed@main/blog/image-20250612195909612.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20250612195909612"
+	
+	
+></p>
+<blockquote>
+<p>仓库名 分支名 对应于之前你创建的GitHub仓库<br>
+Token就是前面创建的Token,被PicGo用来上传照片到长仓库<br>
+路径可以自定义<br>
+自定义域名格式:https://cdn.jsdelivr.net/gh/用户名/仓库名@分支名</p></blockquote>
+<h2 id="typora">Typora
+</h2><p>Typora 可搭配PicGo使用</p>
+<p><img src="https://cdn.jsdelivr.net/gh/charles-7777/ImageBed@main/blog/image-20250612201005537.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20250612201005537"
+	
+	
+></p>
+<blockquote>
+<p>若PicGo显示unable to verify the first certificate at TLS,无法上传，则可能是你的网络加速工具造成的某些网络加速工具可能会修改网络流量，可能与 SSL证书验证机制发生冲突。这可能导致 SSL 证书验证失败，因为服务器的证书无法正常验证，从而出现类似 &ldquo;unable to verify the first certificate&rdquo; 的错误。例如我之前用Watt Toolkit就出现了：</p></blockquote>
+<p><img src="https://cdn.jsdelivr.net/gh/charles-7777/ImageBed@main/blog/image-20250613102831957.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20250613102831957"
+	
+	
+></p>
+<blockquote>
+<p>如果Typora显示failed to fetch ；检查PicGo  server 设置的监听地址是否一致（点击Typora图片设置中的验证图片上传）</p></blockquote>
+<p><img src="https://cdn.jsdelivr.net/gh/charles-7777/ImageBed@main/blog/image-20250612202248915.png"
+	
+	
+	
+	loading="lazy"
+	
+		alt="image-20250612202248915"
+	
+	
+></p>
 
-    <div class="article-title-wrapper">
-        <h2 class="article-title">
-            <a href="/hugo-stack/p/hugo-stack-blog-%E6%90%AD%E5%BB%BA%E8%AE%B0%E5%BD%95/">hugo stack blog 搭建记录</a>
-        </h2>
+</section>
+
+
+    <footer class="article-footer">
     
+    <section class="article-tags">
         
-        <h3 class="article-subtitle">
-            使用hugo工具生成静态页面，然后在github上部署静态页面，来免费搭建自己的博客
-        </h3>
+            <a href="/hugo-stack/tags/hugo/">Hugo</a>
         
-    </div>
+            <a href="/hugo-stack/tags/imagebed/">Imagebed</a>
+        
+    </section>
+
 
     
-    
-    
-    
-    <footer class="article-time">
-        
-            <div>
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
   <path stroke="none" d="M0 0h24v24H0z"/>
-  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
-  <circle cx="18" cy="18" r="4" />
-  <path d="M15 3v4" />
-  <path d="M7 3v4" />
-  <path d="M3 11h16" />
-  <path d="M18 16.496v1.504l1 1" />
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
 </svg>
-                <time class="article-time--published">Jun 09, 2025</time>
-            </div>
-        <div>
-            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-edit"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg>
-            <time class="article-lastmod">Jun 14, 2025 22:41 &#43;0800</time>
-        </div>
-        
 
-        
-            <div>
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    <section class="article-lastmod">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
   <path stroke="none" d="M0 0h24v24H0z"/>
   <circle cx="12" cy="12" r="9" />
   <polyline points="12 7 12 12 15 15" />
@@ -528,36 +493,53 @@
 
 
 
-                <time class="article-time--reading">
-                    阅读时长: 2 分钟
-                </time>
-            </div>
-        
+        <span>
+            最后更新于 Jun 15, 2025 00:10 &#43;0800
+        </span>
+    </section></footer>
 
-        
-            <div>
-                <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-file-word"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 12l1.333 5l1.667 -4l1.667 4l1.333 -5" /></svg>
-                <time class="article-words">
-                    301 字
-                </time>
-            </div>
-        
-
-
-    </footer>
-    
 
     
-
-
-</div>
-
-
-</header>
 </article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="has-image">
+    <a href="/hugo-stack/p/hugo-stack-blog-%E6%90%AD%E5%BB%BA%E8%AE%B0%E5%BD%95/">
         
-    </section>
-<footer class="site-footer">
+        
+            <div class="article-image">
+                
+                    <img src="https://cdn.jsdelivr.net/gh/charles-7777/ImageBed@main/blog/hugo.png" loading="lazy" data-key="" data-hash="https://cdn.jsdelivr.net/gh/charles-7777/ImageBed@main/blog/hugo.png"/>
+                
+            </div>
+        
+
+        <div class="article-details">
+            <h2 class="article-title">hugo stack blog 搭建记录</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
     <section class="copyright">
         &copy; 
         
@@ -569,6 +551,85 @@
         主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
     </section>
 </footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
 
             </main>
         </div>
