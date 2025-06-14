@@ -260,8 +260,8 @@ hugo 生成网站时优先寻找站点源目录下的，找不到，才会去sta
 &lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;git submodule update
 &lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
 &lt;/div&gt;
-&lt;/div&gt;&lt;blockquote&gt;
-&lt;p&gt;&lt;strong&gt;参考链接&lt;/strong&gt;&lt;br&gt;
+&lt;/div&gt;&lt;blockquote class=&#34;alert alert-tip&#34;&gt;
+    &lt;p&gt;&lt;strong&gt;参考链接&lt;/strong&gt;&lt;br&gt;
 &lt;a class=&#34;link&#34; href=&#34;https://letere-gzj.github.io/hugo-stack/tags/hugo/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
     &gt;https://letere-gzj.github.io/hugo-stack/tags/hugo/&lt;/a&gt;&lt;/p&gt;&lt;/blockquote&gt;
 </description>
