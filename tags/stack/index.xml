@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
-        <title></title>
-        <link>https://charles-7777.github.io/hugo-stack/</link>
-        <description>Recent content on </description>
+        <title>Stack on </title>
+        <link>https://charles-7777.github.io/hugo-stack/tags/stack/</link>
+        <description>Recent content in Stack on </description>
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
         <copyright>Charles Lv</copyright>
-        <lastBuildDate>Mon, 09 Jun 2025 00:00:00 +0000</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Mon, 09 Jun 2025 00:00:00 +0000</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/tags/stack/index.xml" rel="self" type="application/rss+xml" /><item>
         <title>hugo stack blog 搭建记录</title>
         <link>https://charles-7777.github.io/hugo-stack/p/hugo-stack-blog-%E6%90%AD%E5%BB%BA%E8%AE%B0%E5%BD%95/</link>
         <pubDate>Mon, 09 Jun 2025 00:00:00 +0000</pubDate>
@@ -265,54 +265,6 @@ hugo 生成网站时优先寻找站点源目录下的，找不到，才会去sta
 &lt;a class=&#34;link&#34; href=&#34;https://letere-gzj.github.io/hugo-stack/tags/hugo/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
     &gt;https://letere-gzj.github.io/hugo-stack/tags/hugo/&lt;/a&gt;&lt;/p&gt;&lt;/blockquote&gt;
 </description>
-        </item>
-        <item>
-        <title>归档</title>
-        <link>https://charles-7777.github.io/hugo-stack/archives/</link>
-        <pubDate>Tue, 28 May 2019 00:00:00 +0000</pubDate>
-        
-        <guid>https://charles-7777.github.io/hugo-stack/archives/</guid>
-        <description></description>
-        </item>
-        <item>
-        <title>关于</title>
-        <link>https://charles-7777.github.io/hugo-stack/%E5%85%B3%E4%BA%8E/</link>
-        <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-        
-        <guid>https://charles-7777.github.io/hugo-stack/%E5%85%B3%E4%BA%8E/</guid>
-        <description>&lt;!-- This is a test page for i18n support. --&gt;</description>
-        </item>
-        <item>
-        <title>链接</title>
-        <link>https://charles-7777.github.io/hugo-stack/%E9%93%BE%E6%8E%A5/</link>
-        <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-        
-        <guid>https://charles-7777.github.io/hugo-stack/%E9%93%BE%E6%8E%A5/</guid>
-        <description>&lt;!-- To use this feature, add `links` section to frontmatter.
-
-This page&#39;s frontmatter:
-
-```yaml
-links:
-  - title: GitHub
-    description: GitHub is the world&#39;s largest software development platform.
-    website: https://github.com
-    image: https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png
-  - title: TypeScript
-    description: TypeScript is a typed superset of JavaScript that compiles to plain JavaScript.
-    website: https://www.typescriptlang.org
-    image: ts-logo-128.jpg
-```
-
-`image` field accepts both local and external images. --&gt;</description>
-        </item>
-        <item>
-        <title>搜索</title>
-        <link>https://charles-7777.github.io/hugo-stack/search/</link>
-        <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-        
-        <guid>https://charles-7777.github.io/hugo-stack/search/</guid>
-        <description></description>
         </item>
         
     </channel>
