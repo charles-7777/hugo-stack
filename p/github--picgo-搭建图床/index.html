@@ -6,7 +6,7 @@
 
 <link rel='canonical' href='https://charles-7777.github.io/hugo-stack/p/github--picgo-%E6%90%AD%E5%BB%BA%E5%9B%BE%E5%BA%8A/'>
 
-<link rel="stylesheet" href="/hugo-stack/scss/style.min.f697464f34bef58081c0d16d942296c942006e0d951fed4e6729cb35fa7c2740.css"><meta property='og:title' content="Github + PicGo 搭建图床">
+<link rel="stylesheet" href="/hugo-stack/scss/style.min.946cca6c6259ef94ac55abfae7c7bf3291ea3ed5eea17ef77500b257217c6710.css"><meta property='og:title' content="Github + PicGo 搭建图床">
 <meta property='og:description' content="创建public仓库用来存放照片 创建token token将来PicGo操作你的github仓库来上传图片时要用到，在 GitHub 账户下 Setting - Developer setting - Personal access tokens(classic) 下创建一个不过期(no expiration)的 Token，权限需要开启 repo.这个我们在用Github action 来部署博客仓库时已经创建了，用那个就好.token 在创建时只显示一次，要保存好哦！\n配置PicGo github 搜索PicGo 然后安装 图床具体参数配置 仓库名 分支名 对应于之前你创建的GitHub仓库\nToken就是前面创建的Token,被PicGo用来上传照片到长仓库\n路径可以自定义\n自定义域名格式:https://cdn.jsdelivr.net/gh/用户名/仓库名@分支名\nTypora Typora 可搭配PicGo使用\n若PicGo显示unable to verify the first certificate at TLS,无法上传，则可能是你的网络加速工具造成的某些网络加速工具可能会修改网络流量，可能与 SSL证书验证机制发生冲突。这可能导致 SSL 证书验证失败，因为服务器的证书无法正常验证，从而出现类似 &ldquo;unable to verify the first certificate&rdquo; 的错误。例如我之前用Watt Toolkit就出现了：\n如果Typora显示failed to fetch ；检查PicGo server 设置的监听地址是否一致（点击Typora图片设置中的验证图片上传）\njsDelivr jsDelivr是一个免费、开源的加速CDN公共服务,托管了许多大大小小的项目,可加速访问托管的项目目录或图片资源。 他支持提供npm、Github、WordPress上资源cdn服务。\n">
 <meta property='og:url' content='https://charles-7777.github.io/hugo-stack/p/github--picgo-%E6%90%AD%E5%BB%BA%E5%9B%BE%E5%BA%8A/'>
 <meta property='og:site_name' content=''>
