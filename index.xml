@@ -100,6 +100,34 @@ Token就是前面创建的Token,被PicGo用来上传照片到长仓库&lt;br&gt;
 </description>
         </item>
         <item>
+        <title>test</title>
+        <link>https://charles-7777.github.io/hugo-stack/p/test/</link>
+        <pubDate>Thu, 12 Jun 2025 19:33:46 +0800</pubDate>
+        
+        <guid>https://charles-7777.github.io/hugo-stack/p/test/</guid>
+        <description>&lt;h2 id=&#34;test-video&#34;&gt;test video
+&lt;/h2&gt;
+
+
+
+
+
+    
+
+
+&lt;div class=&#34;video-wrapper&#34;&gt;
+    &lt;iframe src=&#34;https://player.bilibili.com/player.html?as_wide=1&amp;amp;high_quality=1&amp;amp;page=1&amp;bvid=BV1yx7WzeEsq&#34;
+            scrolling=&#34;no&#34;
+            frameborder=&#34;no&#34;
+            framespacing=&#34;0&#34;
+            allowfullscreen=&#34;true&#34;
+    &gt;
+    &lt;/iframe&gt;
+&lt;/div&gt;
+
+</description>
+        </item>
+        <item>
         <title>hugo stack blog 搭建记录</title>
         <link>https://charles-7777.github.io/hugo-stack/p/hugo-stack-blog-%E6%90%AD%E5%BB%BA%E8%AE%B0%E5%BD%95/</link>
         <pubDate>Mon, 09 Jun 2025 00:00:00 +0000</pubDate>
