@@ -7,6 +7,255 @@
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
         <copyright>Charles Lv</copyright><atom:link href="https://charles-7777.github.io/hugo-stack/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>证书详解</title>
+        <link>https://charles-7777.github.io/hugo-stack/p/%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3/</link>
+        <pubDate>Mon, 28 Jul 2025 16:36:08 +0800</pubDate>
+        
+        <guid>https://charles-7777.github.io/hugo-stack/p/%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3/</guid>
+        <description>&lt;h2 id=&#34;对称加密&#34;&gt;对称加密
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;加密前的原始数据，叫做 &lt;strong&gt;原文&lt;/strong&gt;（ &lt;em&gt;original text&lt;/em&gt; ），或者 &lt;strong&gt;明文&lt;/strong&gt;（ &lt;em&gt;plain text&lt;/em&gt; ）；&lt;/li&gt;
+&lt;li&gt;加密后的不规则（ &lt;em&gt;scrambled&lt;/em&gt; ）数据，通常叫做 &lt;strong&gt;密文&lt;/strong&gt;（ &lt;em&gt;cipher text&lt;/em&gt; ）；&lt;/li&gt;
+&lt;li&gt;加密所用的密码，通常叫做 &lt;strong&gt;密钥&lt;/strong&gt;（ &lt;em&gt;secret key&lt;/em&gt; ）；&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;code&gt;对称加密（symmetric encryption）算法最大的特点是，它只有一把密钥，加密和解密过程用的都是同一把密钥，这也符合大众对加密算法的认知，用密码对数据进行加密之后，必须用同一个密码才能将数据解密出来&lt;/code&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;em&gt;AES&lt;/em&gt; ，高级加密标准，新一代加密算法标准，速度快，安全级别高；&lt;/li&gt;
+&lt;li&gt;&lt;em&gt;DES&lt;/em&gt; ，数据加密标准，速度较快，适用于加密大量数据，但安全性较弱；&lt;/li&gt;
+&lt;li&gt;&lt;em&gt;Blowfish&lt;/em&gt; ，使用变长密钥，运行速度很快，非专利算法，没有使用限制；&lt;/li&gt;
+&lt;li&gt;&lt;em&gt;etc&lt;/em&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;非对称加密&#34;&gt;非对称加密
+&lt;/h2&gt;&lt;p&gt;从前有一个黑帮，老大和手下们之间的通信必须加密确保安全。于此同时，老大希望手下发给他的信息，不能被其他手下知晓。若采用对称加密算法，只能给每个手下都分配一个独立的密钥，但老大觉得太麻烦了。该怎么办呢？&lt;/p&gt;
+&lt;p&gt;黑帮老大希望他只维护一份密钥，就能达到这样的效果，有办法做到吗？&lt;/p&gt;
+&lt;p&gt;可以用非对称加密（&lt;em&gt;asymmetric encryption&lt;/em&gt;）&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;非对称加密，顾明思议，在加密和解密环节用的密钥是不同的。&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;非对称加密算法需要两把不同的密钥，这两把密钥组成一对：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;公钥&lt;/strong&gt;（ &lt;em&gt;public key&lt;/em&gt; ），公钥用来对数据进行 &lt;strong&gt;加密&lt;/strong&gt; ；&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;私钥&lt;/strong&gt;（ &lt;em&gt;private key&lt;/em&gt; ），也称为 &lt;strong&gt;密钥&lt;/strong&gt;（ &lt;em&gt;secret key&lt;/em&gt; ），用来对数据进行 &lt;strong&gt;解密&lt;/strong&gt; ；&lt;/li&gt;
+&lt;li&gt;公钥和私钥总是成对出现，用公钥加密后得到的密文，必须用对应的私钥才能解密；&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这套加密机制完美解决了黑帮老大的难题，他只需要生成一对密钥：公钥分发给手下们，他们先用公钥加密信息，再发老大；老大接到密文，就用自己保管的私钥来解密；手下们就算拿到别人发的密文也解不开，因为私钥只有他们老大才有。&lt;/p&gt;
+&lt;h3 id=&#34;数学原理&#34;&gt;数学原理
+&lt;/h3&gt;&lt;p&gt;公钥和私钥的加密机制看起来非常不可思议，这一切其实来一个神奇的数学原理。&lt;/p&gt;
+&lt;p&gt;我们来做一个数字游戏，您随便写下一个整数 &lt;em&gt;m&lt;/em&gt; （1&amp;lt;m&amp;lt;7387  ），然后计算m ^3  mod  7387  并把结果告诉我，我就知道您写下的整数 &lt;em&gt;m&lt;/em&gt; 是什么&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt; 1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 3
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 4
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 5
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 6
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 7
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 8
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 9
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;10
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;11
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-python&#34; data-lang=&#34;python&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;# 520&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;o&#34;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;520&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;**&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;3&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;%&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;7387&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;mi&#34;&gt;3842&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;o&#34;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;3842&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;**&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;4811&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;%&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;7387&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;mi&#34;&gt;520&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;# 1314&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;o&#34;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;1314&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;**&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;3&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;%&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;7387&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;mi&#34;&gt;7382&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;o&#34;&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;7382&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;**&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;4811&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;%&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;7387&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;mi&#34;&gt;1314&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;公钥参数 3 和 7387 ，私钥参数 4811 和 7387 又是怎么生成的呢？
+第一步，随机选择两个质数 p 和 q ：
+&lt;code&gt;p = 83   q = 89&lt;/code&gt;
+第二步，计算 p 和 q 的乘积 n ：
+&lt;code&gt;n = p * q = 7387&lt;/code&gt;
+第三步，计算 n 的欧拉函数 ，记为 phi ：
+&lt;code&gt;φ(n) = (p-1) * (q-1) = 7216&lt;/code&gt;
+第四步，随机选择一个整数 e ，满足1&amp;lt;e&amp;lt;φ(n)，且 e 和φ(n)互质：
+&lt;code&gt;选一个质数 e ，使得不能被 e 整除即可。&lt;/code&gt;
+第五步，计算 e 对φ(n)的模反元素 d ，即找到一个数 d 使得 ed 除以φ(n)的余数为 1 ：
+&lt;code&gt;ed ≡ 1 mod(φ ( n ))  &amp;lt;=&amp;gt; ed = kφ(n) + 1 &lt;/code&gt;&lt;/p&gt;
+&lt;p&gt; 可以找到一个d :4811&lt;/p&gt;
+&lt;h3 id=&#34;安全性分析&#34;&gt;安全性分析
+&lt;/h3&gt;&lt;p&gt;那么，有无可能在已知n和e的情况下，推导出d？&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;3
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-text&#34; data-lang=&#34;text&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;ed≡1 (mod φ(n))。只有知道e和φ(n)，才能算出d。
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;φ(n)=(p-1)(q-1)。只有知道p和q，才能算出φ(n)。
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;n=pq。只有将n因数分解，才能算出p和q。
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;大整数的因数分解，是一件非常困难的事情&lt;/p&gt;
+&lt;p&gt;目前，能够被破解的 &lt;em&gt;n&lt;/em&gt; 最大位数是 &lt;em&gt;768&lt;/em&gt; 位(这里提到的位是指二进制位)，因此有人开始质疑 &lt;em&gt;1024&lt;/em&gt; 位密钥的安全性。现在推荐的密钥长度至少要 &lt;em&gt;2048&lt;/em&gt; 位，只要长度足够，安全性完全不用担心&lt;/p&gt;
+&lt;h3 id=&#34;应用场景&#34;&gt;应用场景
+&lt;/h3&gt;&lt;h4 id=&#34;加密&#34;&gt;加密
+&lt;/h4&gt;&lt;p&gt;公钥加密私钥解密是非对称加密算法最典型的应用场景，特别适用于密钥需要公开的场景，比如 传输层安全协议 &lt;em&gt;TLS&lt;/em&gt; ，它为通讯双方提供可靠的加密连接&lt;/p&gt;
+&lt;p&gt;如果没有非对称加密算法，&lt;em&gt;TLS&lt;/em&gt; 将无法实现。因为对称加密算法要求双方使用同一密钥，加密连接建立之前，只能明文协商密钥。试想浏览器想跟服务器建立安全连接，无论是它选定密钥然后发给服务器，还是服务器选定密钥发给它，只要密钥经过明文传输，加密就失去意义。&lt;/p&gt;
+&lt;p&gt;有了非对称加密算法，服务器可以生成一对密钥，私钥自己保管，公钥可以公开。当浏览器请求建立加密连接时，服务器可以将公钥发给浏览器，因为公钥是可以公开的。浏览器将敏感信息用公钥加密后再发给浏览器，只有掌握私钥的服务器才能解密，他人便无法知晓。&lt;/p&gt;
+&lt;p&gt;同理，服务器想发敏感信息给客户端，必须由客户端生成的公钥加密。换句话讲，每对密钥&lt;strong&gt;解决一个方向的加密&lt;/strong&gt;问题，通讯双方都需要生成自己的密钥对，负责加密对方发来的数据。&lt;/p&gt;
+&lt;p&gt;由于非对称加密算法运算复杂，加密效率不高，通常只是用来加密少量的关键信息，比如协商密钥。回到 &lt;em&gt;TLS&lt;/em&gt; 这个例子，其实可以借助非对称加密算法协商密钥，从而直接使用更高效的对称加密算法来加密数据：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;服务器&lt;/strong&gt;生成&lt;strong&gt;公钥&lt;/strong&gt;和&lt;strong&gt;私钥&lt;/strong&gt; 对；&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;客户端&lt;/strong&gt;（浏览器）连接上来后，服务器将&lt;strong&gt;公钥&lt;/strong&gt;发给客户端；&lt;/li&gt;
+&lt;li&gt;客户端&lt;strong&gt;随机生成&lt;/strong&gt;一个用于&lt;strong&gt;对称加密&lt;/strong&gt;（ &lt;em&gt;AES&lt;/em&gt; ）的密钥；&lt;/li&gt;
+&lt;li&gt;客户端用&lt;strong&gt;公钥&lt;/strong&gt;对生成的密钥进行&lt;strong&gt;加密&lt;/strong&gt;，然后后发给服务器；&lt;/li&gt;
+&lt;li&gt;服务器收到客户端用公钥加密的密钥后，用自己的私钥解密，至此密钥协商完毕；&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;由于私钥只有服务器才有，因此第三方无法知晓客户端选定的密钥是啥&lt;/strong&gt;；&lt;/li&gt;
+&lt;li&gt;此后通信双方采用对称加密，以该密钥加密数据；&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;签名&#34;&gt;签名
+&lt;/h4&gt;&lt;p&gt;实际上，私钥也可以用来加密数据，加密后的密文只有公钥才能解密。尽管如此，由于公钥是公开的，因此这个机制不能来加密数据，但可以对用来对数据进行签名防伪。&lt;/p&gt;
+&lt;h2 id=&#34;数字证书certificate&#34;&gt;数字证书(certificate)
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;信息摘要&lt;/strong&gt;（ &lt;em&gt;digest&lt;/em&gt; ），数据经过哈希算法得到的一串哈希值，代表数据的特征，也称为数据指纹；&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;摘要算法&lt;/strong&gt; ，可以把任意长度的数据，映射成一个定长的字符串（哈希值）；
+&lt;ul&gt;
+&lt;li&gt;由于哈希冲突的存在，两份不同的数据，有可能算出相同的摘要值；&lt;/li&gt;
+&lt;li&gt;摘要算法无法用于数据加密，通常用来校验数据完整性，即 &lt;strong&gt;数据防伪&lt;/strong&gt; ；&lt;/li&gt;
+&lt;li&gt;常见的摘要算法有：&lt;em&gt;MD5&lt;/em&gt; 、&lt;em&gt;SHA1&lt;/em&gt; 、&lt;em&gt;SHA256&lt;/em&gt; 、&lt;em&gt;SHA512&lt;/em&gt; 。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;数字签名&lt;/strong&gt;（ &lt;em&gt;signature&lt;/em&gt; ），摘要由私钥加密后，得到的摘要密文就是数字签名；
+&lt;ul&gt;
+&lt;li&gt;签名，由数据发送方生成，这是一个 &lt;strong&gt;加密&lt;/strong&gt; 过程（使用私钥）；&lt;/li&gt;
+&lt;li&gt;验签，由数据接收方校验，这是一个 &lt;strong&gt;解密&lt;/strong&gt; 过程（使用公钥）；&lt;/li&gt;
+&lt;li&gt;数字签名只能由私钥生成，因此第三方无法伪造；&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;在介绍密钥协商时，我们提到服务器先将公钥发给客户端，用公钥保护对称加密密钥，确保通信内容不会被第三方获悉。但如果客户端连接的服务器是假的呢？如果用户对假网站信以为真，输入了账号密码，那么这些敏感信息都会被假网站窃取！&lt;/p&gt;
+&lt;p&gt;上节我们也讨论了数字签名，通过它可以实现数据防伪。那么，我们是不是可以利用这项技术来甄别仿冒站点呢&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;权威机构&lt;/strong&gt;生成&lt;strong&gt;一对密钥&lt;/strong&gt;，并提供站点认证审核和数字签名颁发服务；&lt;/li&gt;
+&lt;li&gt;站点管理员将&lt;strong&gt;站点信息&lt;/strong&gt;，包括域名、运营单位、&lt;strong&gt;公钥&lt;/strong&gt;等信息发给权威机构审核；&lt;/li&gt;
+&lt;li&gt;权威机构对提交上来的站点信息进行审核，审核通过则用&lt;strong&gt;私钥签名&lt;/strong&gt;后返回给站点管理员；&lt;/li&gt;
+&lt;li&gt;客户端（浏览器）连接站点服务器，&lt;strong&gt;服务器&lt;/strong&gt;将&lt;strong&gt;站点信息&lt;/strong&gt;以及对应的&lt;strong&gt;数字签名&lt;/strong&gt;发给客户端；&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;客户端&lt;/strong&gt;用权威机构提供的&lt;strong&gt;公钥&lt;/strong&gt;来&lt;strong&gt;校验数字签名&lt;/strong&gt;，即可判断站点信息的真伪性；&lt;/li&gt;
+&lt;li&gt;签名验证通过，客户端从站点信息中取出公钥，与服务端协商密钥，发起加密通信；&lt;/li&gt;
+&lt;li&gt;由于签名用的私钥只有权威机构掌握，黑客无法伪造数字签名，也就无法架设仿冒站点；&lt;/li&gt;
+&lt;li&gt;权威机构必须由可信的单位运营；&lt;/li&gt;
+&lt;/ol&gt;
+&lt;blockquote&gt;
+&lt;p&gt;你可能会觉得，黑客直接盗用站点信息和签名不就可以伪造原站点了嘛？此言差矣！因为公钥属于站点信息&lt;br&gt;
+的一 部分，也会参与签名！客户端和服务端协商密钥时，会使用这个公钥加密密钥。由于黑客不掌握站点私
+钥，因此  加密连接无法建立！黑客把公钥替换成自己的吧，签名就不对，肯定会被验出来！&lt;/p&gt;&lt;/blockquote&gt;
+&lt;h3 id=&#34;证书签发实验&#34;&gt;证书签发实验
+&lt;/h3&gt;&lt;h4 id=&#34;ca权威机构&#34;&gt;CA权威机构
+&lt;/h4&gt;&lt;p&gt;首先，权威机构需要生成一对密钥，cakey.pem 是私钥,&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-text&#34; data-lang=&#34;text&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;openssl genrsa -out cakey.pem 2048
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;然后，生成根证书签发申请文件（ csr 文件）：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-text&#34; data-lang=&#34;text&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;openssl req -new -key cakey.pem -out ca.csr -subj &amp;#39;/C=CN/ST=Guangdong/L=Guangzhou/O=coding-fans/OU=CA/CN=ca.fasionchan.com&amp;#39;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;证书申请文件包含权威机构的信息，包括机构信息(&lt;em&gt;Subject&lt;/em&gt; )和公钥(&lt;em&gt;Public Key&lt;/em&gt; 部分)可以用下面命令查看：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-text&#34; data-lang=&#34;text&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;openssl req -in ca.csr -text -noout
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;最后，自签根证书（ &lt;em&gt;cer&lt;/em&gt; 文件 ）：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-text&#34; data-lang=&#34;text&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;openssl x509 -req -days 3650 -sha1 -extensions v3_ca -signkey cakey.pem -in ca.csr -out ca.cer
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;这一步生成的 &lt;em&gt;cer&lt;/em&gt; 文件就是&lt;strong&gt;根证书文件&lt;/strong&gt;，它的主要作用是承载权威机构&lt;strong&gt;公钥&lt;/strong&gt;，以便预装在操作系统或者其他终端。它同样会包含权威机构的信息，公钥，以及对应的签名。&lt;/p&gt;
+&lt;h4 id=&#34;商业站点服务端&#34;&gt;商业站点（服务端）
+&lt;/h4&gt;&lt;p&gt;首先，站点管理员生成一对密钥&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-text&#34; data-lang=&#34;text&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;openssl genrsa -out sitekey.pem 2048
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;然后，生成证书签发申请文件（ csr 文件）：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-fallback&#34; data-lang=&#34;fallback&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;openssl req -new -key sitekey.pem -out site.csr -subj &amp;#39;/C=CN/ST=Guangdong/L=Guangzhou/O=fasionchan/OU=website/CN=fasionchan.co
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;证书申请文件包含站点信息和公钥，站点管理员将证书申请文件发给权威机构审核，&lt;/p&gt;
+&lt;p&gt;权威机构对申请进行审核，审核通过则用自己的&lt;strong&gt;私钥&lt;/strong&gt;对它进行签名，生成证书(cer 文件):&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-text&#34; data-lang=&#34;text&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;openssl x509 -req -days 365 -sha1 -extensions v3_req -CA ca.cer -CAkey cakey.pem -CAserial ca.srl -CAcreateserial -in site.csr -out site.cer
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;证书中保存着包括公钥在内的站点信息，以及权威机构对这些信息的签名。管理员接到权威机构颁发的证书，就可以部署网站了&lt;/p&gt;
+&lt;h4 id=&#34;浏览器客户端&#34;&gt;浏览器（客户端）
+&lt;/h4&gt;&lt;p&gt;客户端浏览器访问站点，&lt;strong&gt;服务端&lt;/strong&gt;会将其&lt;strong&gt;证书发&lt;/strong&gt;给客户端。客户端先对证书签名进行验证，步骤如下：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;重新对证书中的站点信息计算 &lt;strong&gt;摘要值&lt;/strong&gt; ；&lt;/li&gt;
+&lt;li&gt;用公钥对证书中的签名进行解密，得到证书的原始摘要值；
+&lt;ul&gt;
+&lt;li&gt;公钥通常由根证书提供，根证书通常预装在系统里；&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;对比两个摘要值看是否一致；&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;调用 &lt;em&gt;openssl&lt;/em&gt; 工具，一行命令即可完成签名验证&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-text&#34; data-lang=&#34;text&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;openssl verify -CAfile ca.cer site.cer
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;h3 id=&#34;总结&#34;&gt;总结
+&lt;/h3&gt;&lt;p&gt;数字证书是支撑互联网身份认证的重要技术手段，可以简单理解成经过 &lt;em&gt;CA&lt;/em&gt; 权威结构签名认证过的站点信息。由于经过 &lt;em&gt;CA&lt;/em&gt; 签名，第三方无法通过伪造手段冒充身份。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;证书由&lt;strong&gt;站点信息&lt;/strong&gt;和 &lt;strong&gt;&lt;em&gt;CA&lt;/em&gt; 签名&lt;/strong&gt;组成，&lt;strong&gt;站点信息包含站点公钥&lt;/strong&gt;，公钥用于协商对称加密密钥；&lt;/li&gt;
+&lt;li&gt;证书由 &lt;em&gt;CA&lt;/em&gt; 权威机构审核签发，签名用的是 &lt;em&gt;CA&lt;/em&gt; 的私钥；&lt;/li&gt;
+&lt;li&gt;&lt;em&gt;CA&lt;/em&gt; 公钥通常以根证书形式预装在系统内，客户端通过它来验证证书签名；&lt;/li&gt;
+&lt;li&gt;有了数字签名，黑客无法对证书进行篡改，也无法伪造证书，因此无法部署仿冒站点；
+&lt;ul&gt;
+&lt;li&gt;若只窃取原站点证书，不做篡改，客户端使用真实站点的公钥，而黑客无法掌握站点私钥，因此加密连接无法建立；&lt;/li&gt;
+&lt;li&gt;如果篡改原站点证书，换上自己的公钥，但因为没有 &lt;em&gt;CA&lt;/em&gt; 私钥无法生成合法签名，也会被识别出来；&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;转载自&lt;a class=&#34;link&#34; href=&#34;https://fasionchan.com/network/cryptography/certificate/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;数字证书身份认证原理与签发步骤详解 | 小菜学网络&lt;/a&gt;&lt;/p&gt;&lt;/blockquote&gt;
+</description>
+        </item>
+        <item>
         <title>RESTful API</title>
         <link>https://charles-7777.github.io/hugo-stack/p/restful-api/</link>
         <pubDate>Thu, 26 Jun 2025 15:22:59 +0800</pubDate>

@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="对称加密 加密前的原始数据，叫做\u00a0原文（\u00a0original text\u00a0），或者\u00a0明文（\u00a0plain text\u00a0）； 加密后的不规则（\u00a0scrambled\u00a0）数据，通常叫做\u00a0密文（\u00a0cipher text\u00a0）； 加密所用的密码，通常叫做\u00a0密钥（\u00a0secret key\u00a0）； 对称加密（symmetric encryption）算法最大的特点是，它只有一把密钥，加密和解密过程用的都是同一把密钥，这也符合大众对加密算法的认知，用密码对数据进行加密之后，必须用同一个密码才能将数据解密出来\nAES\u00a0，高级加密标准，新一代加密算法标准，速度快，安全级别高； DES\u00a0，数据加密标准，速度较快，适用于加密大量数据，但安全性较弱； Blowfish\u00a0，使用变长密钥，运行速度很快，非专利算法，没有使用限制； etc 非对称加密 从前有一个黑帮，老大和手下们之间的通信必须加密确保安全。于此同时，老大希望手下发给他的信息，不能被其他手下知晓。若采用对称加密算法，只能给每个手下都分配一个独立的密钥，但老大觉得太麻烦了。该怎么办呢？\n黑帮老大希望他只维护一份密钥，就能达到这样的效果，有办法做到吗？\n可以用非对称加密（asymmetric encryption）\n非对称加密，顾明思议，在加密和解密环节用的密钥是不同的。\n非对称加密算法需要两把不同的密钥，这两把密钥组成一对：\n公钥（\u00a0public key\u00a0），公钥用来对数据进行\u00a0加密\u00a0； 私钥（\u00a0private key\u00a0），也称为\u00a0密钥（\u00a0secret key\u00a0），用来对数据进行\u00a0解密\u00a0； 公钥和私钥总是成对出现，用公钥加密后得到的密文，必须用对应的私钥才能解密； 这套加密机制完美解决了黑帮老大的难题，他只需要生成一对密钥：公钥分发给手下们，他们先用公钥加密信息，再发老大；老大接到密文，就用自己保管的私钥来解密；手下们就算拿到别人发的密文也解不开，因为私钥只有他们老大才有。\n数学原理 公钥和私钥的加密机制看起来非常不可思议，这一切其实来一个神奇的数学原理。\n我们来做一个数字游戏，您随便写下一个整数\u00a0m\u00a0（1&lt;m&lt;7387\u00a0），然后计算m ^3 mod 7387\u00a0并把结果告诉我，我就知道您写下的整数\u00a0m\u00a0是什么\n1 2 3 4 5 6 7 8 9 10 11 # 520 &gt;&gt;&gt; 520 ** 3 % 7387 3842 &gt;&gt;&gt; 3842 ** 4811 % 7387 520 # 1314 &gt;&gt;&gt; 1314 ** 3 % 7387 7382 &gt;&gt;&gt; 7382 ** 4811 % 7387 1314 公钥参数 3 和 7387 ，私钥参数 4811 和 7387 又是怎么生成的呢？ 第一步，随机选择两个质数 p 和 q ： p = 83 q = 89 第二步，计算 p 和 q 的乘积 n ： n = p * q = 7387 第三步，计算 n 的欧拉函数 ，记为 phi ： φ(n) = (p-1) * (q-1) = 7216 第四步，随机选择一个整数 e ，满足1&lt;e&lt;φ(n)，且 e 和φ(n)互质： 选一个质数 e ，使得不能被 e 整除即可。 第五步，计算 e 对φ(n)的模反元素 d ，即找到一个数 d 使得 ed 除以φ(n)的余数为 1 ： ed ≡ 1 mod(φ ( n )) &lt;=&gt; ed = kφ(n) + 1 ">
+<title>证书详解</title>
+
+<link rel='canonical' href='https://charles-7777.github.io/hugo-stack/p/%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3/'>
+
+<link rel="stylesheet" href="/hugo-stack/scss/style.min.94fdd056ea16418ea0951f1e222a9e85c8943510b2ceb77611d956b6974ebd26.css"><meta property='og:title' content="证书详解">
+<meta property='og:description' content="对称加密 加密前的原始数据，叫做\u00a0原文（\u00a0original text\u00a0），或者\u00a0明文（\u00a0plain text\u00a0）； 加密后的不规则（\u00a0scrambled\u00a0）数据，通常叫做\u00a0密文（\u00a0cipher text\u00a0）； 加密所用的密码，通常叫做\u00a0密钥（\u00a0secret key\u00a0）； 对称加密（symmetric encryption）算法最大的特点是，它只有一把密钥，加密和解密过程用的都是同一把密钥，这也符合大众对加密算法的认知，用密码对数据进行加密之后，必须用同一个密码才能将数据解密出来\nAES\u00a0，高级加密标准，新一代加密算法标准，速度快，安全级别高； DES\u00a0，数据加密标准，速度较快，适用于加密大量数据，但安全性较弱； Blowfish\u00a0，使用变长密钥，运行速度很快，非专利算法，没有使用限制； etc 非对称加密 从前有一个黑帮，老大和手下们之间的通信必须加密确保安全。于此同时，老大希望手下发给他的信息，不能被其他手下知晓。若采用对称加密算法，只能给每个手下都分配一个独立的密钥，但老大觉得太麻烦了。该怎么办呢？\n黑帮老大希望他只维护一份密钥，就能达到这样的效果，有办法做到吗？\n可以用非对称加密（asymmetric encryption）\n非对称加密，顾明思议，在加密和解密环节用的密钥是不同的。\n非对称加密算法需要两把不同的密钥，这两把密钥组成一对：\n公钥（\u00a0public key\u00a0），公钥用来对数据进行\u00a0加密\u00a0； 私钥（\u00a0private key\u00a0），也称为\u00a0密钥（\u00a0secret key\u00a0），用来对数据进行\u00a0解密\u00a0； 公钥和私钥总是成对出现，用公钥加密后得到的密文，必须用对应的私钥才能解密； 这套加密机制完美解决了黑帮老大的难题，他只需要生成一对密钥：公钥分发给手下们，他们先用公钥加密信息，再发老大；老大接到密文，就用自己保管的私钥来解密；手下们就算拿到别人发的密文也解不开，因为私钥只有他们老大才有。\n数学原理 公钥和私钥的加密机制看起来非常不可思议，这一切其实来一个神奇的数学原理。\n我们来做一个数字游戏，您随便写下一个整数\u00a0m\u00a0（1&lt;m&lt;7387\u00a0），然后计算m ^3 mod 7387\u00a0并把结果告诉我，我就知道您写下的整数\u00a0m\u00a0是什么\n1 2 3 4 5 6 7 8 9 10 11 # 520 &gt;&gt;&gt; 520 ** 3 % 7387 3842 &gt;&gt;&gt; 3842 ** 4811 % 7387 520 # 1314 &gt;&gt;&gt; 1314 ** 3 % 7387 7382 &gt;&gt;&gt; 7382 ** 4811 % 7387 1314 公钥参数 3 和 7387 ，私钥参数 4811 和 7387 又是怎么生成的呢？ 第一步，随机选择两个质数 p 和 q ： p = 83 q = 89 第二步，计算 p 和 q 的乘积 n ： n = p * q = 7387 第三步，计算 n 的欧拉函数 ，记为 phi ： φ(n) = (p-1) * (q-1) = 7216 第四步，随机选择一个整数 e ，满足1&lt;e&lt;φ(n)，且 e 和φ(n)互质： 选一个质数 e ，使得不能被 e 整除即可。 第五步，计算 e 对φ(n)的模反元素 d ，即找到一个数 d 使得 ed 除以φ(n)的余数为 1 ： ed ≡ 1 mod(φ ( n )) &lt;=&gt; ed = kφ(n) + 1 ">
+<meta property='og:url' content='https://charles-7777.github.io/hugo-stack/p/%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3/'>
+<meta property='og:site_name' content=''>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='cert' /><meta property='article:published_time' content='2025-07-28T16:36:08&#43;08:00'/><meta property='article:modified_time' content='2025-07-28T16:43:15&#43;08:00'/>
+<meta name="twitter:title" content="证书详解">
+<meta name="twitter:description" content="对称加密 加密前的原始数据，叫做\u00a0原文（\u00a0original text\u00a0），或者\u00a0明文（\u00a0plain text\u00a0）； 加密后的不规则（\u00a0scrambled\u00a0）数据，通常叫做\u00a0密文（\u00a0cipher text\u00a0）； 加密所用的密码，通常叫做\u00a0密钥（\u00a0secret key\u00a0）； 对称加密（symmetric encryption）算法最大的特点是，它只有一把密钥，加密和解密过程用的都是同一把密钥，这也符合大众对加密算法的认知，用密码对数据进行加密之后，必须用同一个密码才能将数据解密出来\nAES\u00a0，高级加密标准，新一代加密算法标准，速度快，安全级别高； DES\u00a0，数据加密标准，速度较快，适用于加密大量数据，但安全性较弱； Blowfish\u00a0，使用变长密钥，运行速度很快，非专利算法，没有使用限制； etc 非对称加密 从前有一个黑帮，老大和手下们之间的通信必须加密确保安全。于此同时，老大希望手下发给他的信息，不能被其他手下知晓。若采用对称加密算法，只能给每个手下都分配一个独立的密钥，但老大觉得太麻烦了。该怎么办呢？\n黑帮老大希望他只维护一份密钥，就能达到这样的效果，有办法做到吗？\n可以用非对称加密（asymmetric encryption）\n非对称加密，顾明思议，在加密和解密环节用的密钥是不同的。\n非对称加密算法需要两把不同的密钥，这两把密钥组成一对：\n公钥（\u00a0public key\u00a0），公钥用来对数据进行\u00a0加密\u00a0； 私钥（\u00a0private key\u00a0），也称为\u00a0密钥（\u00a0secret key\u00a0），用来对数据进行\u00a0解密\u00a0； 公钥和私钥总是成对出现，用公钥加密后得到的密文，必须用对应的私钥才能解密； 这套加密机制完美解决了黑帮老大的难题，他只需要生成一对密钥：公钥分发给手下们，他们先用公钥加密信息，再发老大；老大接到密文，就用自己保管的私钥来解密；手下们就算拿到别人发的密文也解不开，因为私钥只有他们老大才有。\n数学原理 公钥和私钥的加密机制看起来非常不可思议，这一切其实来一个神奇的数学原理。\n我们来做一个数字游戏，您随便写下一个整数\u00a0m\u00a0（1&lt;m&lt;7387\u00a0），然后计算m ^3 mod 7387\u00a0并把结果告诉我，我就知道您写下的整数\u00a0m\u00a0是什么\n1 2 3 4 5 6 7 8 9 10 11 # 520 &gt;&gt;&gt; 520 ** 3 % 7387 3842 &gt;&gt;&gt; 3842 ** 4811 % 7387 520 # 1314 &gt;&gt;&gt; 1314 ** 3 % 7387 7382 &gt;&gt;&gt; 7382 ** 4811 % 7387 1314 公钥参数 3 和 7387 ，私钥参数 4811 和 7387 又是怎么生成的呢？ 第一步，随机选择两个质数 p 和 q ： p = 83 q = 89 第二步，计算 p 和 q 的乘积 n ： n = p * q = 7387 第三步，计算 n 的欧拉函数 ，记为 phi ： φ(n) = (p-1) * (q-1) = 7216 第四步，随机选择一个整数 e ，满足1&lt;e&lt;φ(n)，且 e 和φ(n)互质： 选一个质数 e ，使得不能被 e 整除即可。 第五步，计算 e 对φ(n)的模反元素 d ，即找到一个数 d 使得 ed 除以φ(n)的余数为 1 ： ed ≡ 1 mod(φ ( n )) &lt;=&gt; ed = kφ(n) + 1 ">
+    <link rel="shortcut icon" href="/hugo-stack/favicon2.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/hugo-stack/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/hugo-stack/img/oi_compressed_hu_9c5e2ca2fe891746.gif" width="300"
+                            height="303" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/hugo-stack"></a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://www.bilibili.com/'
+                        target="_blank"
+                        title="bilibili"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-brand-bilibili"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 10a4 4 0 0 1 4 -4h10a4 4 0 0 1 4 4v6a4 4 0 0 1 -4 4h-10a4 4 0 0 1 -4 -4v-6z" /><path d="M8 3l2 3" /><path d="M16 3l-2 3" /><path d="M9 13v-2" /><path d="M15 11v2" /></svg>
+                        
+                    </a>
+                </li>
+            
+                <li>
+                    <a 
+                        href='https://www.douyin.com/'
+                        target="_blank"
+                        title="douyin"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-brand-tiktok"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M21 7.917v4.034a9.948 9.948 0 0 1 -5 -1.951v4.5a6.5 6.5 0 1 1 -8 -6.326v4.326a2.5 2.5 0 1 0 4 2v-11.5h4.083a6.005 6.005 0 0 0 4.917 4.917z" /></svg>
+                        
+                    </a>
+                </li>
+            
+                <li>
+                    <a 
+                        href='https://github.com/charles-7777/hugo-blog'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/hugo-stack/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                
+                <span>主页</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/archives/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                
+                <span>归档</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/cats-tags/' >
+                
+                
+                
+                    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-tags"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 8v4.172a2 2 0 0 0 .586 1.414l5.71 5.71a2.41 2.41 0 0 0 3.408 0l3.592 -3.592a2.41 2.41 0 0 0 0 -3.408l-5.71 -5.71a2 2 0 0 0 -1.414 -.586h-4.172a2 2 0 0 0 -2 2z" /><path d="M18 19l1.592 -1.592a4.82 4.82 0 0 0 0 -6.816l-4.592 -4.592" /><path d="M7 10h-.01" /></svg>
+                
+                <span>Cats&amp;Tags</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/%E9%93%BE%E6%8E%A5/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                
+                <span>链接</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/search/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+                
+                <span>搜索</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/%E5%85%B3%E4%BA%8E/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                
+                <span>关于</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>暗色模式</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ol>
+    <li><a href="#对称加密">对称加密</a></li>
+    <li><a href="#非对称加密">非对称加密</a>
+      <ol>
+        <li><a href="#数学原理">数学原理</a></li>
+        <li><a href="#安全性分析">安全性分析</a></li>
+        <li><a href="#应用场景">应用场景</a>
+          <ol>
+            <li><a href="#加密">加密</a></li>
+            <li><a href="#签名">签名</a></li>
+          </ol>
+        </li>
+      </ol>
+    </li>
+    <li><a href="#数字证书certificate">数字证书(certificate)</a>
+      <ol>
+        <li><a href="#证书签发实验">证书签发实验</a>
+          <ol>
+            <li><a href="#ca权威机构">CA权威机构</a></li>
+            <li><a href="#商业站点服务端">商业站点（服务端）</a></li>
+            <li><a href="#浏览器客户端">浏览器（客户端）</a></li>
+          </ol>
+        </li>
+        <li><a href="#总结">总结</a></li>
+      </ol>
+    </li>
+  </ol>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/hugo-stack/categories/%E7%AC%94%E8%AE%B0/" >
+                笔记
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/hugo-stack/p/%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3/">证书详解</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">2025-07-28 16:36</time>
+            </div>
+        <div>
+            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-edit"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg>
+            <time class="article-lastmod">2025-07-28 16:43</time>
+        </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 2 分钟
+                </time>
+            </div>
+        
+
+        
+            <div>
+                <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-file-word"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 12l1.333 5l1.667 -4l1.667 4l1.333 -5" /></svg>
+                <time class="article-words">
+                    421 字
+                </time>
+            </div>
+        
+
+
+    </footer>
+    
+
+    
+
+
+</div>
+
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h2 id="对称加密">对称加密
+</h2><ul>
+<li>加密前的原始数据，叫做 <strong>原文</strong>（ <em>original text</em> ），或者 <strong>明文</strong>（ <em>plain text</em> ）；</li>
+<li>加密后的不规则（ <em>scrambled</em> ）数据，通常叫做 <strong>密文</strong>（ <em>cipher text</em> ）；</li>
+<li>加密所用的密码，通常叫做 <strong>密钥</strong>（ <em>secret key</em> ）；</li>
+</ul>
+<p><code>对称加密（symmetric encryption）算法最大的特点是，它只有一把密钥，加密和解密过程用的都是同一把密钥，这也符合大众对加密算法的认知，用密码对数据进行加密之后，必须用同一个密码才能将数据解密出来</code></p>
+<ul>
+<li><em>AES</em> ，高级加密标准，新一代加密算法标准，速度快，安全级别高；</li>
+<li><em>DES</em> ，数据加密标准，速度较快，适用于加密大量数据，但安全性较弱；</li>
+<li><em>Blowfish</em> ，使用变长密钥，运行速度很快，非专利算法，没有使用限制；</li>
+<li><em>etc</em></li>
+</ul>
+<h2 id="非对称加密">非对称加密
+</h2><p>从前有一个黑帮，老大和手下们之间的通信必须加密确保安全。于此同时，老大希望手下发给他的信息，不能被其他手下知晓。若采用对称加密算法，只能给每个手下都分配一个独立的密钥，但老大觉得太麻烦了。该怎么办呢？</p>
+<p>黑帮老大希望他只维护一份密钥，就能达到这样的效果，有办法做到吗？</p>
+<p>可以用非对称加密（<em>asymmetric encryption</em>）</p>
+<p><code>非对称加密，顾明思议，在加密和解密环节用的密钥是不同的。</code></p>
+<p>非对称加密算法需要两把不同的密钥，这两把密钥组成一对：</p>
+<ul>
+<li><strong>公钥</strong>（ <em>public key</em> ），公钥用来对数据进行 <strong>加密</strong> ；</li>
+<li><strong>私钥</strong>（ <em>private key</em> ），也称为 <strong>密钥</strong>（ <em>secret key</em> ），用来对数据进行 <strong>解密</strong> ；</li>
+<li>公钥和私钥总是成对出现，用公钥加密后得到的密文，必须用对应的私钥才能解密；</li>
+</ul>
+<p>这套加密机制完美解决了黑帮老大的难题，他只需要生成一对密钥：公钥分发给手下们，他们先用公钥加密信息，再发老大；老大接到密文，就用自己保管的私钥来解密；手下们就算拿到别人发的密文也解不开，因为私钥只有他们老大才有。</p>
+<h3 id="数学原理">数学原理
+</h3><p>公钥和私钥的加密机制看起来非常不可思议，这一切其实来一个神奇的数学原理。</p>
+<p>我们来做一个数字游戏，您随便写下一个整数 <em>m</em> （1&lt;m&lt;7387  ），然后计算m ^3  mod  7387  并把结果告诉我，我就知道您写下的整数 <em>m</em> 是什么</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="c1"># 520</span>
+</span></span><span class="line"><span class="cl"><span class="o">&gt;&gt;&gt;</span> <span class="mi">520</span> <span class="o">**</span> <span class="mi">3</span> <span class="o">%</span> <span class="mi">7387</span>
+</span></span><span class="line"><span class="cl"><span class="mi">3842</span>
+</span></span><span class="line"><span class="cl"><span class="o">&gt;&gt;&gt;</span> <span class="mi">3842</span> <span class="o">**</span> <span class="mi">4811</span> <span class="o">%</span> <span class="mi">7387</span>
+</span></span><span class="line"><span class="cl"><span class="mi">520</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 1314</span>
+</span></span><span class="line"><span class="cl"><span class="o">&gt;&gt;&gt;</span> <span class="mi">1314</span> <span class="o">**</span> <span class="mi">3</span> <span class="o">%</span> <span class="mi">7387</span>
+</span></span><span class="line"><span class="cl"><span class="mi">7382</span>
+</span></span><span class="line"><span class="cl"><span class="o">&gt;&gt;&gt;</span> <span class="mi">7382</span> <span class="o">**</span> <span class="mi">4811</span> <span class="o">%</span> <span class="mi">7387</span>
+</span></span><span class="line"><span class="cl"><span class="mi">1314</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>公钥参数 3 和 7387 ，私钥参数 4811 和 7387 又是怎么生成的呢？
+第一步，随机选择两个质数 p 和 q ：
+<code>p = 83   q = 89</code>
+第二步，计算 p 和 q 的乘积 n ：
+<code>n = p * q = 7387</code>
+第三步，计算 n 的欧拉函数 ，记为 phi ：
+<code>φ(n) = (p-1) * (q-1) = 7216</code>
+第四步，随机选择一个整数 e ，满足1&lt;e&lt;φ(n)，且 e 和φ(n)互质：
+<code>选一个质数 e ，使得不能被 e 整除即可。</code>
+第五步，计算 e 对φ(n)的模反元素 d ，即找到一个数 d 使得 ed 除以φ(n)的余数为 1 ：
+<code>ed ≡ 1 mod(φ ( n ))  &lt;=&gt; ed = kφ(n) + 1 </code></p>
+<p> 可以找到一个d :4811</p>
+<h3 id="安全性分析">安全性分析
+</h3><p>那么，有无可能在已知n和e的情况下，推导出d？</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">ed≡1 (mod φ(n))。只有知道e和φ(n)，才能算出d。
+</span></span><span class="line"><span class="cl">φ(n)=(p-1)(q-1)。只有知道p和q，才能算出φ(n)。
+</span></span><span class="line"><span class="cl">n=pq。只有将n因数分解，才能算出p和q。
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>大整数的因数分解，是一件非常困难的事情</p>
+<p>目前，能够被破解的 <em>n</em> 最大位数是 <em>768</em> 位(这里提到的位是指二进制位)，因此有人开始质疑 <em>1024</em> 位密钥的安全性。现在推荐的密钥长度至少要 <em>2048</em> 位，只要长度足够，安全性完全不用担心</p>
+<h3 id="应用场景">应用场景
+</h3><h4 id="加密">加密
+</h4><p>公钥加密私钥解密是非对称加密算法最典型的应用场景，特别适用于密钥需要公开的场景，比如 传输层安全协议 <em>TLS</em> ，它为通讯双方提供可靠的加密连接</p>
+<p>如果没有非对称加密算法，<em>TLS</em> 将无法实现。因为对称加密算法要求双方使用同一密钥，加密连接建立之前，只能明文协商密钥。试想浏览器想跟服务器建立安全连接，无论是它选定密钥然后发给服务器，还是服务器选定密钥发给它，只要密钥经过明文传输，加密就失去意义。</p>
+<p>有了非对称加密算法，服务器可以生成一对密钥，私钥自己保管，公钥可以公开。当浏览器请求建立加密连接时，服务器可以将公钥发给浏览器，因为公钥是可以公开的。浏览器将敏感信息用公钥加密后再发给浏览器，只有掌握私钥的服务器才能解密，他人便无法知晓。</p>
+<p>同理，服务器想发敏感信息给客户端，必须由客户端生成的公钥加密。换句话讲，每对密钥<strong>解决一个方向的加密</strong>问题，通讯双方都需要生成自己的密钥对，负责加密对方发来的数据。</p>
+<p>由于非对称加密算法运算复杂，加密效率不高，通常只是用来加密少量的关键信息，比如协商密钥。回到 <em>TLS</em> 这个例子，其实可以借助非对称加密算法协商密钥，从而直接使用更高效的对称加密算法来加密数据：</p>
+<ol>
+<li><strong>服务器</strong>生成<strong>公钥</strong>和<strong>私钥</strong> 对；</li>
+<li><strong>客户端</strong>（浏览器）连接上来后，服务器将<strong>公钥</strong>发给客户端；</li>
+<li>客户端<strong>随机生成</strong>一个用于<strong>对称加密</strong>（ <em>AES</em> ）的密钥；</li>
+<li>客户端用<strong>公钥</strong>对生成的密钥进行<strong>加密</strong>，然后后发给服务器；</li>
+<li>服务器收到客户端用公钥加密的密钥后，用自己的私钥解密，至此密钥协商完毕；</li>
+<li><strong>由于私钥只有服务器才有，因此第三方无法知晓客户端选定的密钥是啥</strong>；</li>
+<li>此后通信双方采用对称加密，以该密钥加密数据；</li>
+</ol>
+<h4 id="签名">签名
+</h4><p>实际上，私钥也可以用来加密数据，加密后的密文只有公钥才能解密。尽管如此，由于公钥是公开的，因此这个机制不能来加密数据，但可以对用来对数据进行签名防伪。</p>
+<h2 id="数字证书certificate">数字证书(certificate)
+</h2><ul>
+<li><strong>信息摘要</strong>（ <em>digest</em> ），数据经过哈希算法得到的一串哈希值，代表数据的特征，也称为数据指纹；</li>
+<li><strong>摘要算法</strong> ，可以把任意长度的数据，映射成一个定长的字符串（哈希值）；
+<ul>
+<li>由于哈希冲突的存在，两份不同的数据，有可能算出相同的摘要值；</li>
+<li>摘要算法无法用于数据加密，通常用来校验数据完整性，即 <strong>数据防伪</strong> ；</li>
+<li>常见的摘要算法有：<em>MD5</em> 、<em>SHA1</em> 、<em>SHA256</em> 、<em>SHA512</em> 。</li>
+</ul>
+</li>
+<li><strong>数字签名</strong>（ <em>signature</em> ），摘要由私钥加密后，得到的摘要密文就是数字签名；
+<ul>
+<li>签名，由数据发送方生成，这是一个 <strong>加密</strong> 过程（使用私钥）；</li>
+<li>验签，由数据接收方校验，这是一个 <strong>解密</strong> 过程（使用公钥）；</li>
+<li>数字签名只能由私钥生成，因此第三方无法伪造；</li>
+</ul>
+</li>
+</ul>
+<p>在介绍密钥协商时，我们提到服务器先将公钥发给客户端，用公钥保护对称加密密钥，确保通信内容不会被第三方获悉。但如果客户端连接的服务器是假的呢？如果用户对假网站信以为真，输入了账号密码，那么这些敏感信息都会被假网站窃取！</p>
+<p>上节我们也讨论了数字签名，通过它可以实现数据防伪。那么，我们是不是可以利用这项技术来甄别仿冒站点呢</p>
+<ol>
+<li><strong>权威机构</strong>生成<strong>一对密钥</strong>，并提供站点认证审核和数字签名颁发服务；</li>
+<li>站点管理员将<strong>站点信息</strong>，包括域名、运营单位、<strong>公钥</strong>等信息发给权威机构审核；</li>
+<li>权威机构对提交上来的站点信息进行审核，审核通过则用<strong>私钥签名</strong>后返回给站点管理员；</li>
+<li>客户端（浏览器）连接站点服务器，<strong>服务器</strong>将<strong>站点信息</strong>以及对应的<strong>数字签名</strong>发给客户端；</li>
+<li><strong>客户端</strong>用权威机构提供的<strong>公钥</strong>来<strong>校验数字签名</strong>，即可判断站点信息的真伪性；</li>
+<li>签名验证通过，客户端从站点信息中取出公钥，与服务端协商密钥，发起加密通信；</li>
+<li>由于签名用的私钥只有权威机构掌握，黑客无法伪造数字签名，也就无法架设仿冒站点；</li>
+<li>权威机构必须由可信的单位运营；</li>
+</ol>
+<blockquote>
+<p>你可能会觉得，黑客直接盗用站点信息和签名不就可以伪造原站点了嘛？此言差矣！因为公钥属于站点信息<br>
+的一 部分，也会参与签名！客户端和服务端协商密钥时，会使用这个公钥加密密钥。由于黑客不掌握站点私
+钥，因此  加密连接无法建立！黑客把公钥替换成自己的吧，签名就不对，肯定会被验出来！</p></blockquote>
+<h3 id="证书签发实验">证书签发实验
+</h3><h4 id="ca权威机构">CA权威机构
+</h4><p>首先，权威机构需要生成一对密钥，cakey.pem 是私钥,</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">openssl genrsa -out cakey.pem 2048
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>然后，生成根证书签发申请文件（ csr 文件）：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">openssl req -new -key cakey.pem -out ca.csr -subj &#39;/C=CN/ST=Guangdong/L=Guangzhou/O=coding-fans/OU=CA/CN=ca.fasionchan.com&#39;
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>证书申请文件包含权威机构的信息，包括机构信息(<em>Subject</em> )和公钥(<em>Public Key</em> 部分)可以用下面命令查看：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">openssl req -in ca.csr -text -noout
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>最后，自签根证书（ <em>cer</em> 文件 ）：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">openssl x509 -req -days 3650 -sha1 -extensions v3_ca -signkey cakey.pem -in ca.csr -out ca.cer
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>这一步生成的 <em>cer</em> 文件就是<strong>根证书文件</strong>，它的主要作用是承载权威机构<strong>公钥</strong>，以便预装在操作系统或者其他终端。它同样会包含权威机构的信息，公钥，以及对应的签名。</p>
+<h4 id="商业站点服务端">商业站点（服务端）
+</h4><p>首先，站点管理员生成一对密钥</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">openssl genrsa -out sitekey.pem 2048
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>然后，生成证书签发申请文件（ csr 文件）：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">openssl req -new -key sitekey.pem -out site.csr -subj &#39;/C=CN/ST=Guangdong/L=Guangzhou/O=fasionchan/OU=website/CN=fasionchan.co
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>证书申请文件包含站点信息和公钥，站点管理员将证书申请文件发给权威机构审核，</p>
+<p>权威机构对申请进行审核，审核通过则用自己的<strong>私钥</strong>对它进行签名，生成证书(cer 文件):</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">openssl x509 -req -days 365 -sha1 -extensions v3_req -CA ca.cer -CAkey cakey.pem -CAserial ca.srl -CAcreateserial -in site.csr -out site.cer
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>证书中保存着包括公钥在内的站点信息，以及权威机构对这些信息的签名。管理员接到权威机构颁发的证书，就可以部署网站了</p>
+<h4 id="浏览器客户端">浏览器（客户端）
+</h4><p>客户端浏览器访问站点，<strong>服务端</strong>会将其<strong>证书发</strong>给客户端。客户端先对证书签名进行验证，步骤如下：</p>
+<ul>
+<li>重新对证书中的站点信息计算 <strong>摘要值</strong> ；</li>
+<li>用公钥对证书中的签名进行解密，得到证书的原始摘要值；
+<ul>
+<li>公钥通常由根证书提供，根证书通常预装在系统里；</li>
+</ul>
+</li>
+<li>对比两个摘要值看是否一致；</li>
+</ul>
+<p>调用 <em>openssl</em> 工具，一行命令即可完成签名验证</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">openssl verify -CAfile ca.cer site.cer
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="总结">总结
+</h3><p>数字证书是支撑互联网身份认证的重要技术手段，可以简单理解成经过 <em>CA</em> 权威结构签名认证过的站点信息。由于经过 <em>CA</em> 签名，第三方无法通过伪造手段冒充身份。</p>
+<ul>
+<li>证书由<strong>站点信息</strong>和 <strong><em>CA</em> 签名</strong>组成，<strong>站点信息包含站点公钥</strong>，公钥用于协商对称加密密钥；</li>
+<li>证书由 <em>CA</em> 权威机构审核签发，签名用的是 <em>CA</em> 的私钥；</li>
+<li><em>CA</em> 公钥通常以根证书形式预装在系统内，客户端通过它来验证证书签名；</li>
+<li>有了数字签名，黑客无法对证书进行篡改，也无法伪造证书，因此无法部署仿冒站点；
+<ul>
+<li>若只窃取原站点证书，不做篡改，客户端使用真实站点的公钥，而黑客无法掌握站点私钥，因此加密连接无法建立；</li>
+<li>如果篡改原站点证书，换上自己的公钥，但因为没有 <em>CA</em> 私钥无法生成合法签名，也会被识别出来；</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>转载自<a class="link" href="https://fasionchan.com/network/cryptography/certificate/"  target="_blank" rel="noopener"
+    >数字证书身份认证原理与签发步骤详解 | 小菜学网络</a></p></blockquote>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/hugo-stack/tags/cert/">Cert</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    
+
+    
+</footer>
+
+
+    
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="">
+    <a href="/hugo-stack/p/restful-api/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">RESTful API</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+        2025 Charles Lv
+    </section>
+    
+    <section class="powerby">
+        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/hugo-stack/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+<script src=https://charles-7777.github.io/hugo-stack/background/sakura.js></script>
+
+
+
+
+
+
+<style>
+    .highlight {
+         
+        max-height: 400px;
+        overflow: hidden;
+    }
+
+    .code-show {
+        max-height: none !important;
+    }
+
+    .code-more-box {
+        width: 100%;
+        padding-top: 78px;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(rgba(255, 255, 255, 0)), to(#fff));
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1;
+    }
+
+    .code-more-btn {
+        display: block;
+        margin: auto;
+        width: 44px;
+        height: 22px;
+        background: #f0f0f5;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+        padding-top: 6px;
+        cursor: pointer;
+    }
+
+    .code-more-img {
+        cursor: pointer !important;
+        display: block;
+        margin: auto;
+        width: 22px;
+        height: 16px;
+    }
+</style>
+
+<script>
+  function initCodeMoreBox() {
+    let codeBlocks = document.querySelectorAll(".highlight");
+    if (!codeBlocks) {
+      return;
+    }
+    codeBlocks.forEach(codeBlock => {
+      
+      if (codeBlock.scrollHeight <= codeBlock.clientHeight) {
+        return;
+      }
+      
+      
+      let codeMoreBox = document.createElement('div');
+      codeMoreBox.classList.add('code-more-box');
+      
+      let codeMoreBtn = document.createElement('span');
+      codeMoreBtn.classList.add('code-more-btn');
+      codeMoreBtn.addEventListener('click', () => {
+        codeBlock.classList.add('code-show');
+        codeMoreBox.style.display = 'none';
+        
+        window.dispatchEvent(new Event('resize'))
+      })
+      
+      let img = document.createElement('img');
+      img.classList.add('code-more-img');
+      img.src = "https://charles-7777.github.io/hugo-stack/icons/codeMore.png"
+      
+      codeMoreBtn.appendChild(img);
+      codeMoreBox.appendChild(codeMoreBtn);
+      codeBlock.appendChild(codeMoreBox)
+    })
+  }
+  
+  initCodeMoreBox();
+</script>
+
+
+
+<style>
+    #backTopBtn {
+        display: none;
+        position: fixed;
+        bottom: 30px;
+        z-index: 99;
+        cursor: pointer;
+        width: 30px;
+        height: 30px;
+        background-image: url(https://charles-7777.github.io/hugo-stack/icons/backTop.svg);
+    }
+</style>
+
+<script>
+    
+
+    function initScrollTop() {
+        let rightSideBar = document.querySelector(".right-sidebar");
+        if (!rightSideBar) {
+            return;
+        }
+        
+        let btn = document.createElement("div");
+        btn.id = "backTopBtn";
+        btn.onclick = backToTop
+        rightSideBar.appendChild(btn)
+        
+        window.onscroll = function() {
+            
+            if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+                btn.style.display = "block";
+            } else {
+                btn.style.display = "none";
+            }
+        };
+    }
+
+    
+
+    function backToTop(){
+        window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+
+    initScrollTop();
+</script>
+
+
+<style>
+    #TableOfContents > ul, ol {
+        ul, ol {
+            display: none;
+        }
+        .open {
+            display: block;
+        }
+    }
+</style>
+
+<script>
+    function initTocHide() {
+        
+        let toc = document.querySelector(".widget--toc");
+        if (!toc) {
+            return;
+        }
+        
+        window.addEventListener('scroll', function() {
+            
+            let openUl = document.querySelectorAll(".open");
+            if (openUl.length > 0) {
+              openUl.forEach((ul) => {
+                ul.classList.remove("open")
+              })
+            }
+            
+            let currentLi = document.querySelector(".active-class");
+            if (!currentLi) {
+                return
+            }
+            
+            if (currentLi.children.length > 1) {
+                currentLi.children[1].classList.add("open")
+            }
+            
+            let ul = currentLi.parentElement;
+            do {
+                ul.classList.add("open");
+                ul = ul.parentElement.parentElement
+            } while (ul !== undefined && (ul.localName === 'ul' || ul.localName === 'ol'))
+        });
+    }
+    initTocHide()
+</script>
+
+
+
+
+
+
+ <script>
+  const cdnPath = "https://cdn.jsdelivr.net/gh/charles-7777/live2d-widget-v3@main";
+  const config = {
+    
+    path: {
+      homePath: "/",
+      modelPath: cdnPath + "/Resources/",
+      cssPath: cdnPath + "/waifu.css",
+      tipsJsonPath: cdnPath + "/waifu-tips.json",
+      tipsJsPath: cdnPath + "/waifu-tips.js",
+      live2dCorePath: cdnPath + "/Core/live2dcubismcore.js",
+      live2dSdkPath: cdnPath + "/live2d-sdk.js"
+    },
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    tools: ["hitokoto",  "express",  "photo", "info", "quit"],
+    
+    drag: {
+      enable: false,
+      direction: ["x", "y"]
+    },
+    
+    switchType: "order"
+  }
+
+  const local_cssPath = "https://charles-7777.github.io/hugo-stack/waifu/waifu.css";
+  const local_tipsJsonPath = "https://charles-7777.github.io/hugo-stack/waifu/waifu-tips.json";
+  const local_tipsJsPath = "https://charles-7777.github.io/hugo-stack/waifu/waifu-tips.js";
+
+  
+  if (screen.width >= 768) {
+    Promise.all([
+    
+      loadExternalResource(local_cssPath, "css"),
+      loadExternalResource(config.path.live2dCorePath, "js"),
+      loadExternalResource(config.path.live2dSdkPath, "js"),
+    
+      loadExternalResource(local_tipsJsPath, "js")
+    ]).then(() => {
+      initWidget({
+        
+        waifuPath: local_tipsJsonPath,
+        cdnPath: config.path.modelPath,
+        tools: config.tools,
+        dragEnable: config.drag.enable,
+        dragDirection: config.drag.direction,
+        switchType: config.switchType
+      });
+    });
+  }
+
+  
+  function loadExternalResource(url, type) {
+    return new Promise((resolve, reject) => {
+      let tag;
+      if (type === "css") {
+        tag = document.createElement("link");
+        tag.rel = "stylesheet";
+        tag.href = url;
+      }
+      else if (type === "js") {
+        tag = document.createElement("script");
+        tag.src = url;
+      }
+      if (tag) {
+        tag.onload = () => resolve(url);
+        tag.onerror = () => reject(url);
+        document.head.appendChild(tag);
+      }
+    });
+  }
+</script>
+
+    </body>
+</html>
