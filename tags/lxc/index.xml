@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+        <title>Lxc on </title>
+        <link>https://charles-7777.github.io/hugo-stack/tags/lxc/</link>
+        <description>Recent content in Lxc on </description>
+        <generator>Hugo -- gohugo.io</generator>
+        <language>zh-cn</language>
+        <copyright>Charles Lv</copyright>
+        <lastBuildDate>Mon, 28 Jul 2025 20:05:23 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/tags/lxc/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>LXC详解</title>
+        <link>https://charles-7777.github.io/hugo-stack/p/lxc%E8%AF%A6%E8%A7%A3/</link>
+        <pubDate>Mon, 28 Jul 2025 20:00:08 +0800</pubDate>
+        
+        <guid>https://charles-7777.github.io/hugo-stack/p/lxc%E8%AF%A6%E8%A7%A3/</guid>
+        <description>&lt;h1 id=&#34;lxc-linux-容器-工作原理详解&#34;&gt;LXC (Linux 容器) 工作原理详解
+&lt;/h1&gt;&lt;p&gt;LXC (Linux Containers) 是一种操作系统级别的虚拟化技术，它允许在单个 Linux 内核上运行多个隔离的 Linux 系统（容器）。与虚拟机（VM）不同，LXC 不需要模拟硬件，因此它非常轻量级且启动速度快。&lt;/p&gt;
+&lt;p&gt;LXC 的核心是利用 Linux 内核的两个关键特性：&lt;strong&gt;命名空间 (Namespaces)&lt;/strong&gt; 和 &lt;strong&gt;控制组 (Cgroups)&lt;/strong&gt;。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Namespaces&lt;/strong&gt;：负责隔离，确保一个容器中的进程看不到或影响到另一个容器或宿主机的进程、网络、文件系统等。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Cgroups&lt;/strong&gt;：负责资源限制和审计，确保每个容器只能使用分配给它的 CPU、内存、I/O 等资源。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;本文将重点详细介绍几个关键的命名空间。&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;1-pid-命名空间-pid-namespace&#34;&gt;1. PID 命名空间 (PID Namespace)
+&lt;/h2&gt;&lt;p&gt;PID (Process ID) 命名空间用于隔离进程 ID。&lt;/p&gt;
+&lt;h3 id=&#34;原理&#34;&gt;原理
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;隔离进程树&lt;/strong&gt;：每个 PID 命名空间都有一套独立的进程 ID，从 1 开始。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;容器的 &lt;code&gt;init&lt;/code&gt; 进程&lt;/strong&gt;：在一个新的 PID 命名空间中创建的第一个进程会成为该空间的 &amp;ldquo;init&amp;rdquo; 进程，其 PID 为 1。这个进程负责管理容器内的所有其他进程（例如，处理孤儿进程）。如果这个 PID 为 1 的进程终止，内核将终止该命名空间中的所有其他进程。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;内外 PID 映射&lt;/strong&gt;：容器内的进程在容器内部有自己的 PID（例如，PID 1, 2, 3&amp;hellip;），同时在宿主机上也有一个全局唯一的 PID。这意味着从宿主机看，所有容器的进程都是普通的进程，只是被 PID 命名空间隔离开来。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;示例&#34;&gt;示例
+&lt;/h3&gt;&lt;p&gt;假设我们在宿主机上启动一个 LXC 容器，并在容器内运行 &lt;code&gt;bash&lt;/code&gt;。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;容器内视角&lt;/strong&gt;:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;3
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;4
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;5
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;6
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;# 在容器内执行&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;ps aux
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;root           &lt;span class=&#34;m&#34;&gt;1&lt;/span&gt;  0.1  0.0   &lt;span class=&#34;m&#34;&gt;2384&lt;/span&gt;  &lt;span class=&#34;m&#34;&gt;1596&lt;/span&gt; ?        Ss   10:00   0:00 /sbin/init
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;root          &lt;span class=&#34;m&#34;&gt;15&lt;/span&gt;  0.0  0.0   &lt;span class=&#34;m&#34;&gt;4372&lt;/span&gt;  &lt;span class=&#34;m&#34;&gt;3480&lt;/span&gt; pts/0    Ss   10:01   0:00 bash
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;root          &lt;span class=&#34;m&#34;&gt;25&lt;/span&gt;  0.0  0.0   &lt;span class=&#34;m&#34;&gt;5924&lt;/span&gt;  &lt;span class=&#34;m&#34;&gt;1788&lt;/span&gt; pts/0    R+   10:02   0:00 ps aux
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;在这里，&lt;code&gt;init&lt;/code&gt; 进程的 PID 是 1，&lt;code&gt;bash&lt;/code&gt; 的 PID 是 15。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;宿主机视角&lt;/strong&gt;:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;3
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;4
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;# 在宿主机执行&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;ps aux &lt;span class=&#34;p&#34;&gt;|&lt;/span&gt; grep bash
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;# 输出可能像这样&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;root       &lt;span class=&#34;m&#34;&gt;12345&lt;/span&gt;  0.0  0.0   &lt;span class=&#34;m&#34;&gt;4372&lt;/span&gt;  &lt;span class=&#34;m&#34;&gt;3480&lt;/span&gt; pts/0    Ss   10:01   0:00 bash
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;在宿主机上，同一个 &lt;code&gt;bash&lt;/code&gt; 进程的 PID 可能是 12345。这种隔离使得容器内的进程管理与宿主机完全分离。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;2-网络命名空间-network-namespace&#34;&gt;2. 网络命名空间 (Network Namespace)
+&lt;/h2&gt;&lt;p&gt;网络命名空间为每个容器提供了一个完全独立的网络协议栈。&lt;/p&gt;
+&lt;h3 id=&#34;原理-1&#34;&gt;原理
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;独立网络栈&lt;/strong&gt;：每个网络命名空间都有自己独立的网络设备（如 &lt;code&gt;lo&lt;/code&gt;, &lt;code&gt;eth0&lt;/code&gt;）、IP 地址、路由表、iptables 防火墙规则、端口号等。一个容器默认无法访问另一个容器或宿主机的网络。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;veth&lt;/code&gt; 设备对&lt;/strong&gt;：为了让容器能与外部通信，LXC 通常使用 &lt;code&gt;veth&lt;/code&gt; (Virtual Ethernet) 设备对。&lt;code&gt;veth&lt;/code&gt; 设备总是成对出现，像一根虚拟网线。数据从一端进入，会从另一端出来。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;连接过程&lt;/strong&gt;:
+&lt;ol&gt;
+&lt;li&gt;创建一对 &lt;code&gt;veth&lt;/code&gt; 设备，例如 &lt;code&gt;veth_host&lt;/code&gt; 和 &lt;code&gt;veth_container&lt;/code&gt;。&lt;/li&gt;
+&lt;li&gt;将 &lt;code&gt;veth_host&lt;/code&gt; 留在宿主机的网络命名空间中。&lt;/li&gt;
+&lt;li&gt;将 &lt;code&gt;veth_container&lt;/code&gt; &amp;ldquo;移动&amp;rdquo; 到容器的网络命名空间中，并将其重命名为 &lt;code&gt;eth0&lt;/code&gt;。&lt;/li&gt;
+&lt;li&gt;在宿主机上，通常会创建一个网桥（例如 &lt;code&gt;lxcbr0&lt;/code&gt;），并将 &lt;code&gt;veth_host&lt;/code&gt; 端连接到这个网桥上。&lt;/li&gt;
+&lt;li&gt;为容器内的 &lt;code&gt;eth0&lt;/code&gt; 分配 IP 地址。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;数据流&lt;/strong&gt;: 容器内 &lt;code&gt;eth0&lt;/code&gt; 发出的网络包 -&amp;gt; 通过 &lt;code&gt;veth&lt;/code&gt; 对到达宿主机的 &lt;code&gt;veth_host&lt;/code&gt; -&amp;gt; 进入宿主机的网桥 &lt;code&gt;lxcbr0&lt;/code&gt; -&amp;gt; 通过宿主机的物理网卡和路由规则与外部网络通信。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这种结构使得每个容器都像一台独立的机器连接到了一个虚拟交换机（网桥）上，实现了网络隔离和互联。&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;3-文件系统命名空间-mount-namespace&#34;&gt;3. 文件系统命名空间 (Mount Namespace)
+&lt;/h2&gt;&lt;p&gt;文件系统（挂载）命名空间允许每个容器拥有自己独立的文件系统视图，尤其是独立的根目录 (&lt;code&gt;/&lt;/code&gt;)。&lt;/p&gt;
+&lt;h3 id=&#34;原理-2&#34;&gt;原理
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;隔离挂载点&lt;/strong&gt;：每个挂载命名空间维护着一个独立的挂载点列表。在一个命名空间中的 &lt;code&gt;mount()&lt;/code&gt; 和 &lt;code&gt;umount()&lt;/code&gt; 操作不会影响到其他命名空间。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;独立的根文件系统 (&lt;code&gt;rootfs&lt;/code&gt;)&lt;/strong&gt;：LXC 利用这个特性为每个容器创建一个独立的根文件系统。容器进程看到的文件系统层次结构与宿主机完全不同。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;实现方式&lt;/strong&gt;:
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;准备 &lt;code&gt;rootfs&lt;/code&gt;&lt;/strong&gt;：首先，需要为容器准备一个目录，其中包含一个完整的 Linux 系统所需的文件和目录（如 &lt;code&gt;/bin&lt;/code&gt;, &lt;code&gt;/etc&lt;/code&gt;, &lt;code&gt;/lib&lt;/code&gt;, &lt;code&gt;/usr&lt;/code&gt; 等）。这通常通过复制一个最小化的系统模板来完成。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;pivot_root&lt;/code&gt; 系统调用&lt;/strong&gt;：为了将容器的根目录切换到准备好的 &lt;code&gt;rootfs&lt;/code&gt;，LXC 使用 &lt;code&gt;pivot_root&lt;/code&gt; 系统调用（或者在某些情况下使用 &lt;code&gt;chroot&lt;/code&gt;，但 &lt;code&gt;pivot_root&lt;/code&gt; 更强大、更安全）。&lt;code&gt;pivot_root&lt;/code&gt; 会将当前进程的根文件系统切换到一个新的挂载点，同时将旧的根文件系统挂载到新根下的一个指定目录中，之后可以将其卸载。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;隔离挂载&lt;/strong&gt;：在容器启动后，它可以在自己的文件系统命名空间内自由地挂载其他设备或文件系统（如 &lt;code&gt;proc&lt;/code&gt;, &lt;code&gt;sysfs&lt;/code&gt;, &lt;code&gt;tmpfs&lt;/code&gt;），而这些挂载对宿主机是不可见的。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;通过这种方式，容器内的进程被&amp;quot;囚禁&amp;quot;在其自己的文件系统视图中，无法访问或修改宿主机的文件系统（除非特别配置了绑定挂载 &lt;code&gt;bind mount&lt;/code&gt;）。&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;其他命名空间&#34;&gt;其他命名空间
+&lt;/h2&gt;&lt;p&gt;除了以上三个，LXC 还使用了其他命名空间来实现全方位隔离：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;UTS Namespace&lt;/strong&gt;: 隔离主机名和域名。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;IPC Namespace&lt;/strong&gt;: 隔离进程间通信资源，如 System V IPC 和 POSIX 消息队列。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;User Namespace&lt;/strong&gt;: 隔离用户和组 ID。允许容器内的 &lt;code&gt;root&lt;/code&gt; 用户（UID 0）映射为宿主机上的一个非特权用户，极大地提升了安全性。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Cgroup Namespace&lt;/strong&gt;: 隔离控制组视图。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;总结&#34;&gt;总结
+&lt;/h2&gt;&lt;p&gt;LXC 通过精巧地组合使用 Linux 内核的 &lt;strong&gt;Namespaces&lt;/strong&gt; 和 &lt;strong&gt;Cgroups&lt;/strong&gt; 特性，为用户提供了一个轻量级、高效且隔离性良好的容器环境。PID、网络和文件系统命名空间是实现这种隔离的基础，它们分别创建了独立的进程树、网络协议栈和文件系统视图，使得容器内的环境看起来就像一个独立的操作系统。&lt;/p&gt;
+</description>
+        </item>
+        
+    </channel>
+</rss>
