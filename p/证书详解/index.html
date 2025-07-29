@@ -6,7 +6,7 @@
 
 <link rel='canonical' href='https://charles-7777.github.io/hugo-stack/p/%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3/'>
 
-<link rel="stylesheet" href="/hugo-stack/scss/style.min.94fdd056ea16418ea0951f1e222a9e85c8943510b2ceb77611d956b6974ebd26.css"><meta property='og:title' content="证书详解">
+<link rel="stylesheet" href="/hugo-stack/scss/style.min.1aedf5438eb6380946ca2f7d86c958e5adeb3c679a95ad190168d7c28b43101d.css"><meta property='og:title' content="证书详解">
 <meta property='og:description' content="对称加密 加密前的原始数据，叫做\u00a0原文（\u00a0original text\u00a0），或者\u00a0明文（\u00a0plain text\u00a0）； 加密后的不规则（\u00a0scrambled\u00a0）数据，通常叫做\u00a0密文（\u00a0cipher text\u00a0）； 加密所用的密码，通常叫做\u00a0密钥（\u00a0secret key\u00a0）； 对称加密（symmetric encryption）算法最大的特点是，它只有一把密钥，加密和解密过程用的都是同一把密钥，这也符合大众对加密算法的认知，用密码对数据进行加密之后，必须用同一个密码才能将数据解密出来\nAES\u00a0，高级加密标准，新一代加密算法标准，速度快，安全级别高； DES\u00a0，数据加密标准，速度较快，适用于加密大量数据，但安全性较弱； Blowfish\u00a0，使用变长密钥，运行速度很快，非专利算法，没有使用限制； etc 非对称加密 从前有一个黑帮，老大和手下们之间的通信必须加密确保安全。于此同时，老大希望手下发给他的信息，不能被其他手下知晓。若采用对称加密算法，只能给每个手下都分配一个独立的密钥，但老大觉得太麻烦了。该怎么办呢？\n黑帮老大希望他只维护一份密钥，就能达到这样的效果，有办法做到吗？\n可以用非对称加密（asymmetric encryption）\n非对称加密，顾明思议，在加密和解密环节用的密钥是不同的。\n非对称加密算法需要两把不同的密钥，这两把密钥组成一对：\n公钥（\u00a0public key\u00a0），公钥用来对数据进行\u00a0加密\u00a0； 私钥（\u00a0private key\u00a0），也称为\u00a0密钥（\u00a0secret key\u00a0），用来对数据进行\u00a0解密\u00a0； 公钥和私钥总是成对出现，用公钥加密后得到的密文，必须用对应的私钥才能解密； 这套加密机制完美解决了黑帮老大的难题，他只需要生成一对密钥：公钥分发给手下们，他们先用公钥加密信息，再发老大；老大接到密文，就用自己保管的私钥来解密；手下们就算拿到别人发的密文也解不开，因为私钥只有他们老大才有。\n数学原理 公钥和私钥的加密机制看起来非常不可思议，这一切其实来一个神奇的数学原理。\n我们来做一个数字游戏，您随便写下一个整数\u00a0m\u00a0（1&lt;m&lt;7387\u00a0），然后计算m ^3 mod 7387\u00a0并把结果告诉我，我就知道您写下的整数\u00a0m\u00a0是什么\n1 2 3 4 5 6 7 8 9 10 11 # 520 &gt;&gt;&gt; 520 ** 3 % 7387 3842 &gt;&gt;&gt; 3842 ** 4811 % 7387 520 # 1314 &gt;&gt;&gt; 1314 ** 3 % 7387 7382 &gt;&gt;&gt; 7382 ** 4811 % 7387 1314 公钥参数 3 和 7387 ，私钥参数 4811 和 7387 又是怎么生成的呢？ 第一步，随机选择两个质数 p 和 q ： p = 83 q = 89 第二步，计算 p 和 q 的乘积 n ： n = p * q = 7387 第三步，计算 n 的欧拉函数 ，记为 phi ： φ(n) = (p-1) * (q-1) = 7216 第四步，随机选择一个整数 e ，满足1&lt;e&lt;φ(n)，且 e 和φ(n)互质： 选一个质数 e ，使得不能被 e 整除即可。 第五步，计算 e 对φ(n)的模反元素 d ，即找到一个数 d 使得 ed 除以φ(n)的余数为 1 ： ed ≡ 1 mod(φ ( n )) &lt;=&gt; ed = kφ(n) + 1 ">
 <meta property='og:url' content='https://charles-7777.github.io/hugo-stack/p/%E8%AF%81%E4%B9%A6%E8%AF%A6%E8%A7%A3/'>
 <meta property='og:site_name' content=''>
@@ -231,6 +231,18 @@
 
                 
                 <span>关于</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/' >
+                
+                
+                
+                    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-logs"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 12h.01" /><path d="M4 6h.01" /><path d="M4 18h.01" /><path d="M8 18h2" /><path d="M8 12h2" /><path d="M8 6h2" /><path d="M14 6h6" /><path d="M14 12h6" /><path d="M14 18h6" /></svg>
+                
+                <span>更新日志</span>
             </a>
         </li>
         

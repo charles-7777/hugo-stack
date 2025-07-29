@@ -6,7 +6,7 @@
 
 <link rel='canonical' href='https://charles-7777.github.io/hugo-stack/p/lxc%E8%AF%A6%E8%A7%A3/'>
 
-<link rel="stylesheet" href="/hugo-stack/scss/style.min.94fdd056ea16418ea0951f1e222a9e85c8943510b2ceb77611d956b6974ebd26.css"><meta property='og:title' content="LXC详解">
+<link rel="stylesheet" href="/hugo-stack/scss/style.min.1aedf5438eb6380946ca2f7d86c958e5adeb3c679a95ad190168d7c28b43101d.css"><meta property='og:title' content="LXC详解">
 <meta property='og:description' content="LXC (Linux 容器) 工作原理详解 LXC (Linux Containers) 是一种操作系统级别的虚拟化技术，它允许在单个 Linux 内核上运行多个隔离的 Linux 系统（容器）。与虚拟机（VM）不同，LXC 不需要模拟硬件，因此它非常轻量级且启动速度快。\nLXC 的核心是利用 Linux 内核的两个关键特性：命名空间 (Namespaces) 和 控制组 (Cgroups)。\nNamespaces：负责隔离，确保一个容器中的进程看不到或影响到另一个容器或宿主机的进程、网络、文件系统等。 Cgroups：负责资源限制和审计，确保每个容器只能使用分配给它的 CPU、内存、I/O 等资源。 本文将重点详细介绍几个关键的命名空间。\n1. PID 命名空间 (PID Namespace) PID (Process ID) 命名空间用于隔离进程 ID。\n原理 隔离进程树：每个 PID 命名空间都有一套独立的进程 ID，从 1 开始。 容器的 init 进程：在一个新的 PID 命名空间中创建的第一个进程会成为该空间的 &ldquo;init&rdquo; 进程，其 PID 为 1。这个进程负责管理容器内的所有其他进程（例如，处理孤儿进程）。如果这个 PID 为 1 的进程终止，内核将终止该命名空间中的所有其他进程。 内外 PID 映射：容器内的进程在容器内部有自己的 PID（例如，PID 1, 2, 3&hellip;），同时在宿主机上也有一个全局唯一的 PID。这意味着从宿主机看，所有容器的进程都是普通的进程，只是被 PID 命名空间隔离开来。 示例 假设我们在宿主机上启动一个 LXC 容器，并在容器内运行 bash。\n">
 <meta property='og:url' content='https://charles-7777.github.io/hugo-stack/p/lxc%E8%AF%A6%E8%A7%A3/'>
 <meta property='og:site_name' content=''>
@@ -231,6 +231,18 @@
 
                 
                 <span>关于</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/' >
+                
+                
+                
+                    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-logs"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 12h.01" /><path d="M4 6h.01" /><path d="M4 18h.01" /><path d="M8 18h2" /><path d="M8 12h2" /><path d="M8 6h2" /><path d="M14 6h6" /><path d="M14 12h6" /><path d="M14 18h6" /></svg>
+                
+                <span>更新日志</span>
             </a>
         </li>
         

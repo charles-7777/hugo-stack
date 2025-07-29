@@ -6,7 +6,7 @@
 
 <link rel='canonical' href='https://charles-7777.github.io/hugo-stack/p/restful-api/'>
 
-<link rel="stylesheet" href="/hugo-stack/scss/style.min.94fdd056ea16418ea0951f1e222a9e85c8943510b2ceb77611d956b6974ebd26.css"><meta property='og:title' content="RESTful API">
+<link rel="stylesheet" href="/hugo-stack/scss/style.min.1aedf5438eb6380946ca2f7d86c958e5adeb3c679a95ad190168d7c28b43101d.css"><meta property='og:title' content="RESTful API">
 <meta property='og:description' content="RESTful API 一、RESTful API概述 1.1 定义 REST（Representational State Transfer）即表现层状态转移，是一种针对网络应用的设计风格，主要用于设计分布式超媒体系统。RESTful API 则是遵循 REST 架构原则的应用程序接口，允许客户端和服务器通过 HTTP 协议进行交互。它采用资源定位的思维模式，将所有的操作都视为对资源的操作，以使系统更加简洁、易于理解和扩展。\n1.2 核心概念 资源（Resource）：RESTful API 中的每一个对象、实体或数据都被抽象为一个资源。例如，用户、文章等都可以作为资源。每个资源都通过一个唯一的 URI（统一资源标识符）标识。比如，/users/123 表示 id 为 123 的用户资源，/posts/456 表示 id 为 456 的文章资源。 URI（统一资源标识符）：用于标识资源的地址，通常使用 URL（统一资源定位符）作为 URI。 HTTP 动作（HTTP Methods）：依赖于 HTTP 协议的常见方法来对资源进行操作，每个 HTTP 方法对应不同的操作： GET：获取服务器上的资源。 POST：在服务器上创建新的资源。 PUT：更新服务器上的资源。 DELETE：删除服务器上的资源。 无状态（Statelessness）：每个请求都应该是独立的，服务器不会在请求之间保存客户端的状态。每次请求都必须包含理解请求所必需的信息。 表现层状态转移（Representational State Transfer）：资源的表现形式可以是 JSON、XML、HTML 等格式，通常 RESTful API 使用 JSON 作为数据交换格式，因为它轻量且易于解析。客户端通过接收资源的表现形式（如 JSON、XML）来感知资源的变化，从而实现状态的“转移”。 二、RESTful API的特点和优势 2.1 特点 资源导向：所有内容都被抽象为资源（如 User、Order、Article 等），每个资源都有一个唯一的标识符（URI）。例如，/users 表示用户资源，/users/1 表示 ID 为 1 的用户。 使用标准协议：基于 HTTP 协议，直接使用其方法（GET、POST 等）来操作资源。 无状态通信：每次请求都包含所有上下文，不依赖服务器保存状态。这使得服务器可以更加容易地进行扩展和负载均衡，因为每个请求都是独立的，不需要考虑之前的请求状态。 统一接口：接口风格统一、易于理解和使用。通过标准的 HTTP 方法（GET、POST、PUT、DELETE 等）和资源标识符（URI）访问资源，简化了系统的整体架构，提升了互操作性。 可缓存：客户端可根据响应头对资源进行缓存，提高性能。利用 HTTP 协议的缓存机制，允许中间件或客户端缓存响应结果，减少不必要的网络请求，从而提升响应速度和减轻服务器负担。 分层架构：客户端无需知道请求最终由谁处理（例如中间层、负载均衡等）。允许通过中间层（如代理服务器、网关）来处理请求，每层只需与相邻层通信，增强了系统的安全性、可扩展性和灵活性。 按需代码（可选）：客户端可以从服务器下载代码或脚本，以扩展其功能，增加了系统的灵活性和可扩展性。 2.2 优势 简洁易懂：使用 HTTP 协议的标准方法和 URI，可以让 API 的设计和使用变得简单。通过 URL 和 HTTP 动词的组合，可以明确地表示对特定资源的操作意图。 灵活性：资源可以有不同的表示形式（JSON、XML 等），同时 HTTP 方法明确区分不同的操作。客户端可以根据自身需求选择合适的数据格式。 扩展性强：通过一致的接口设计，可以很容易地扩展和维护 API。随着应用程序的发展，可以轻松地添加新的资源和操作，而不会影响现有的 API 结构。 无状态性：简化了服务器端的设计，增强了系统的可扩展性。服务器不需要保存客户端的状态信息，使得服务器可以更容易地进行扩展和负载均衡。 跨平台：基于 HTTP 协议，可以被任何支持 HTTP 的客户端调用，适用于各种应用场景，特别是需要跨平台和跨语言交互的系统。 三、RESTful API的设计原则 3.1 基于资源 将网络上的每个实体或概念视为唯一资源是一个关键原则。通过 URL 来表示这些资源，使得资源的定位更加清晰和直观。例如，一个博客文章可以被表示为 /articles/123，其中 “articles” 表示文章资源的集合，“123” 是具体某一篇文章的唯一标识符。这种方式使得开发者和用户都能够轻松地理解和访问特定的资源。以电商平台为例，商品可以表示为 /products，每个具体的商品可以通过 /products/{productId} 来访问，其中 {productId} 是商品的唯一标识。\n">
 <meta property='og:url' content='https://charles-7777.github.io/hugo-stack/p/restful-api/'>
 <meta property='og:site_name' content=''>
@@ -231,6 +231,18 @@
 
                 
                 <span>关于</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/' >
+                
+                
+                
+                    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-logs"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 12h.01" /><path d="M4 6h.01" /><path d="M4 18h.01" /><path d="M8 18h2" /><path d="M8 12h2" /><path d="M8 6h2" /><path d="M14 6h6" /><path d="M14 12h6" /><path d="M14 18h6" /></svg>
+                
+                <span>更新日志</span>
             </a>
         </li>
         

@@ -1395,6 +1395,33 @@ hugo 生成网站时优先寻找站点源目录下的，找不到，才会去sta
         <description></description>
         </item>
         <item>
+        <title></title>
+        <link>https://charles-7777.github.io/hugo-stack/</link>
+        <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+        
+        <guid>https://charles-7777.github.io/hugo-stack/</guid>
+        <description>&lt;!-- # &lt;center&gt;  更新日志  --&gt;
+&lt;h1 style=&#34;color: #add8e6; text-align: center;&#34;&gt;更新日志&lt;/h1&gt;
+&lt;table class=&#34;updates-table&#34;&gt;
+  &lt;thead&gt;&lt;tr&gt;&lt;th&gt;更新内容&lt;/th&gt;&lt;th&gt;时间&lt;/th&gt;&lt;th&gt;备注&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;
+  &lt;tbody&gt;
+    
+      &lt;tr class=&#34;done&#34;&gt;
+        &lt;td&gt;添加新页面&lt;/td&gt;
+        &lt;td&gt;2025-7-29&lt;/td&gt;
+        &lt;td&gt;更新日志&lt;/td&gt;
+      &lt;/tr&gt;
+    
+      &lt;tr class=&#34;&#34;&gt;
+        &lt;td&gt;添加新笔记&lt;/td&gt;
+        &lt;td&gt;&lt;/td&gt;
+        &lt;td&gt;&lt;/td&gt;
+      &lt;/tr&gt;
+    
+  &lt;/tbody&gt;
+&lt;/table&gt;</description>
+        </item>
+        <item>
         <title>关于</title>
         <link>https://charles-7777.github.io/hugo-stack/%E5%85%B3%E4%BA%8E/</link>
         <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
