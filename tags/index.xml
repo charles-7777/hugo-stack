@@ -7,7 +7,15 @@
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
         <copyright>Charles Lv</copyright>
-        <lastBuildDate>Wed, 30 Jul 2025 18:30:50 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/tags/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Thu, 31 Jul 2025 17:29:39 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/tags/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Linux</title>
+        <link>https://charles-7777.github.io/hugo-stack/tags/linux/</link>
+        <pubDate>Thu, 31 Jul 2025 17:22:16 +0800</pubDate>
+        
+        <guid>https://charles-7777.github.io/hugo-stack/tags/linux/</guid>
+        <description></description>
+        </item>
+        <item>
         <title>Openwrt</title>
         <link>https://charles-7777.github.io/hugo-stack/tags/openwrt/</link>
         <pubDate>Wed, 30 Jul 2025 18:28:23 +0800</pubDate>
