@@ -10,7 +10,7 @@
 <meta property='og:description' content="openwrt procd启动流程分析 kernel_init Linux内核执行start_kernel函数时会调用kernel_init来启动init进程，流程如下图\nstart_kernel&ndash;&gt;rest_init&ndash;&gt;kernel_init&ndash;&gt;try_to_run_init_process\nkernel_init()(位于 linux-4.1.52/init/main.c)\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 /* * We try each of these until one succeeds. * * The Bourne shell can be used instead of init if we are * trying to recover a really broken machine. */ if (execute_command) { ret = run_init_process(execute_command); if (!ret) return 0; panic(&#34;Requested init %s failed (error %d).&#34;, execute_command, ret); } if (!try_to_run_init_process(&#34;/sbin/init&#34;) || !try_to_run_init_process(&#34;/etc/init&#34;) || !try_to_run_init_process(&#34;/bin/init&#34;) || !try_to_run_init_process(&#34;/bin/sh&#34;)) return 0; panic(&#34;No working init found. Try passing init= option to kernel. &#34; &#34;See Linux Documentation/init.txt for guidance.&#34;); } /sbin/init openwrt 源码 openwrt/package/system/procd/Makefile\n">
 <meta property='og:url' content='https://charles-7777.github.io/hugo-stack/p/openwrt-procd%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90/'>
 <meta property='og:site_name' content=''>
-<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='openwrt' /><meta property='article:published_time' content='2025-07-30T18:28:23&#43;08:00'/><meta property='article:modified_time' content='2025-07-30T18:30:50&#43;08:00'/>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='openwrt' /><meta property='article:published_time' content='2025-07-30T18:28:23&#43;08:00'/><meta property='article:modified_time' content='2025-08-04T15:14:08&#43;08:00'/>
 <meta name="twitter:title" content="openwrt procd启动流程分析">
 <meta name="twitter:description" content="openwrt procd启动流程分析 kernel_init Linux内核执行start_kernel函数时会调用kernel_init来启动init进程，流程如下图\nstart_kernel&ndash;&gt;rest_init&ndash;&gt;kernel_init&ndash;&gt;try_to_run_init_process\nkernel_init()(位于 linux-4.1.52/init/main.c)\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 /* * We try each of these until one succeeds. * * The Bourne shell can be used instead of init if we are * trying to recover a really broken machine. */ if (execute_command) { ret = run_init_process(execute_command); if (!ret) return 0; panic(&#34;Requested init %s failed (error %d).&#34;, execute_command, ret); } if (!try_to_run_init_process(&#34;/sbin/init&#34;) || !try_to_run_init_process(&#34;/etc/init&#34;) || !try_to_run_init_process(&#34;/bin/init&#34;) || !try_to_run_init_process(&#34;/bin/sh&#34;)) return 0; panic(&#34;No working init found. Try passing init= option to kernel. &#34; &#34;See Linux Documentation/init.txt for guidance.&#34;); } /sbin/init openwrt 源码 openwrt/package/system/procd/Makefile\n">
     <link rel="shortcut icon" href="/hugo-stack/favicon2.ico" />
@@ -353,7 +353,7 @@
             </div>
         <div>
             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-edit"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg>
-            <time class="article-lastmod">2025-07-30 18:30</time>
+            <time class="article-lastmod">2025-08-04 15:14</time>
         </div>
         
 
@@ -368,7 +368,7 @@
 
 
                 <time class="article-time--reading">
-                    阅读时长: 8 分钟
+                    阅读时长: 9 分钟
                 </time>
             </div>
         
@@ -377,7 +377,7 @@
             <div>
                 <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-file-word"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 12l1.333 5l1.667 -4l1.667 4l1.333 -5" /></svg>
                 <time class="article-words">
-                    1509 字
+                    1799 字
                 </time>
             </div>
         
@@ -428,27 +428,27 @@
 </span><span class="lnt">22
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl">	<span class="cm">/*
-</span></span></span><span class="line"><span class="cl"><span class="cm">	 * We try each of these until one succeeds.
-</span></span></span><span class="line"><span class="cl"><span class="cm">	 *
-</span></span></span><span class="line"><span class="cl"><span class="cm">	 * The Bourne shell can be used instead of init if we are
-</span></span></span><span class="line"><span class="cl"><span class="cm">	 * trying to recover a really broken machine.
-</span></span></span><span class="line"><span class="cl"><span class="cm">	 */</span>
-</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">execute_command</span><span class="p">)</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">		<span class="n">ret</span> <span class="o">=</span> <span class="nf">run_init_process</span><span class="p">(</span><span class="n">execute_command</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">ret</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">			<span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-</span></span><span class="line"><span class="cl">		<span class="nf">panic</span><span class="p">(</span><span class="s">&#34;Requested init %s failed (error %d).&#34;</span><span class="p">,</span>
-</span></span><span class="line"><span class="cl">		      <span class="n">execute_command</span><span class="p">,</span> <span class="n">ret</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">	<span class="p">}</span>
-</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nf">try_to_run_init_process</span><span class="p">(</span><span class="s">&#34;/sbin/init&#34;</span><span class="p">)</span> <span class="o">||</span>
-</span></span><span class="line"><span class="cl">	    <span class="o">!</span><span class="nf">try_to_run_init_process</span><span class="p">(</span><span class="s">&#34;/etc/init&#34;</span><span class="p">)</span> <span class="o">||</span>
-</span></span><span class="line"><span class="cl">	    <span class="o">!</span><span class="nf">try_to_run_init_process</span><span class="p">(</span><span class="s">&#34;/bin/init&#34;</span><span class="p">)</span> <span class="o">||</span>
-</span></span><span class="line"><span class="cl">	    <span class="o">!</span><span class="nf">try_to_run_init_process</span><span class="p">(</span><span class="s">&#34;/bin/sh&#34;</span><span class="p">))</span>
-</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl">    <span class="cm">/*
+</span></span></span><span class="line"><span class="cl"><span class="cm">     * We try each of these until one succeeds.
+</span></span></span><span class="line"><span class="cl"><span class="cm">     *
+</span></span></span><span class="line"><span class="cl"><span class="cm">     * The Bourne shell can be used instead of init if we are
+</span></span></span><span class="line"><span class="cl"><span class="cm">     * trying to recover a really broken machine.
+</span></span></span><span class="line"><span class="cl"><span class="cm">     */</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">execute_command</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">ret</span> <span class="o">=</span> <span class="nf">run_init_process</span><span class="p">(</span><span class="n">execute_command</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">ret</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">panic</span><span class="p">(</span><span class="s">&#34;Requested init %s failed (error %d).&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">              <span class="n">execute_command</span><span class="p">,</span> <span class="n">ret</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nf">try_to_run_init_process</span><span class="p">(</span><span class="s">&#34;/sbin/init&#34;</span><span class="p">)</span> <span class="o">||</span>
+</span></span><span class="line"><span class="cl">        <span class="o">!</span><span class="nf">try_to_run_init_process</span><span class="p">(</span><span class="s">&#34;/etc/init&#34;</span><span class="p">)</span> <span class="o">||</span>
+</span></span><span class="line"><span class="cl">        <span class="o">!</span><span class="nf">try_to_run_init_process</span><span class="p">(</span><span class="s">&#34;/bin/init&#34;</span><span class="p">)</span> <span class="o">||</span>
+</span></span><span class="line"><span class="cl">        <span class="o">!</span><span class="nf">try_to_run_init_process</span><span class="p">(</span><span class="s">&#34;/bin/sh&#34;</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">	<span class="nf">panic</span><span class="p">(</span><span class="s">&#34;No working init found.  Try passing init= option to kernel. &#34;</span>
-</span></span><span class="line"><span class="cl">	      <span class="s">&#34;See Linux Documentation/init.txt for guidance.&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">panic</span><span class="p">(</span><span class="s">&#34;No working init found.  Try passing init= option to kernel. &#34;</span>
+</span></span><span class="line"><span class="cl">          <span class="s">&#34;See Linux Documentation/init.txt for guidance.&#34;</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
 </span></span></code></pre></td></tr></table>
 </div>
@@ -469,14 +469,14 @@
 </span></code></pre></td>
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-makefile" data-lang="makefile"><span class="line"><span class="cl"><span class="err">define</span> <span class="err">Package/procd/install</span>
-</span></span><span class="line"><span class="cl">	<span class="k">$(</span><span class="nv">INSTALL_DIR</span><span class="k">)</span> <span class="k">$(</span>1<span class="k">)</span><span class="err">/sbin</span> <span class="k">$(</span>1<span class="k">)</span><span class="err">/etc</span> <span class="k">$(</span>1<span class="k">)</span><span class="err">/lib/functions</span>
+</span></span><span class="line"><span class="cl">    <span class="k">$(</span><span class="nv">INSTALL_DIR</span><span class="k">)</span> <span class="k">$(</span>1<span class="k">)</span><span class="err">/sbin</span> <span class="k">$(</span>1<span class="k">)</span><span class="err">/etc</span> <span class="k">$(</span>1<span class="k">)</span><span class="err">/lib/functions</span>
 </span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">	<span class="k">$(</span><span class="nv">INSTALL_BIN</span><span class="k">)</span> <span class="k">$(</span><span class="nv">PKG_INSTALL_DIR</span><span class="k">)</span><span class="err">/usr/sbin/{init,procd,askfirst,udevtrigger,upgraded}</span> <span class="k">$(</span>1<span class="k">)</span><span class="err">/sbin/</span>
-</span></span><span class="line"><span class="cl">	<span class="k">$(</span><span class="nv">INSTALL_DATA</span><span class="k">)</span> <span class="k">$(</span><span class="nv">PKG_INSTALL_DIR</span><span class="k">)</span><span class="err">/usr/lib/libsetlbf.so</span> <span class="k">$(</span>1<span class="k">)</span><span class="err">/lib</span>
-</span></span><span class="line"><span class="cl">	<span class="k">$(</span><span class="nv">INSTALL_BIN</span><span class="k">)</span> <span class="err">./files/reload_config</span> <span class="k">$(</span>1<span class="k">)</span><span class="err">/sbin/</span>
-</span></span><span class="line"><span class="cl">	<span class="k">$(</span><span class="nv">INSTALL_CONF</span><span class="k">)</span> <span class="err">./files/hotplug*.json</span> <span class="k">$(</span>1<span class="k">)</span><span class="err">/etc/</span>
-</span></span><span class="line"><span class="cl">	<span class="k">$(</span><span class="nv">INSTALL_DATA</span><span class="k">)</span> <span class="err">./files/procd.sh</span> <span class="k">$(</span>1<span class="k">)</span><span class="err">/lib/functions/</span>
-</span></span><span class="line"><span class="cl">	<span class="k">$(</span><span class="nv">INSTALL_BIN</span><span class="k">)</span> <span class="err">./files/service</span> <span class="k">$(</span>1<span class="k">)</span><span class="err">/sbin/service</span>
+</span></span><span class="line"><span class="cl">    <span class="k">$(</span><span class="nv">INSTALL_BIN</span><span class="k">)</span> <span class="k">$(</span><span class="nv">PKG_INSTALL_DIR</span><span class="k">)</span><span class="err">/usr/sbin/{init,procd,askfirst,udevtrigger,upgraded}</span> <span class="k">$(</span>1<span class="k">)</span><span class="err">/sbin/</span>
+</span></span><span class="line"><span class="cl">    <span class="k">$(</span><span class="nv">INSTALL_DATA</span><span class="k">)</span> <span class="k">$(</span><span class="nv">PKG_INSTALL_DIR</span><span class="k">)</span><span class="err">/usr/lib/libsetlbf.so</span> <span class="k">$(</span>1<span class="k">)</span><span class="err">/lib</span>
+</span></span><span class="line"><span class="cl">    <span class="k">$(</span><span class="nv">INSTALL_BIN</span><span class="k">)</span> <span class="err">./files/reload_config</span> <span class="k">$(</span>1<span class="k">)</span><span class="err">/sbin/</span>
+</span></span><span class="line"><span class="cl">    <span class="k">$(</span><span class="nv">INSTALL_CONF</span><span class="k">)</span> <span class="err">./files/hotplug*.json</span> <span class="k">$(</span>1<span class="k">)</span><span class="err">/etc/</span>
+</span></span><span class="line"><span class="cl">    <span class="k">$(</span><span class="nv">INSTALL_DATA</span><span class="k">)</span> <span class="err">./files/procd.sh</span> <span class="k">$(</span>1<span class="k">)</span><span class="err">/lib/functions/</span>
+</span></span><span class="line"><span class="cl">    <span class="k">$(</span><span class="nv">INSTALL_BIN</span><span class="k">)</span> <span class="err">./files/service</span> <span class="k">$(</span>1<span class="k">)</span><span class="err">/sbin/service</span>
 </span></span><span class="line"><span class="cl"><span class="err">endef</span>
 </span></span></code></pre></td></tr></table>
 </div>
@@ -499,11 +499,11 @@
 </span></span><span class="line"><span class="cl"><span class="err">ADD_DEFINITIONS(-DDISABLE_INIT)</span>
 </span></span><span class="line"><span class="cl"><span class="err">ELSE()</span>
 </span></span><span class="line"><span class="cl"><span class="err">ADD_EXECUTABLE(init</span> <span class="err">initd/init.c</span> <span class="err">initd/early.c</span> <span class="err">initd/preinit.c</span> <span class="err">initd/mkdev.c</span> <span class="err">sysupgrade.c</span> <span class="err">watchdog.c</span>
-</span></span><span class="line"><span class="cl">	<span class="err">utils/utils.c)</span>
+</span></span><span class="line"><span class="cl">    <span class="err">utils/utils.c)</span>
 </span></span><span class="line"><span class="cl"><span class="err">TARGET_INCLUDE_DIRECTORIES(init</span> <span class="err">PUBLIC</span> <span class="err">${SELINUX_INCLUDE_DIRS})</span>
 </span></span><span class="line"><span class="cl"><span class="err">TARGET_LINK_LIBRARIES(init</span> <span class="err">${LIBS}</span> <span class="err">${SELINUX_LIBRARIES})</span>
 </span></span><span class="line"><span class="cl"><span class="err">INSTALL(TARGETS</span> <span class="err">init</span>
-</span></span><span class="line"><span class="cl">	<span class="err">RUNTIME</span> <span class="err">DESTINATION</span> <span class="err">${CMAKE_INSTALL_SBINDIR}</span>
+</span></span><span class="line"><span class="cl">    <span class="err">RUNTIME</span> <span class="err">DESTINATION</span> <span class="err">${CMAKE_INSTALL_SBINDIR}</span>
 </span></span><span class="line"><span class="cl"><span class="err">)</span>
 </span></span></code></pre></td></tr></table>
 </div>
@@ -562,54 +562,54 @@
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span>
 </span></span><span class="line"><span class="cl"><span class="p">{</span>
-</span></span><span class="line"><span class="cl">	<span class="kt">pid_t</span> <span class="n">pid</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">pid_t</span> <span class="n">pid</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">	<span class="nf">ulog_open</span><span class="p">(</span><span class="n">ULOG_KMSG</span><span class="p">,</span> <span class="n">LOG_DAEMON</span><span class="p">,</span> <span class="s">&#34;init&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">ulog_open</span><span class="p">(</span><span class="n">ULOG_KMSG</span><span class="p">,</span> <span class="n">LOG_DAEMON</span><span class="p">,</span> <span class="s">&#34;init&#34;</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">	<span class="nf">sigaction</span><span class="p">(</span><span class="n">SIGTERM</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">sa_shutdown</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">	<span class="nf">sigaction</span><span class="p">(</span><span class="n">SIGUSR1</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">sa_shutdown</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">	<span class="nf">sigaction</span><span class="p">(</span><span class="n">SIGUSR2</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">sa_shutdown</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">	<span class="nf">sigaction</span><span class="p">(</span><span class="n">SIGPWR</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">sa_shutdown</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">sigaction</span><span class="p">(</span><span class="n">SIGTERM</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">sa_shutdown</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">sigaction</span><span class="p">(</span><span class="n">SIGUSR1</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">sa_shutdown</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">sigaction</span><span class="p">(</span><span class="n">SIGUSR2</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">sa_shutdown</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">sigaction</span><span class="p">(</span><span class="n">SIGPWR</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">sa_shutdown</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="nf">selinux</span><span class="p">(</span><span class="n">argv</span><span class="p">))</span>
-</span></span><span class="line"><span class="cl">		<span class="nf">exit</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">	<span class="nf">early</span><span class="p">();</span>
-</span></span><span class="line"><span class="cl">	<span class="nf">cmdline</span><span class="p">();</span>
-</span></span><span class="line"><span class="cl">	<span class="nf">watchdog_init</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="nf">selinux</span><span class="p">(</span><span class="n">argv</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">exit</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">early</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">cmdline</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">watchdog_init</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">	<span class="n">pid</span> <span class="o">=</span> <span class="nf">fork</span><span class="p">();</span>
-</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">pid</span><span class="p">)</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">		<span class="kt">char</span> <span class="o">*</span><span class="n">kmod</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span> <span class="s">&#34;/sbin/kmodloader&#34;</span><span class="p">,</span> <span class="s">&#34;/etc/modules-boot.d/&#34;</span><span class="p">,</span> <span class="nb">NULL</span> <span class="p">};</span>
+</span></span><span class="line"><span class="cl">    <span class="n">pid</span> <span class="o">=</span> <span class="nf">fork</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">pid</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="kt">char</span> <span class="o">*</span><span class="n">kmod</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span> <span class="s">&#34;/sbin/kmodloader&#34;</span><span class="p">,</span> <span class="s">&#34;/etc/modules-boot.d/&#34;</span><span class="p">,</span> <span class="nb">NULL</span> <span class="p">};</span>
 </span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="p">(</span><span class="n">debug</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">			<span class="nf">patch_stdio</span><span class="p">(</span><span class="s">&#34;/dev/null&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">debug</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="nf">patch_stdio</span><span class="p">(</span><span class="s">&#34;/dev/null&#34;</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">		<span class="nf">execvp</span><span class="p">(</span><span class="n">kmod</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">kmod</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">		<span class="nf">ERROR</span><span class="p">(</span><span class="s">&#34;Failed to start kmodloader: %m</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">		<span class="nf">exit</span><span class="p">(</span><span class="n">EXIT_FAILURE</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">	<span class="p">}</span>
-</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">pid</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">		<span class="nf">ERROR</span><span class="p">(</span><span class="s">&#34;Failed to start kmodloader instance: %m</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">		<span class="k">const</span> <span class="k">struct</span> <span class="n">timespec</span> <span class="n">req</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span> <span class="o">*</span> <span class="mi">1000</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">};</span>
-</span></span><span class="line"><span class="cl">		<span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">execvp</span><span class="p">(</span><span class="n">kmod</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">kmod</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">ERROR</span><span class="p">(</span><span class="s">&#34;Failed to start kmodloader: %m</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">exit</span><span class="p">(</span><span class="n">EXIT_FAILURE</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">pid</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">ERROR</span><span class="p">(</span><span class="s">&#34;Failed to start kmodloader instance: %m</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">const</span> <span class="k">struct</span> <span class="n">timespec</span> <span class="n">req</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span> <span class="o">*</span> <span class="mi">1000</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">};</span>
+</span></span><span class="line"><span class="cl">        <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">		<span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">1200</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">			<span class="k">if</span> <span class="p">(</span><span class="nf">waitpid</span><span class="p">(</span><span class="n">pid</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">WNOHANG</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">				<span class="k">break</span><span class="p">;</span>
-</span></span><span class="line"><span class="cl">			<span class="nf">nanosleep</span><span class="p">(</span><span class="o">&amp;</span><span class="n">req</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">			<span class="nf">watchdog_ping</span><span class="p">();</span>
-</span></span><span class="line"><span class="cl">		<span class="p">}</span>
-</span></span><span class="line"><span class="cl">	<span class="p">}</span>
-</span></span><span class="line"><span class="cl">	<span class="nf">uloop_init</span><span class="p">();</span>
-</span></span><span class="line"><span class="cl">	<span class="nf">preinit</span><span class="p">();</span>
-</span></span><span class="line"><span class="cl">	<span class="nf">uloop_run</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">        <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">1200</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="k">if</span> <span class="p">(</span><span class="nf">waitpid</span><span class="p">(</span><span class="n">pid</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">WNOHANG</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">                <span class="k">break</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="nf">nanosleep</span><span class="p">(</span><span class="o">&amp;</span><span class="n">req</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">            <span class="nf">watchdog_ping</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">uloop_init</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">preinit</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">uloop_run</span><span class="p">();</span>
 </span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
 </span></span></code></pre></td></tr></table>
 </div>
-</div><p><em>uloop_init_实现位于<strong>libubox</strong>源码_uloop.c</em></p>
+</div><p><strong>uloop_init</strong>实现位于<strong>libubox</strong>源码<strong>uloop.c</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt"> 1
@@ -641,12 +641,12 @@
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">uloop_init</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
 </span></span><span class="line"><span class="cl"><span class="p">{</span>
-</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="nf">uloop_init_pollfd</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="nf">uloop_init_pollfd</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
 </span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="nf">waker_init</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">		<span class="nf">uloop_done</span><span class="p">();</span>
-</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">uloop_done</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl">    <span class="p">}</span>
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
@@ -657,7 +657,7 @@
 </span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">poll_fd</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span>
 </span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">    <span class="n">poll_fd</span> <span class="o">=</span> <span class="nf">epoll_create</span><span class="p">(</span><span class="mi">32</span><span class="p">);</span>	
+</span></span><span class="line"><span class="cl">    <span class="n">poll_fd</span> <span class="o">=</span> <span class="nf">epoll_create</span><span class="p">(</span><span class="mi">32</span><span class="p">);</span>    
 </span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">poll_fd</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
 </span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl">
@@ -666,7 +666,7 @@
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
 </span></span></code></pre></td></tr></table>
 </div>
-</div><p><em>preinit_实现位于<strong>procd</strong>源码文件_initd/preinit.c</em></p>
+</div><p><strong>preinit</strong>实现位于<strong>procd</strong>源码文件<strong>initd/preinit.c</strong></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt"> 1
@@ -726,58 +726,58 @@
 </span></span><span class="line"><span class="cl"><span class="kt">void</span>
 </span></span><span class="line"><span class="cl"><span class="nf">preinit</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
 </span></span><span class="line"><span class="cl"><span class="p">{</span>
-</span></span><span class="line"><span class="cl">	<span class="kt">char</span> <span class="o">*</span><span class="n">init</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span> <span class="s">&#34;/bin/sh&#34;</span><span class="p">,</span> <span class="s">&#34;/etc/preinit&#34;</span><span class="p">,</span> <span class="nb">NULL</span> <span class="p">};</span>
-</span></span><span class="line"><span class="cl">	<span class="kt">char</span> <span class="o">*</span><span class="n">plug</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span> <span class="s">&#34;/sbin/procd&#34;</span><span class="p">,</span> <span class="s">&#34;-h&#34;</span><span class="p">,</span> <span class="s">&#34;/etc/hotplug-preinit.json&#34;</span><span class="p">,</span> <span class="nb">NULL</span> <span class="p">};</span>
-</span></span><span class="line"><span class="cl">	<span class="kt">int</span> <span class="n">fd</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span> <span class="o">*</span><span class="n">init</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span> <span class="s">&#34;/bin/sh&#34;</span><span class="p">,</span> <span class="s">&#34;/etc/preinit&#34;</span><span class="p">,</span> <span class="nb">NULL</span> <span class="p">};</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span> <span class="o">*</span><span class="n">plug</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span> <span class="s">&#34;/sbin/procd&#34;</span><span class="p">,</span> <span class="s">&#34;-h&#34;</span><span class="p">,</span> <span class="s">&#34;/etc/hotplug-preinit.json&#34;</span><span class="p">,</span> <span class="nb">NULL</span> <span class="p">};</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">fd</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">	<span class="nf">LOG</span><span class="p">(</span><span class="s">&#34;- preinit -</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">LOG</span><span class="p">(</span><span class="s">&#34;- preinit -</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">	<span class="n">plugd_proc</span><span class="p">.</span><span class="n">cb</span> <span class="o">=</span> <span class="n">plugd_proc_cb</span><span class="p">;</span>
-</span></span><span class="line"><span class="cl">	<span class="n">plugd_proc</span><span class="p">.</span><span class="n">pid</span> <span class="o">=</span> <span class="nf">fork</span><span class="p">();</span>
-</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">plugd_proc</span><span class="p">.</span><span class="n">pid</span><span class="p">)</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">		<span class="nf">execvp</span><span class="p">(</span><span class="n">plug</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">plug</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">		<span class="nf">ERROR</span><span class="p">(</span><span class="s">&#34;Failed to start plugd: %m</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">		<span class="nf">exit</span><span class="p">(</span><span class="n">EXIT_FAILURE</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">	<span class="p">}</span>
-</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">plugd_proc</span><span class="p">.</span><span class="n">pid</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">		<span class="nf">ERROR</span><span class="p">(</span><span class="s">&#34;Failed to start new plugd instance: %m</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">		<span class="k">return</span><span class="p">;</span>
-</span></span><span class="line"><span class="cl">	<span class="p">}</span>
-</span></span><span class="line"><span class="cl">	<span class="nf">uloop_process_add</span><span class="p">(</span><span class="o">&amp;</span><span class="n">plugd_proc</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">plugd_proc</span><span class="p">.</span><span class="n">cb</span> <span class="o">=</span> <span class="n">plugd_proc_cb</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">plugd_proc</span><span class="p">.</span><span class="n">pid</span> <span class="o">=</span> <span class="nf">fork</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">plugd_proc</span><span class="p">.</span><span class="n">pid</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">execvp</span><span class="p">(</span><span class="n">plug</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">plug</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">ERROR</span><span class="p">(</span><span class="s">&#34;Failed to start plugd: %m</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">exit</span><span class="p">(</span><span class="n">EXIT_FAILURE</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">plugd_proc</span><span class="p">.</span><span class="n">pid</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">ERROR</span><span class="p">(</span><span class="s">&#34;Failed to start new plugd instance: %m</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">uloop_process_add</span><span class="p">(</span><span class="o">&amp;</span><span class="n">plugd_proc</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">	<span class="nf">setenv</span><span class="p">(</span><span class="s">&#34;PREINIT&#34;</span><span class="p">,</span> <span class="s">&#34;1&#34;</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">setenv</span><span class="p">(</span><span class="s">&#34;PREINIT&#34;</span><span class="p">,</span> <span class="s">&#34;1&#34;</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">	<span class="n">fd</span> <span class="o">=</span> <span class="nf">creat</span><span class="p">(</span><span class="s">&#34;/tmp/.preinit&#34;</span><span class="p">,</span> <span class="mo">0600</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">fd</span> <span class="o">=</span> <span class="nf">creat</span><span class="p">(</span><span class="s">&#34;/tmp/.preinit&#34;</span><span class="p">,</span> <span class="mo">0600</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">fd</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">		<span class="nf">ERROR</span><span class="p">(</span><span class="s">&#34;Failed to create sentinel file: %m</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">	<span class="k">else</span>
-</span></span><span class="line"><span class="cl">		<span class="nf">close</span><span class="p">(</span><span class="n">fd</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">fd</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">ERROR</span><span class="p">(</span><span class="s">&#34;Failed to create sentinel file: %m</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">else</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">close</span><span class="p">(</span><span class="n">fd</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">	<span class="n">preinit_proc</span><span class="p">.</span><span class="n">cb</span> <span class="o">=</span> <span class="n">spawn_procd</span><span class="p">;</span>
-</span></span><span class="line"><span class="cl">	<span class="n">preinit_proc</span><span class="p">.</span><span class="n">pid</span> <span class="o">=</span> <span class="nf">fork</span><span class="p">();</span>
-</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">preinit_proc</span><span class="p">.</span><span class="n">pid</span><span class="p">)</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">		<span class="nf">execvp</span><span class="p">(</span><span class="n">init</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">init</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">		<span class="nf">ERROR</span><span class="p">(</span><span class="s">&#34;Failed to start preinit: %m</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">		<span class="nf">exit</span><span class="p">(</span><span class="n">EXIT_FAILURE</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">	<span class="p">}</span>
-</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">preinit_proc</span><span class="p">.</span><span class="n">pid</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">		<span class="nf">ERROR</span><span class="p">(</span><span class="s">&#34;Failed to start new preinit instance: %m</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">		<span class="k">return</span><span class="p">;</span>
-</span></span><span class="line"><span class="cl">	<span class="p">}</span>
-</span></span><span class="line"><span class="cl">	<span class="nf">uloop_process_add</span><span class="p">(</span><span class="o">&amp;</span><span class="n">preinit_proc</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">preinit_proc</span><span class="p">.</span><span class="n">cb</span> <span class="o">=</span> <span class="n">spawn_procd</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">preinit_proc</span><span class="p">.</span><span class="n">pid</span> <span class="o">=</span> <span class="nf">fork</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">preinit_proc</span><span class="p">.</span><span class="n">pid</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">execvp</span><span class="p">(</span><span class="n">init</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">init</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">ERROR</span><span class="p">(</span><span class="s">&#34;Failed to start preinit: %m</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">exit</span><span class="p">(</span><span class="n">EXIT_FAILURE</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">preinit_proc</span><span class="p">.</span><span class="n">pid</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">ERROR</span><span class="p">(</span><span class="s">&#34;Failed to start new preinit instance: %m</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">uloop_process_add</span><span class="p">(</span><span class="o">&amp;</span><span class="n">preinit_proc</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">	<span class="nf">DEBUG</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s">&#34;Launched preinit instance, pid=%d</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">preinit_proc</span><span class="p">.</span><span class="n">pid</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">DEBUG</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s">&#34;Launched preinit instance, pid=%d</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">preinit_proc</span><span class="p">.</span><span class="n">pid</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
 </span></span></code></pre></td></tr></table>
 </div>
 </div><blockquote>
 <ul>
-<li>创建子进程执行 /sbin/procd -h /etc/hotplug-preinit.json ，主进程同时使用 uloop_process_add()把 /sbin/procd 子进程加入 uloop 进行监控，当 /sbin/procd 进程结束时回调 spawn_procd() 函数。</li>
-<li>创建子进程执行 /etc/preinit 脚本，此时 PREINIT环境变量被设置为1，主进程同时使用 uloop_process_add() 把/etc/preinit 子进程加入 uloop 进行监控，当 /etcpreinit 执行结束时回调 plugd_proc_cb()函数把监控 /etc/preinit 进程对应对象中 pid 属性设置为0，表示 /etc/preinit 已执行完成。</li>
+<li>创建子进程执行 /sbin/procd -h /etc/hotplug-preinit.json ，主进程同时使用 uloop_process_add()把 /sbin/procd 子进程加入 uloop 进行监控，当 /sbin/procd 进程结束时回调 plugd_proc_cb 函数。</li>
+<li>创建子进程执行 /etc/preinit 脚本，此时 PREINIT环境变量被设置为1，主进程同时使用 uloop_process_add() 把/etc/preinit 子进程加入 uloop 进行监控，当 /etc/preinit 执行结束时回调 spawn_procd函数</li>
 <li>spawn_procd()函数繁行后继真正使用的 /sbin/procd 进程，从 /tmp/debuglevel 读出 debug 级别并设置到环境变量 DBGLVL 中，把 watchdog fd 设置到环境变量 WDTFD 中，最后调用 execvp()繁行 /sbin/procd 进程</li>
 </ul></blockquote>
-<p>首先看_procd_，因为带有参数_“-h /etc/hotplug-preinit.json”_，所以会执行_hotplug_run_函数。</p>
+<p>首先看<strong>procd</strong>，因为带有参数“-h /etc/hotplug-preinit.json”，所以会执行<strong>hotplug_run</strong>函数。</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt"> 1
@@ -829,52 +829,52 @@
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span>
 </span></span><span class="line"><span class="cl"><span class="p">{</span>
-</span></span><span class="line"><span class="cl">	<span class="kt">int</span> <span class="n">ch</span><span class="p">;</span>
-</span></span><span class="line"><span class="cl">	<span class="kt">char</span> <span class="o">*</span><span class="n">dbglvl</span> <span class="o">=</span> <span class="nf">getenv</span><span class="p">(</span><span class="s">&#34;DBGLVL&#34;</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">	<span class="kt">int</span> <span class="n">ulog_channels</span> <span class="o">=</span> <span class="n">ULOG_KMSG</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">ch</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span> <span class="o">*</span><span class="n">dbglvl</span> <span class="o">=</span> <span class="nf">getenv</span><span class="p">(</span><span class="s">&#34;DBGLVL&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">ulog_channels</span> <span class="o">=</span> <span class="n">ULOG_KMSG</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">dbglvl</span><span class="p">)</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">		<span class="n">debug</span> <span class="o">=</span> <span class="nf">atoi</span><span class="p">(</span><span class="n">dbglvl</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">		<span class="nf">unsetenv</span><span class="p">(</span><span class="s">&#34;DBGLVL&#34;</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">dbglvl</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">debug</span> <span class="o">=</span> <span class="nf">atoi</span><span class="p">(</span><span class="n">dbglvl</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">unsetenv</span><span class="p">(</span><span class="s">&#34;DBGLVL&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
 </span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">	<span class="k">while</span> <span class="p">((</span><span class="n">ch</span> <span class="o">=</span> <span class="nf">getopt</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">,</span> <span class="s">&#34;d:s:h:S&#34;</span><span class="p">))</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">		<span class="k">switch</span> <span class="p">(</span><span class="n">ch</span><span class="p">)</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">		<span class="k">case</span> <span class="sc">&#39;h&#39;</span><span class="o">:</span>
-</span></span><span class="line"><span class="cl">			<span class="k">return</span> <span class="nf">hotplug_run</span><span class="p">(</span><span class="n">optarg</span><span class="p">);</span> <span class="c1">// hotplug
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="k">case</span> <span class="sc">&#39;s&#39;</span><span class="o">:</span>
-</span></span><span class="line"><span class="cl">			<span class="n">ubus_socket</span> <span class="o">=</span> <span class="n">optarg</span><span class="p">;</span>
-</span></span><span class="line"><span class="cl">			<span class="k">break</span><span class="p">;</span>
-</span></span><span class="line"><span class="cl">		<span class="k">case</span> <span class="sc">&#39;d&#39;</span><span class="o">:</span>
-</span></span><span class="line"><span class="cl">			<span class="n">debug</span> <span class="o">=</span> <span class="nf">atoi</span><span class="p">(</span><span class="n">optarg</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">			<span class="k">break</span><span class="p">;</span>
-</span></span><span class="line"><span class="cl">		<span class="k">case</span> <span class="sc">&#39;S&#39;</span><span class="o">:</span>
-</span></span><span class="line"><span class="cl">			<span class="n">ulog_channels</span> <span class="o">=</span> <span class="n">ULOG_STDIO</span><span class="p">;</span>
-</span></span><span class="line"><span class="cl">			<span class="k">break</span><span class="p">;</span>
-</span></span><span class="line"><span class="cl">		<span class="k">default</span><span class="o">:</span>
-</span></span><span class="line"><span class="cl">			<span class="k">return</span> <span class="nf">usage</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
-</span></span><span class="line"><span class="cl">		<span class="p">}</span>
-</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">while</span> <span class="p">((</span><span class="n">ch</span> <span class="o">=</span> <span class="nf">getopt</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">,</span> <span class="s">&#34;d:s:h:S&#34;</span><span class="p">))</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">switch</span> <span class="p">(</span><span class="n">ch</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">case</span> <span class="sc">&#39;h&#39;</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">            <span class="k">return</span> <span class="nf">hotplug_run</span><span class="p">(</span><span class="n">optarg</span><span class="p">);</span> <span class="c1">// hotplug
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="k">case</span> <span class="sc">&#39;s&#39;</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">ubus_socket</span> <span class="o">=</span> <span class="n">optarg</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="k">break</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">case</span> <span class="sc">&#39;d&#39;</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">debug</span> <span class="o">=</span> <span class="nf">atoi</span><span class="p">(</span><span class="n">optarg</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">            <span class="k">break</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">case</span> <span class="sc">&#39;S&#39;</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">ulog_channels</span> <span class="o">=</span> <span class="n">ULOG_STDIO</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="k">break</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">default</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">            <span class="k">return</span> <span class="nf">usage</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
 </span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">	<span class="nf">ulog_open</span><span class="p">(</span><span class="n">ulog_channels</span><span class="p">,</span> <span class="n">LOG_DAEMON</span><span class="p">,</span> <span class="s">&#34;procd&#34;</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">	<span class="nf">ulog_threshold</span><span class="p">(</span><span class="n">LOG_DEBUG</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">ulog_open</span><span class="p">(</span><span class="n">ulog_channels</span><span class="p">,</span> <span class="n">LOG_DAEMON</span><span class="p">,</span> <span class="s">&#34;procd&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">ulog_threshold</span><span class="p">(</span><span class="n">LOG_DEBUG</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">	<span class="nf">setsid</span><span class="p">();</span>
-</span></span><span class="line"><span class="cl">	<span class="nf">uloop_init</span><span class="p">();</span>
-</span></span><span class="line"><span class="cl">	<span class="nf">procd_signal</span><span class="p">();</span>
-</span></span><span class="line"><span class="cl">	<span class="nf">procd_udebug_set_enabled</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="nf">getpid</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">		<span class="nf">procd_connect_ubus</span><span class="p">();</span>
-</span></span><span class="line"><span class="cl">	<span class="k">else</span>
-</span></span><span class="line"><span class="cl">		<span class="nf">procd_state_next</span><span class="p">();</span>
-</span></span><span class="line"><span class="cl">	<span class="nf">uloop_run</span><span class="p">();</span>
-</span></span><span class="line"><span class="cl">	<span class="nf">uloop_done</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">setsid</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">uloop_init</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">procd_signal</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">procd_udebug_set_enabled</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="nf">getpid</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">procd_connect_ubus</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="k">else</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">procd_state_next</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">uloop_run</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">uloop_done</span><span class="p">();</span>
 </span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
 </span></span></code></pre></td></tr></table>
 </div>
-</div><p>_hotplug_实现如下，这里是建立_netlink_通信机制，完成用户层和内核的交互，监听内核的uevent事件。</p>
+</div><p><strong>hotplug</strong>实现如下，这里是建立<strong>netlink</strong>通信机制，完成用户层和内核的交互，监听内核的uevent事件。</p>
 <p><em>procd/plug/hotplug.c</em></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
@@ -961,7 +961,7 @@
 <li>用户空间监听uevent
 在 procd/plug/hotplug.c 中，创建一个 PF_NETLINK 套接字来监听内核 netlink_broadcast_fitered() 发出的 uevent 。收到uevent 之后，在根据 /etc/hotplug.json 里的描述，定位到对应的执行函数来处理.通常情况下， /etc/hotplug.json 会调用 /sbin/hotplug-call 来处理 uevent ，它根据 uevent 的 $SUBSYSTEM 变量来分别调用 /etc/hotplug.d 下不同目录中的脚本。</li>
 </ul></blockquote>
-<p>_/etc/preinit_脚本大致内容如下，先调用另外的shell脚本，获取函数定义</p>
+<p><strong>/etc/preinit</strong>脚本大致内容如下，先调用另外的shell脚本，获取函数定义</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt"> 1
@@ -1003,12 +1003,12 @@
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"># 执行preinit_essential注册的hook链的所有函数
 </span></span><span class="line"><span class="cl">boot_run_hook preinit_essential
-</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"># 执行preinit_main注册的hook链的所有函数
 </span></span><span class="line"><span class="cl">boot_run_hook preinit_main
 </span></span></code></pre></td></tr></table>
 </div>
-</div><p><em>/etc/preinit_脚本执行完成后，调用_spawn_procd</em>,spawn_procd会调用 execvp()执行 /sbin/procd 进程</p>
+</div><p><strong>/etc/preinit</strong>脚本执行完成后，调用<strong>spawn_procd</strong>,spawn_procd会调用 <strong>execvp</strong>()执行 <strong>/sbin/procd</strong>进程</p>
 <p><em>procd/initd/preinit.c</em></p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
@@ -1041,32 +1041,32 @@
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="nf">spawn_procd</span><span class="p">(</span><span class="k">struct</span> <span class="n">uloop_process</span> <span class="o">*</span><span class="n">proc</span><span class="p">,</span> <span class="kt">int</span> <span class="n">ret</span><span class="p">)</span>
 </span></span><span class="line"><span class="cl"><span class="p">{</span>
-</span></span><span class="line"><span class="cl">	<span class="kt">char</span> <span class="o">*</span><span class="n">wdt_fd</span> <span class="o">=</span> <span class="nf">watchdog_fd</span><span class="p">();</span>
-</span></span><span class="line"><span class="cl">	<span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span> <span class="s">&#34;/sbin/procd&#34;</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">};</span>
-</span></span><span class="line"><span class="cl">	<span class="kt">char</span> <span class="n">dbg</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span> <span class="o">*</span><span class="n">wdt_fd</span> <span class="o">=</span> <span class="nf">watchdog_fd</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span> <span class="s">&#34;/sbin/procd&#34;</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">};</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span> <span class="n">dbg</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
 </span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">plugd_proc</span><span class="p">.</span><span class="n">pid</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">		<span class="nf">kill</span><span class="p">(</span><span class="n">plugd_proc</span><span class="p">.</span><span class="n">pid</span><span class="p">,</span> <span class="n">SIGKILL</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">plugd_proc</span><span class="p">.</span><span class="n">pid</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">kill</span><span class="p">(</span><span class="n">plugd_proc</span><span class="p">.</span><span class="n">pid</span><span class="p">,</span> <span class="n">SIGKILL</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">	<span class="nf">unsetenv</span><span class="p">(</span><span class="s">&#34;PREINIT&#34;</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">	<span class="nf">unlink</span><span class="p">(</span><span class="s">&#34;/tmp/.preinit&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">unsetenv</span><span class="p">(</span><span class="s">&#34;PREINIT&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">unlink</span><span class="p">(</span><span class="s">&#34;/tmp/.preinit&#34;</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">	<span class="nf">check_sysupgrade</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">check_sysupgrade</span><span class="p">();</span>
 </span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">	<span class="nf">DEBUG</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s">&#34;Exec to real procd now</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">wdt_fd</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">		<span class="nf">setenv</span><span class="p">(</span><span class="s">&#34;WDTFD&#34;</span><span class="p">,</span> <span class="n">wdt_fd</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">	<span class="nf">check_dbglvl</span><span class="p">();</span>
-</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">debug</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">		<span class="nf">snprintf</span><span class="p">(</span><span class="n">dbg</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="s">&#34;%d&#34;</span><span class="p">,</span> <span class="n">debug</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">		<span class="nf">setenv</span><span class="p">(</span><span class="s">&#34;DBGLVL&#34;</span><span class="p">,</span> <span class="n">dbg</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">DEBUG</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s">&#34;Exec to real procd now</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">wdt_fd</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">setenv</span><span class="p">(</span><span class="s">&#34;WDTFD&#34;</span><span class="p">,</span> <span class="n">wdt_fd</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">check_dbglvl</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">debug</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">snprintf</span><span class="p">(</span><span class="n">dbg</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="s">&#34;%d&#34;</span><span class="p">,</span> <span class="n">debug</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">setenv</span><span class="p">(</span><span class="s">&#34;DBGLVL&#34;</span><span class="p">,</span> <span class="n">dbg</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
 </span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">	<span class="nf">execvp</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">argv</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">execvp</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">argv</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
 </span></span></code></pre></td></tr></table>
 </div>
-</div><p>_procd/procd.c_中</p>
+</div><p><strong>procd/procd.c</strong>中</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt"> 1
@@ -1086,15 +1086,15 @@
 </span></span><span class="line"><span class="cl"><span class="nf">procd_signal</span><span class="p">();</span>
 </span></span><span class="line"><span class="cl"><span class="nf">procd_udebug_set_enabled</span><span class="p">(</span><span class="nb">true</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="nf">getpid</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">	<span class="nf">procd_connect_ubus</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">procd_connect_ubus</span><span class="p">();</span>
 </span></span><span class="line"><span class="cl"><span class="k">else</span>
-</span></span><span class="line"><span class="cl">	<span class="nf">procd_state_next</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">procd_state_next</span><span class="p">();</span>
 </span></span><span class="line"><span class="cl"><span class="nf">uloop_run</span><span class="p">();</span>
 </span></span><span class="line"><span class="cl"><span class="nf">uloop_done</span><span class="p">();</span>
 </span></span></code></pre></td></tr></table>
 </div>
-</div><p>此时_getpid()<em>等于1，所以调用_procd_state_next</em>，进入到状态机处理中。</p>
-<p>_procd_state_不断迁移，包括<strong>STATE_EARLY</strong>，<strong>STATE_UBUS</strong>，<strong>STATE_INIT</strong>等。</p>
+</div><p>此时getpid()等于1，所以调用<strong>procd_state_next</strong>，进入到状态机处理中。</p>
+<p><strong>procd_state</strong>不断迁移，包括<strong>STATE_EARLY</strong>，<strong>STATE_UBUS</strong>，<strong>STATE_INIT</strong>等。</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt"> 1
@@ -1120,10 +1120,10 @@
 </span><span class="lnt">21
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-gdscript3" data-lang="gdscript3"><span class="line"><span class="cl"><span class="p">[</span>    <span class="mf">3.161338</span><span class="err">@</span><span class="mi">3</span><span class="p">]</span> <span class="n">init</span><span class="p">:</span> <span class="n">Console</span> <span class="n">is</span> <span class="n">alive</span>		
-</span></span><span class="line"><span class="cl"><span class="p">[</span>    <span class="mf">3.173921</span><span class="err">@</span><span class="mi">3</span><span class="p">]</span> <span class="n">init</span><span class="p">:</span> <span class="n">Ping</span>		
+<pre tabindex="0" class="chroma"><code class="language-gdscript3" data-lang="gdscript3"><span class="line"><span class="cl"><span class="p">[</span>    <span class="mf">3.161338</span><span class="err">@</span><span class="mi">3</span><span class="p">]</span> <span class="n">init</span><span class="p">:</span> <span class="n">Console</span> <span class="n">is</span> <span class="n">alive</span>        
+</span></span><span class="line"><span class="cl"><span class="p">[</span>    <span class="mf">3.173921</span><span class="err">@</span><span class="mi">3</span><span class="p">]</span> <span class="n">init</span><span class="p">:</span> <span class="n">Ping</span>        
 </span></span><span class="line"><span class="cl"><span class="p">[</span>    <span class="mf">3.184207</span><span class="err">@</span><span class="mi">3</span><span class="p">]</span> <span class="n">init</span><span class="p">:</span> <span class="n">Ping</span>
-</span></span><span class="line"><span class="cl"><span class="p">[</span>    <span class="mf">3.192558</span><span class="err">@</span><span class="mi">1</span><span class="p">]</span> <span class="n">kmodloader</span><span class="p">:</span> <span class="n">loading</span> <span class="n">kernel</span> <span class="n">modules</span> <span class="n">from</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">modules</span><span class="o">-</span><span class="n">boot</span><span class="o">.</span><span class="n">d</span><span class="o">/*</span>	
+</span></span><span class="line"><span class="cl"><span class="p">[</span>    <span class="mf">3.192558</span><span class="err">@</span><span class="mi">1</span><span class="p">]</span> <span class="n">kmodloader</span><span class="p">:</span> <span class="n">loading</span> <span class="n">kernel</span> <span class="n">modules</span> <span class="n">from</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">modules</span><span class="o">-</span><span class="n">boot</span><span class="o">.</span><span class="n">d</span><span class="o">/*</span>    
 </span></span><span class="line"><span class="cl"><span class="p">[</span>    <span class="mf">3.194447</span><span class="err">@</span><span class="mi">3</span><span class="p">]</span> <span class="n">init</span><span class="p">:</span> <span class="n">Ping</span>
 </span></span><span class="line"><span class="cl"><span class="p">[</span>    <span class="mf">3.196209</span><span class="err">@</span><span class="mi">1</span><span class="p">]</span> <span class="n">kmodloader</span><span class="p">:</span> <span class="n">done</span> <span class="n">loading</span> <span class="n">kernel</span> <span class="n">modules</span> <span class="n">from</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">modules</span><span class="o">-</span><span class="n">boot</span><span class="o">.</span><span class="n">d</span><span class="o">/*</span>
 </span></span><span class="line"><span class="cl"><span class="p">[</span>    <span class="mf">3.204716</span><span class="err">@</span><span class="mi">3</span><span class="p">]</span> <span class="n">init</span><span class="p">:</span> <span class="n">Ping</span>
@@ -1143,7 +1143,7 @@
 </span></span><span class="line"><span class="cl"><span class="p">[</span>    <span class="mf">4.104142</span><span class="err">@</span><span class="mi">2</span><span class="p">]</span> <span class="n">procd</span><span class="p">:</span> <span class="n">Launched</span> <span class="n">new</span> <span class="n">askfirst</span> <span class="n">action</span><span class="p">,</span> <span class="n">pid</span><span class="o">=</span><span class="mi">1556</span>
 </span></span></code></pre></td></tr></table>
 </div>
-</div><p>以<strong>STATE_INIT</strong>为例，执行_procd_inittab_run(&ldquo;xxx&rdquo;)<em>会调用对应_handlers_的_callback</em>，对应所有的_init_action_是在_procd_inittab()_中添加的。</p>
+</div><p>以<strong>STATE_INIT</strong>为例，执行<strong>procd_inittab_run</strong>(&ldquo;xxx&rdquo;)会调用对应handlers的callback，对应所有的init_action是在<strong>procd_inittab</strong>()中添加的。</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt"> 1
@@ -1225,27 +1225,154 @@
 </span><span class="lnt">13
 </span><span class="lnt">14
 </span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
+</span><span class="lnt">74
+</span><span class="lnt">75
+</span><span class="lnt">76
+</span><span class="lnt">77
+</span><span class="lnt">78
+</span><span class="lnt">79
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-gdscript3" data-lang="gdscript3"><span class="line"><span class="cl"><span class="n">void</span> <span class="n">procd_inittab_run</span><span class="p">(</span><span class="k">const</span> <span class="n">char</span> <span class="o">*</span><span class="n">handler</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl"><span class="p">{</span>
-</span></span><span class="line"><span class="cl">    <span class="n">struct</span> <span class="n">init_action</span> <span class="o">*</span><span class="n">a</span><span class="p">;</span>
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">static</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">tab</span> <span class="o">=</span> <span class="s">&#34;/etc/inittab&#34;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="k">static</span> <span class="kt">char</span> <span class="o">*</span><span class="n">ask</span> <span class="o">=</span> <span class="s">&#34;/sbin/askfirst&#34;</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">    <span class="n">list_for_each_entry</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">actions</span><span class="p">,</span> <span class="n">list</span><span class="p">)</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">strcmp</span><span class="p">(</span><span class="n">a</span><span class="o">-&gt;</span><span class="n">handler</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">,</span> <span class="n">handler</span><span class="p">))</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">            <span class="k">if</span> <span class="p">(</span><span class="n">a</span><span class="o">-&gt;</span><span class="n">handler</span><span class="o">-&gt;</span><span class="n">multi</span><span class="p">)</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">                <span class="n">a</span><span class="o">-&gt;</span><span class="n">handler</span><span class="o">-&gt;</span><span class="n">cb</span><span class="p">(</span><span class="n">a</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">                <span class="k">continue</span><span class="p">;</span>
-</span></span><span class="line"><span class="cl">            <span class="p">}</span>
-</span></span><span class="line"><span class="cl">            <span class="n">a</span><span class="o">-&gt;</span><span class="n">handler</span><span class="o">-&gt;</span><span class="n">cb</span><span class="p">(</span><span class="n">a</span><span class="p">);</span>
-</span></span><span class="line"><span class="cl">            <span class="k">break</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="k">static</span> <span class="kt">int</span> <span class="nf">add_action</span><span class="p">(</span><span class="k">struct</span> <span class="n">init_action</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nf">ARRAY_SIZE</span><span class="p">(</span><span class="n">handlers</span><span class="p">);</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nf">strcmp</span><span class="p">(</span><span class="n">handlers</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">name</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="n">a</span><span class="o">-&gt;</span><span class="n">handler</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">handlers</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">            <span class="nf">list_add_tail</span><span class="p">(</span><span class="o">&amp;</span><span class="n">a</span><span class="o">-&gt;</span><span class="n">list</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">actions</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">            <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">ERROR</span><span class="p">(</span><span class="s">&#34;Unknown init handler %s</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">name</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">procd_inittab</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl"><span class="cp">#define LINE_LEN    128
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>    <span class="n">FILE</span> <span class="o">*</span><span class="n">fp</span> <span class="o">=</span> <span class="nf">fopen</span><span class="p">(</span><span class="n">tab</span><span class="p">,</span> <span class="s">&#34;r&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">init_action</span> <span class="o">*</span><span class="n">a</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">regex_t</span> <span class="n">pat_inittab</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">regmatch_t</span> <span class="n">matches</span><span class="p">[</span><span class="mi">5</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span> <span class="o">*</span><span class="n">line</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">fp</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">ERROR</span><span class="p">(</span><span class="s">&#34;Failed to open %s: %m</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">tab</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nf">regcomp</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pat_inittab</span><span class="p">,</span> <span class="s">&#34;([a-zA-Z0-9]*):([a-zA-Z0-9]*):([a-zA-Z0-9]*):(.*)&#34;</span><span class="p">,</span> <span class="n">REG_EXTENDED</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">line</span> <span class="o">=</span> <span class="nf">malloc</span><span class="p">(</span><span class="n">LINE_LEN</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">a</span> <span class="o">=</span> <span class="nf">calloc</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">init_action</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">while</span> <span class="p">(</span><span class="nf">fgets</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">LINE_LEN</span><span class="p">,</span> <span class="n">fp</span><span class="p">))</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="kt">char</span> <span class="o">*</span><span class="n">tags</span><span class="p">[</span><span class="n">TAG_PROCESS</span> <span class="o">+</span> <span class="mi">1</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">        <span class="kt">char</span> <span class="o">*</span><span class="n">tok</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="kt">int</span> <span class="n">len</span> <span class="o">=</span> <span class="nf">strlen</span><span class="p">(</span><span class="n">line</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="k">while</span> <span class="p">(</span><span class="nf">isspace</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="n">len</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]))</span>
+</span></span><span class="line"><span class="cl">            <span class="n">len</span><span class="o">--</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="n">line</span><span class="p">[</span><span class="n">len</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="o">*</span><span class="n">line</span> <span class="o">==</span> <span class="sc">&#39;#&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="k">continue</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="nf">regexec</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pat_inittab</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">matches</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">            <span class="k">continue</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="nf">DEBUG</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s">&#34;Parsing inittab - %s</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">line</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="n">TAG_ID</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;=</span> <span class="n">TAG_PROCESS</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="n">line</span><span class="p">[</span><span class="n">matches</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">rm_eo</span><span class="p">]</span> <span class="o">=</span> <span class="sc">&#39;\0&#39;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="n">tags</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">line</span><span class="p">[</span><span class="n">matches</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">].</span><span class="n">rm_so</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">        <span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="n">tok</span> <span class="o">=</span> <span class="nf">strtok</span><span class="p">(</span><span class="n">tags</span><span class="p">[</span><span class="n">TAG_PROCESS</span><span class="p">],</span> <span class="s">&#34; &#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">MAX_ARGS</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">tok</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="n">a</span><span class="o">-&gt;</span><span class="n">argv</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">tok</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="n">tok</span> <span class="o">=</span> <span class="nf">strtok</span><span class="p">(</span><span class="nb">NULL</span><span class="p">,</span> <span class="s">&#34; &#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">        <span class="n">a</span><span class="o">-&gt;</span><span class="n">argv</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="n">a</span><span class="o">-&gt;</span><span class="n">id</span> <span class="o">=</span> <span class="n">tags</span><span class="p">[</span><span class="n">TAG_ID</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">        <span class="n">a</span><span class="o">-&gt;</span><span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="nf">add_action</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">tags</span><span class="p">[</span><span class="n">TAG_ACTION</span><span class="p">]))</span>
+</span></span><span class="line"><span class="cl">            <span class="k">continue</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="n">line</span> <span class="o">=</span> <span class="nf">malloc</span><span class="p">(</span><span class="n">LINE_LEN</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="n">a</span> <span class="o">=</span> <span class="nf">calloc</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">init_action</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nf">fclose</span><span class="p">(</span><span class="n">fp</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">free</span><span class="p">(</span><span class="n">line</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">free</span><span class="p">(</span><span class="n">a</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">regfree</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pat_inittab</span><span class="p">);</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
 </span></span></code></pre></td></tr></table>
 </div>
-</div><p>这里来看_runrc_的实现，代码位于_inittab.c_</p>
-<div class="highlight"><div class="chroma">
+</div><div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt"> 1
 </span><span class="lnt"> 2
@@ -1262,23 +1389,67 @@
 </span><span class="lnt">13
 </span><span class="lnt">14
 </span><span class="lnt">15
+</span><span class="lnt">16
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">static void runrc(struct init_action *a)
-</span></span><span class="line"><span class="cl">{
-</span></span><span class="line"><span class="cl">    if (!a-&gt;argv[1] || !a-&gt;argv[2]) {
-</span></span><span class="line"><span class="cl">        ERROR(&#34;valid format is rcS &lt;S|K&gt; &lt;param&gt;\n&#34;);
-</span></span><span class="line"><span class="cl">        return;
-</span></span><span class="line"><span class="cl">    }
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">procd_inittab_run</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">handler</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">init_action</span> <span class="o">*</span><span class="n">a</span><span class="p">;</span>
 </span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">    
-</span></span><span class="line"><span class="cl">    if (rcS(a-&gt;argv[1], a-&gt;argv[2], rcdone)) {
-</span></span><span class="line"><span class="cl">        printf(&#34;---rcdone---\n&#34;);
-</span></span><span class="line"><span class="cl">        rcdone(NULL);
-</span></span><span class="line"><span class="cl">    } else {
-</span></span><span class="line"><span class="cl">        printf(&#34;----rcdone error\n&#34;);
-</span></span><span class="line"><span class="cl">    }
-</span></span><span class="line"><span class="cl">}
+</span></span><span class="line"><span class="cl">    <span class="nf">list_for_each_entry</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">actions</span><span class="p">,</span> <span class="n">list</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nf">strcmp</span><span class="p">(</span><span class="n">a</span><span class="o">-&gt;</span><span class="n">handler</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">,</span> <span class="n">handler</span><span class="p">))</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="k">if</span> <span class="p">(</span><span class="n">a</span><span class="o">-&gt;</span><span class="n">handler</span><span class="o">-&gt;</span><span class="n">multi</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">                <span class="n">a</span><span class="o">-&gt;</span><span class="n">handler</span><span class="o">-&gt;</span><span class="nf">cb</span><span class="p">(</span><span class="n">a</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">                <span class="k">continue</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="p">}</span>
+</span></span><span class="line"><span class="cl">            <span class="n">a</span><span class="o">-&gt;</span><span class="n">handler</span><span class="o">-&gt;</span><span class="nf">cb</span><span class="p">(</span><span class="n">a</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">            <span class="k">break</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><em>/etc/inittab</em></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">::sysinit:/etc/init.d/rcS S boot
+</span></span><span class="line"><span class="cl">::shutdown:/etc/init.d/rcS K shutdown
+</span></span><span class="line"><span class="cl">::askconsole:/usr/libexec/login.sh
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>这里来看<strong>runrc</strong>的实现，代码位于<strong>inittab.c</strong></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">static</span> <span class="kt">void</span> <span class="nf">runrc</span><span class="p">(</span><span class="k">struct</span> <span class="n">init_action</span> <span class="o">*</span><span class="n">a</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">a</span><span class="o">-&gt;</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">||</span> <span class="o">!</span><span class="n">a</span><span class="o">-&gt;</span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nf">ERROR</span><span class="p">(</span><span class="s">&#34;valid format is rcS &lt;S|K&gt; &lt;param&gt;</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="cm">/* proceed even if no init or shutdown scripts run */</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="nf">rcS</span><span class="p">(</span><span class="n">a</span><span class="o">-&gt;</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">a</span><span class="o">-&gt;</span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">rcdone</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">		<span class="nf">rcdone</span><span class="p">(</span><span class="nb">NULL</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
 </span></span></code></pre></td></tr></table>
 </div>
 </div><p><em>rcS.c</em></p>
@@ -1304,7 +1475,7 @@
 </span></span><span class="line"><span class="cl">}
 </span></span></code></pre></td></tr></table>
 </div>
-</div><p>执行_/etc/rc.d_目录下<strong>S/K</strong>开头的脚本</p>
+</div><p>执行/etc/rc.d目录下<strong>S</strong>开头的脚本</p>
 
 </section>
 
