@@ -7,7 +7,134 @@
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
         <copyright>Charles Lv</copyright>
-        <lastBuildDate>Thu, 31 Jul 2025 17:29:39 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/tags/linux/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Wed, 06 Aug 2025 16:11:54 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/tags/linux/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Linux 作业控制、进程组和会话</title>
+        <link>https://charles-7777.github.io/hugo-stack/p/linux-%E4%BD%9C%E4%B8%9A%E6%8E%A7%E5%88%B6%E8%BF%9B%E7%A8%8B%E7%BB%84%E5%92%8C%E4%BC%9A%E8%AF%9D/</link>
+        <pubDate>Wed, 06 Aug 2025 15:36:36 +0800</pubDate>
+        
+        <guid>https://charles-7777.github.io/hugo-stack/p/linux-%E4%BD%9C%E4%B8%9A%E6%8E%A7%E5%88%B6%E8%BF%9B%E7%A8%8B%E7%BB%84%E5%92%8C%E4%BC%9A%E8%AF%9D/</guid>
+        <description>&lt;h2 id=&#34;作业控制-job-control&#34;&gt;作业控制 (Job Control)
+&lt;/h2&gt;&lt;p&gt;作业控制是大多数 shell 提供的一个功能，允许用户在单个终端上同时运行和管理多个命令（作业）。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;前台作业 (Foreground Job)&lt;/strong&gt;: 在终端中启动，它会独占终端的输入和输出。在它运行期间，shell 会被挂起，等待该作业完成。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;后台作业 (Background Job)&lt;/strong&gt;: 通过在命令后添加 &lt;code&gt;&amp;amp;&lt;/code&gt; 符号启动。它不会占用终端，你可以在它运行时继续在 shell 中输入其他命令。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;Ctrl+Z&lt;/code&gt;(SIGTSTP）暂停前台进程&lt;code&gt;Ctrl+C&lt;/code&gt;(SIGINT）终止当前前台进程&lt;code&gt;Ctrl+D&lt;/code&gt;（EOF）&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;常用命令: &lt;code&gt;jobs&lt;/code&gt;, &lt;code&gt;fg&lt;/code&gt;, &lt;code&gt;bg&lt;/code&gt;, &lt;code&gt;kill %&amp;lt;job_id&amp;gt;&lt;/code&gt;。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;进程组-process-group&#34;&gt;进程组 (Process Group)
+&lt;/h2&gt;&lt;p&gt;进程组是一个或多个进程的集合。系统中的每个进程都属于一个进程组。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;目的&lt;/strong&gt;: 主要用于作业控制，方便将信号（如 &lt;code&gt;SIGINT&lt;/code&gt;, &lt;code&gt;SIGTSTP&lt;/code&gt;）发送到一组相关的进程。例如，当你在终端按下 &lt;code&gt;Ctrl+C&lt;/code&gt; 时，&lt;code&gt;SIGINT&lt;/code&gt; 信号会被发送到当前前台作业的整个进程组。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;进程组ID (PGID)&lt;/strong&gt;: 每个进程组都有一个唯一的 ID。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;进程组领导 (Process Group Leader)&lt;/strong&gt;: 进程组中第一个创建的进程，其 PID 通常就是该进程组的 PGID。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;一个管道（pipeline）中的所有进程（例如 &lt;code&gt;cat file | grep &amp;quot;text&amp;quot; | wc -l&lt;/code&gt;）通常属于同一个进程组。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;会话-session&#34;&gt;会话 (Session)
+&lt;/h2&gt;&lt;p&gt;会话是一个或多个进程组的集合。它提供了一个更高层次的进程组织方式。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;目的&lt;/strong&gt;: 将一个用户登录到退出期间创建的所有进程组织在一起。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;会话ID (SID)&lt;/strong&gt;: 每个会话都有一个唯一的 ID。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;会话领导 (Session Leader)&lt;/strong&gt;: 创建该会话的进程。通常，这是用户登录时启动的 shell 进程。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;控制终端 (Controlling Terminal)&lt;/strong&gt;: 一个会话通常与一个控制终端相关联。当控制终端断开连接时（例如关闭终端窗口或网络断开），内核会向会话领导发送 &lt;code&gt;SIGHUP&lt;/code&gt; 信号，后者通常会将其传播给会话中的所有进程，导致它们终止。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;setsid-系统调用&#34;&gt;&lt;code&gt;setsid()&lt;/code&gt; 系统调用
+&lt;/h3&gt;&lt;p&gt;&lt;code&gt;setsid()&lt;/code&gt; 是一个关键的系统调用，用于创建一个新的会话。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;功能&lt;/strong&gt;:&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;  1. 调用 &lt;code&gt;setsid()&lt;/code&gt; 的进程会成为一个新会话的&lt;strong&gt;会话领导&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;  2. 该进程会成为一个新进程组的&lt;strong&gt;进程组领导&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;  3. 该进程会&lt;strong&gt;脱离&lt;/strong&gt;它之前的控制终端。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;前提&lt;/strong&gt;: 调用 &lt;code&gt;setsid()&lt;/code&gt; 的进程不能是某个现有进程组的领导者。为了确保这一点，通常的做法是 &lt;code&gt;fork()&lt;/code&gt; 一个子进程，然后让父进程退出，子进程再调用 &lt;code&gt;setsid()&lt;/code&gt;。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;用途&lt;/strong&gt;: 这是创建守护进程（Daemon）的标准方法。通过创建一个没有控制终端的新会hs话，守护进程可以确保自己不会因为终端的关闭而意外终止。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;lxc-attach-后台进程导致退出卡住的原因分析&#34;&gt;&lt;code&gt;lxc-attach&lt;/code&gt; 后台进程导致退出卡住的原因分析
+&lt;/h2&gt;&lt;h3 id=&#34;问题场景&#34;&gt;问题场景
+&lt;/h3&gt;&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt; 用户在终端中执行 &lt;code&gt;lxc-attach &amp;lt;container_name&amp;gt;&lt;/code&gt;。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt; 在 &lt;code&gt;lxc-attach&lt;/code&gt; 创建的 shell 中，启动一个后台作业。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt; 输入 &lt;code&gt;exit&lt;/code&gt; 尝试退出 &lt;code&gt;lxc-attach&lt;/code&gt; 的 shell。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt; 此时，终端卡住，用telnet 连接然后kill 掉才可以回到host 主机的shell&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;原因剖析&#34;&gt;原因剖析
+&lt;/h3&gt;&lt;p&gt;这个问题的核心在于&lt;strong&gt;进程关系和信号处理&lt;/strong&gt;。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt; &lt;strong&gt;进程结构&lt;/strong&gt;:&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;    - 当你运行 &lt;code&gt;lxc-attach&lt;/code&gt; 时，它会在容器内启动一个新的 shell 进程（如 &lt;code&gt;bash&lt;/code&gt;）。&lt;/p&gt;
+&lt;p&gt;    - 这个新的 shell 是 &lt;code&gt;lxc-attach&lt;/code&gt; 进程的子进程。&lt;/p&gt;
+&lt;p&gt;    - 重要的是，这个新 shell &lt;strong&gt;没有成为新的会话领导&lt;/strong&gt;。它与 &lt;code&gt;lxc-attach&lt;/code&gt; 进程、以及你最初的登录 shell 位于&lt;strong&gt;同一个会话&lt;/strong&gt;中，并共享同一个&lt;strong&gt;控制终端&lt;/strong&gt;。&lt;/p&gt;
+&lt;ol start=&#34;2&#34;&gt;
+&lt;li&gt; &lt;strong&gt;启动后台进程&lt;/strong&gt;:&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;    - 当你在 &lt;code&gt;lxc-attach&lt;/code&gt; 的 shell 中运行一个后台进程。&lt;/p&gt;
+&lt;p&gt;    - 这个 后台进程与 &lt;code&gt;lxc-attach&lt;/code&gt; 的 shell 属于&lt;strong&gt;同一个进程组&lt;/strong&gt;。&lt;/p&gt;
+&lt;ol start=&#34;3&#34;&gt;
+&lt;li&gt; &lt;strong&gt;执行 &lt;code&gt;exit&lt;/code&gt;&lt;/strong&gt;:&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;    - 你输入 &lt;code&gt;exit&lt;/code&gt;，&lt;code&gt;lxc-attach&lt;/code&gt; 的 shell 进程开始退出流程。&lt;/p&gt;
+&lt;p&gt;    - shell 进程本身会终止。&lt;/p&gt;
+&lt;p&gt;    - &lt;code&gt;lxc-attach&lt;/code&gt; 进程在等待其子进程（即那个 shell）完全终止。&lt;/p&gt;
+&lt;ol start=&#34;4&#34;&gt;
+&lt;li&gt; &lt;strong&gt;卡住的根源&lt;/strong&gt;:&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;    - shell 进程虽然终止了，但它启动的后台进程仍然在运行。&lt;/p&gt;
+&lt;p&gt;    - 这个后台进程仍然是&lt;strong&gt;前台进程组&lt;/strong&gt;的一部分（相对于控制终端而言），或者说它仍然与控制终端关联。&lt;/p&gt;
+&lt;p&gt;    - 控制终端的驱动程序会发现，虽然前台的 shell 退出了，但该进程组里还有其他进程 在运行。此时，终端会处于一种“挂起”或“等待”状态，因为它需要处理这个仍在运行的后台进程的标准输入/输出（即使它不读写）。&lt;/p&gt;
+&lt;p&gt;    - &lt;code&gt;lxc-attach&lt;/code&gt; 进程本身也在等待，因为它可能需要清理与子进程相关的所有资源。只要 这个后台进程还在运行，整个进程链就无法干净地结束。&lt;/p&gt;
+&lt;p&gt;    - 只有当 这个后台进程结束后，整个进程组才算完全终结，控制终端的锁定状态被解除，&lt;code&gt;lxc-attach&lt;/code&gt; 进程也随之退出，你才能回到原来的 shell 提示符。&lt;/p&gt;
+&lt;ol start=&#34;5&#34;&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;解决办法&lt;/strong&gt;: &lt;code&gt;nohup&lt;/code&gt; &lt;code&gt;setsid&lt;/code&gt; &lt;code&gt;disown&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;    &lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;blockquote&gt;
+&lt;p&gt;参考链接
+&lt;a class=&#34;link&#34; href=&#34;https://segmentfault.com/a/1190000009152815#item-1&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Linux session和进程组概述 - Linux程序员 - SegmentFault 思否&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://segmentfault.com/a/1190000009082089#item-6&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Linux TTY/PTS概述 - Linux程序员 - SegmentFault 思否&lt;/a&gt;&lt;/p&gt;&lt;/blockquote&gt;
+</description>
+        </item>
+        <item>
         <title>进程原语fork exceve waitpid</title>
         <link>https://charles-7777.github.io/hugo-stack/p/%E8%BF%9B%E7%A8%8B%E5%8E%9F%E8%AF%ADfork-exceve-waitpid/</link>
         <pubDate>Thu, 31 Jul 2025 17:22:16 +0800</pubDate>
