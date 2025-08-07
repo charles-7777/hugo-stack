@@ -7,7 +7,104 @@
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
         <copyright>Charles Lv</copyright>
-        <lastBuildDate>Wed, 06 Aug 2025 16:11:54 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/tags/linux/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Thu, 07 Aug 2025 15:26:17 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/tags/linux/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Linux虚拟网卡TUN和TAP</title>
+        <link>https://charles-7777.github.io/hugo-stack/p/linux%E8%99%9A%E6%8B%9F%E7%BD%91%E5%8D%A1tun%E5%92%8Ctap/</link>
+        <pubDate>Thu, 07 Aug 2025 15:17:36 +0800</pubDate>
+        
+        <guid>https://charles-7777.github.io/hugo-stack/p/linux%E8%99%9A%E6%8B%9F%E7%BD%91%E5%8D%A1tun%E5%92%8Ctap/</guid>
+        <description>&lt;h1 id=&#34;什么是虚拟网卡&#34;&gt;什么是虚拟网卡？
+&lt;/h1&gt;&lt;p&gt;虚拟网卡是软件实现的网络接口，与物理网卡不同，它没有物理硬件，只存在于操作系统的内存中。虚拟网卡可以用来模拟网络环境，进行数据包的捕获、分析和处理。
+&lt;img src=&#34;https://cdn.jsdelivr.net/gh/charles-7777/ImageBed@main/blog/951914-20240613194921289-616890101.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h2 id=&#34;tun-和-tap-的基本概念&#34;&gt;TUN 和 TAP 的基本概念
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Tun （Network TUNnel）
+TUN 是三层（网络层）的虚拟网络设备，主要用于 IP 数据包的处理。TUN 设备会模拟一个网络层接口，接收到的数据包会被传递给用户空间的程序进行处理，处理完的数据包会被发送回内核网络栈。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;TAP（Network TAP）
+TAP 是二层（数据链路层）的虚拟网络设备，主要用于以太网帧的处理。TAP 设备可以模拟一个以太网接口，能够接收和发送原始的以太网帧。这使得 TAP 设备非常适合用于桥接不同的网络环境，或者在虚拟机中模拟物理网卡。TAP是数据链路层的虚拟网络设备。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;tun和tap的异同&#34;&gt;Tun和Tap的异同
+&lt;/h2&gt;&lt;p&gt;Tun是三层的设备，该设备没有MAC地址，从字符设备上读取IP数据包，写入的也是IP数据包，因此不能进行二层的操作，例如发ARP包和以太网广播
+Tab是二层的设备，该设备有MAC地址，处理的是数据链路层的数据帧，从字符设备上读取的是数据链路层的数据帧，写入的也是数据。&lt;/p&gt;
+&lt;p&gt;在使用上面，两者都是通过字符设备的方式进行读取和写入，Tun是三层网络设备，而Tab是二层网络设备，Tun常用于VPN等技术，由于工作在IP层，无法与物理网卡做bridge，但可以通过三层交换（如 ip_forward）与物理网卡连通，Tab设备工作在第二层，收发的是MAC层数据包，拥有MAC层的功能，可以与物理网卡做bridge，支持MAC层广播
+&lt;img src=&#34;https://cdn.jsdelivr.net/gh/charles-7777/ImageBed@main/blog/951914-20240613195221480-414693358.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h2 id=&#34;tun和tap应用场景&#34;&gt;Tun和Tap应用场景
+&lt;/h2&gt;&lt;p&gt;Tun是一个网络层设备，支持点到点的网络通信，常用于tunnel隧道和VPN的构建，tunnel技术是网络设备把网络层数据包封装到另一个协议中以跨过网络传送到另一个网络设备的处理过程，主要用于公网主机和私有网络互联互通。在Linux系统中支持多种隧道技术，其底层实现原理都是基于Tun设备。
+&lt;img src=&#34;https://cdn.jsdelivr.net/gh/charles-7777/ImageBed@main/blog/951914-20240613195412140-1269419961.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;
+TAP接口的典型应用场景是在虚拟化网络中。例如，我们通过KVM创建的多个VM（虚拟机），以LinuxBridge（桥接网络）互通；实际上即是通过像vnet0这样的TAP接口来接入LinuxBridge的。在这种场景下，KVM程序就是向TAP接口读写数据的用户空间程序。当VM0向本机的eth0接口发送数据，KVM会将数据发送到TAP接口vnet0，再通过LinuxBridge将数据转发到vnet1上。然后，KVM将数据发送到VM1的eth0口。
+&lt;img src=&#34;https://cdn.jsdelivr.net/gh/charles-7777/ImageBed@main/blog/951914-20240613195718534-1283418141.png&#34;
+	
+	
+	
+	loading=&#34;lazy&#34;
+	
+	
+&gt;&lt;/p&gt;
+&lt;h2 id=&#34;tun-配置&#34;&gt;Tun 配置
+&lt;/h2&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;3
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;4
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;5
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;6
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;7
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;8
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-fallback&#34; data-lang=&#34;fallback&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;\# 创建网卡并配置IP
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;ip tuntap add dev tun0 mode tun
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;ip link set dev tun0 up
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;ip addr add 10.0.0.1/24 dev tun0
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;ip route add 10.0.0.0/24 via 10.0.0.1
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;\# 清除网卡
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;ip link set dev tun0 down
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;ip tuntap del dev tun0 mode tun 
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;blockquote&gt;
+&lt;p&gt;转载自&lt;/p&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://www.cnblogs.com/yanchuanbin/p/18246678&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Linux虚拟网卡TUN和TAP - 心若向阳花自开 - 博客园&lt;/a&gt;&lt;/p&gt;&lt;/blockquote&gt;
+&lt;h2 id=&#34;参考资料&#34;&gt;参考资料
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Fwww.kernel.org%2Fdoc%2FDocumentation%2Fnetworking%2Ftuntap.txt&amp;amp;objectId=2063424&amp;amp;objectType=1&amp;amp;isNewArticle=undefined&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Universal TUN/TAP device driver&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Universal TUN/TAP device driver Frequently Asked Question&lt;/li&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Fbackreference.org%2F2010%2F03%2F26%2Ftuntap-interface-tutorial%2F&amp;amp;objectId=2063424&amp;amp;objectType=1&amp;amp;isNewArticle=undefined&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Tun/Tap interface tutorial&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class=&#34;link&#34; href=&#34;https://cloud.tencent.com/developer/tools/blog-entry?target=https%3A%2F%2Fgithub.com%2Fgregnietsky%2Fsimpletun%2Fblob%2Fmaster%2Fsimpletun.c&amp;amp;objectId=2063424&amp;amp;objectType=1&amp;amp;isNewArticle=undefined&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;A simplistic, simple-minded, naive tunnelling program using tun/tap interfaces and TCP&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
         <title>Linux 作业控制、进程组和会话</title>
         <link>https://charles-7777.github.io/hugo-stack/p/linux-%E4%BD%9C%E4%B8%9A%E6%8E%A7%E5%88%B6%E8%BF%9B%E7%A8%8B%E7%BB%84%E5%92%8C%E4%BC%9A%E8%AF%9D/</link>
         <pubDate>Wed, 06 Aug 2025 15:36:36 +0800</pubDate>
