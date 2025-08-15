@@ -1,22 +1,24 @@
 <!DOCTYPE html>
 <html lang="zh-cn" dir="ltr">
     <head><meta charset='utf-8'>
-<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="">
-<title>Tag: Restful-Api - </title>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="一般情况下如果我们想使用其他文件的函数时，常规操作是将该函数在头文件中声明，然后在需要使用的文件里引用这个头文件 但若是没声明呢？\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 11.c #include &lt;stdio.h&gt; extern char* b; int main() { printf(&#34;aaa--d:%x----%s--p\\n&#34;, aaa(),b,b); char*p = aaa(); printf(&#34;p = %p\\n&#34;, p); if(p) printf(&#34;---\\n&#34;); printf(&#34;value = %s\\n&#34;，p);// 崩溃! return 0; } 2.c char *b=&#34;aaa&#34;; char* aaa(){ return b;} 1 2 3 4 5 6 7 8 9 10 11 12 13 gcc 11.c 2.c -o test 11.c: In function ‘main&#39; 11.c:4:37: warning:: implicit declaration of function ‘aaa&#39;[-Wimplicit-function-declaration] 4| printf(&#34;aaa--d:%x----%s--%p\\n&#34;,aaa(),b,b); | ^~~ 11.c:5:15: warning:： initialization of ‘char *’ fromn‘int&#39; makes pointer from integer without a cast [-Wint-conversion] 5| char *p = aaa(); | ^~~ ./test aaa--d:4b1c032----aaaa--0x560604b1c032 p=0x4b1c032 --- Segmentation fault (core dumped) 这里并没有引用这个头文件，为什么依然可以使用呢？\n">
+<title>implicit-function-declaration</title>
 
-<link rel='canonical' href='https://charles-7777.github.io/hugo-stack/tags/restful-api/'>
+<link rel='canonical' href='https://charles-7777.github.io/hugo-stack/p/implicit-function-declaration/'>
 
-<link rel="stylesheet" href="/hugo-stack/scss/style.min.1aedf5438eb6380946ca2f7d86c958e5adeb3c679a95ad190168d7c28b43101d.css"><meta property='og:title' content="Tag: Restful-Api - ">
-<meta property='og:description' content="">
-<meta property='og:url' content='https://charles-7777.github.io/hugo-stack/tags/restful-api/'>
+<link rel="stylesheet" href="/hugo-stack/scss/style.min.1aedf5438eb6380946ca2f7d86c958e5adeb3c679a95ad190168d7c28b43101d.css"><meta property='og:title' content="implicit-function-declaration">
+<meta property='og:description' content="一般情况下如果我们想使用其他文件的函数时，常规操作是将该函数在头文件中声明，然后在需要使用的文件里引用这个头文件 但若是没声明呢？\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 11.c #include &lt;stdio.h&gt; extern char* b; int main() { printf(&#34;aaa--d:%x----%s--p\\n&#34;, aaa(),b,b); char*p = aaa(); printf(&#34;p = %p\\n&#34;, p); if(p) printf(&#34;---\\n&#34;); printf(&#34;value = %s\\n&#34;，p);// 崩溃! return 0; } 2.c char *b=&#34;aaa&#34;; char* aaa(){ return b;} 1 2 3 4 5 6 7 8 9 10 11 12 13 gcc 11.c 2.c -o test 11.c: In function ‘main&#39; 11.c:4:37: warning:: implicit declaration of function ‘aaa&#39;[-Wimplicit-function-declaration] 4| printf(&#34;aaa--d:%x----%s--%p\\n&#34;,aaa(),b,b); | ^~~ 11.c:5:15: warning:： initialization of ‘char *’ fromn‘int&#39; makes pointer from integer without a cast [-Wint-conversion] 5| char *p = aaa(); | ^~~ ./test aaa--d:4b1c032----aaaa--0x560604b1c032 p=0x4b1c032 --- Segmentation fault (core dumped) 这里并没有引用这个头文件，为什么依然可以使用呢？\n">
+<meta property='og:url' content='https://charles-7777.github.io/hugo-stack/p/implicit-function-declaration/'>
 <meta property='og:site_name' content=''>
-<meta property='og:type' content='website'><meta property='og:updated_time' content=' 2025-08-15T16:50:43&#43;08:00 '/>
-<meta name="twitter:title" content="Tag: Restful-Api - ">
-<meta name="twitter:description" content=""><link rel="alternate" type="application/rss&#43;xml" href="https://charles-7777.github.io/hugo-stack/tags/restful-api/index.xml">
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='C' /><meta property='article:published_time' content='2025-08-15T16:22:16&#43;08:00'/><meta property='article:modified_time' content='2025-08-15T16:50:43&#43;08:00'/>
+<meta name="twitter:title" content="implicit-function-declaration">
+<meta name="twitter:description" content="一般情况下如果我们想使用其他文件的函数时，常规操作是将该函数在头文件中声明，然后在需要使用的文件里引用这个头文件 但若是没声明呢？\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 11.c #include &lt;stdio.h&gt; extern char* b; int main() { printf(&#34;aaa--d:%x----%s--p\\n&#34;, aaa(),b,b); char*p = aaa(); printf(&#34;p = %p\\n&#34;, p); if(p) printf(&#34;---\\n&#34;); printf(&#34;value = %s\\n&#34;，p);// 崩溃! return 0; } 2.c char *b=&#34;aaa&#34;; char* aaa(){ return b;} 1 2 3 4 5 6 7 8 9 10 11 12 13 gcc 11.c 2.c -o test 11.c: In function ‘main&#39; 11.c:4:37: warning:: implicit declaration of function ‘aaa&#39;[-Wimplicit-function-declaration] 4| printf(&#34;aaa--d:%x----%s--%p\\n&#34;,aaa(),b,b); | ^~~ 11.c:5:15: warning:： initialization of ‘char *’ fromn‘int&#39; makes pointer from integer without a cast [-Wint-conversion] 5| char *p = aaa(); | ^~~ ./test aaa--d:4b1c032----aaaa--0x560604b1c032 p=0x4b1c032 --- Segmentation fault (core dumped) 这里并没有引用这个头文件，为什么依然可以使用呢？\n">
     <link rel="shortcut icon" href="/hugo-stack/favicon2.ico" />
 
     </head>
-    <body class="">
+    <body class="
+    article-page
+    ">
     <script>
         (function() {
             const colorSchemeKey = 'StackColorScheme';
@@ -273,191 +275,224 @@
     </ol>
 </aside>
 
-    <aside class="sidebar right-sidebar sticky">
-        
-            
-                <form action="/hugo-stack/search/" class="search-form widget" >
-        <p>
-            <label>搜索</label>
-            <input name="keyword" required placeholder="输入关键词..." />
-        
-            <button title="搜索">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-  <path stroke="none" d="M0 0h24v24H0z"/>
-  <circle cx="10" cy="10" r="7" />
-  <line x1="21" y1="21" x2="15" y2="15" />
-</svg>
+    
 
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
 
-
-            </button>
-        </p>
-    </form>
-            
+    <div class="article-details">
+    
+    <header class="article-category">
         
-            
-                <section class="widget archives">
-        <div class="widget-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-infinity" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-  <path stroke="none" d="M0 0h24v24H0z"/>
-  <path d="M9.828 9.172a4 4 0 1 0 0 5.656 a10 10 0 0 0 2.172 -2.828a10 10 0 0 1 2.172 -2.828 a4 4 0 1 1 0 5.656a10 10 0 0 1 -2.172 -2.828a10 10 0 0 0 -2.172 -2.828" />
-</svg>
-
-
-
-        </div>
-        <h2 class="widget-title section-title">归档</h2>
-
-        
-        
-        
-        
-        
-        <div class="widget-archive--list">
-            <div class="archives-year">
-                    <a href="/hugo-stack/archives/#2025">
-                        
-                            <span class="year">2025</span>
-                            <span class="count">11</span>
-                        
-                    </a> 
-                </div>
-            
-        </div>
-    </section>
-            
-        
-            
-                <section class="widget tagCloud">
-    <div class="widget-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-  <path stroke="none" d="M0 0h24v24H0z"/>
-  <line x1="5" y1="9" x2="19" y2="9" />
-  <line x1="5" y1="15" x2="19" y2="15" />
-  <line x1="11" y1="4" x2="7" y2="20" />
-  <line x1="17" y1="4" x2="13" y2="20" />
-</svg>
-
-
-
-    </div>
-    <h2 class="widget-title section-title">分类</h2>
-
-    <div class="tagCloud-tags">
-        
-            <a href="/hugo-stack/categories/%E7%AC%94%E8%AE%B0/" class="font_size_5">
-                笔记
-            </a>
-        
-            <a href="/hugo-stack/categories/linux/" class="font_size_3">
-                Linux
-            </a>
-        
-            <a href="/hugo-stack/categories/hugo/" class="font_size_2">
-                Hugo
-            </a>
-        
-            <a href="/hugo-stack/categories/c/" class="font_size_1">
+            <a href="/hugo-stack/categories/c/" >
                 C
             </a>
         
-    </div>
-</section>
+    </header>
+    
 
-            
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/hugo-stack/p/implicit-function-declaration/">implicit-function-declaration</a>
+        </h2>
+    
         
-            
-                <section class="widget tagCloud">
-    <div class="widget-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-tag" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
   <path stroke="none" d="M0 0h24v24H0z"/>
-  <path d="M11 3L20 12a1.5 1.5 0 0 1 0 2L14 20a1.5 1.5 0 0 1 -2 0L3 11v-4a4 4 0 0 1 4 -4h4" />
-  <circle cx="9" cy="9" r="2" />
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">2025-08-15 16:22</time>
+            </div>
+        <div>
+            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-edit"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg>
+            <time class="article-lastmod">2025-08-15 16:50</time>
+        </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
 </svg>
 
 
 
-    </div>
-    <h2 class="widget-title section-title">标签云</h2>
+                <time class="article-time--reading">
+                    阅读时长: 1 分钟
+                </time>
+            </div>
+        
 
-    <div class="tagCloud-tags">
         
-            <a href="/hugo-stack/tags/linux/" class="font_size_3">
-                Linux<span class="tagCloud-count-main"> [3]</span>
-            </a>
+            <div>
+                <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-file-word"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 12l1.333 5l1.667 -4l1.667 4l1.333 -5" /></svg>
+                <time class="article-words">
+                    149 字
+                </time>
+            </div>
         
-            <a href="/hugo-stack/tags/hugo/" class="font_size_2">
-                Hugo<span class="tagCloud-count-main"> [2]</span>
-            </a>
-        
-            <a href="/hugo-stack/tags/lxc/" class="font_size_2">
-                Lxc<span class="tagCloud-count-main"> [2]</span>
-            </a>
-        
-            <a href="/hugo-stack/tags/c/" class="font_size_1">
-                C<span class="tagCloud-count-main"> [1]</span>
-            </a>
-        
-            <a href="/hugo-stack/tags/cert/" class="font_size_1">
-                Cert<span class="tagCloud-count-main"> [1]</span>
-            </a>
-        
-            <a href="/hugo-stack/tags/imagebed/" class="font_size_1">
-                Imagebed<span class="tagCloud-count-main"> [1]</span>
-            </a>
-        
-            <a href="/hugo-stack/tags/openwrt/" class="font_size_1">
-                Openwrt<span class="tagCloud-count-main"> [1]</span>
-            </a>
-        
-            <a href="/hugo-stack/tags/restful-api/" class="font_size_1">
-                Restful-Api<span class="tagCloud-count-main"> [1]</span>
-            </a>
-        
-            <a href="/hugo-stack/tags/stack/" class="font_size_1">
-                Stack<span class="tagCloud-count-main"> [1]</span>
-            </a>
-        
-    </div>
+
+
+    </footer>
+    
+
+    
+
+
+</div>
+
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <p>一般情况下如果我们想使用其他文件的函数时，常规操作是将该函数在头文件中声明，然后在需要使用的文件里引用这个头文件
+但若是没声明呢？</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="mf">11.</span><span class="n">c</span>
+</span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span><span class="k">extern</span> <span class="kt">char</span><span class="o">*</span> <span class="n">b</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;aaa--d:%x----%s--p</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="nf">aaa</span><span class="p">(),</span><span class="n">b</span><span class="p">,</span><span class="n">b</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span><span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="nf">aaa</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;p = %p</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">p</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;---</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;value = %s</span><span class="se">\n</span><span class="s">&#34;</span><span class="err">，</span><span class="n">p</span><span class="p">);</span><span class="c1">// 崩溃!
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="mf">2.</span><span class="n">c</span>
+</span></span><span class="line"><span class="cl"><span class="kt">char</span> <span class="o">*</span><span class="n">b</span><span class="o">=</span><span class="s">&#34;aaa&#34;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="kt">char</span><span class="o">*</span> <span class="nf">aaa</span><span class="p">(){</span> <span class="k">return</span> <span class="n">b</span><span class="p">;}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">gcc 11.c 2.c -o <span class="nb">test</span>
+</span></span><span class="line"><span class="cl">11.c: In <span class="k">function</span> ‘main<span class="s1">&#39;
+</span></span></span><span class="line"><span class="cl"><span class="s1">11.c:4:37: warning:: implicit declaration of function ‘aaa&#39;</span><span class="o">[</span>-Wimplicit-function-declaration<span class="o">]</span>
+</span></span><span class="line"><span class="cl"> 4<span class="p">|</span> printf<span class="o">(</span><span class="s2">&#34;aaa--d:%x----%s--%p\n&#34;</span>,aaa<span class="o">()</span>,b,b<span class="o">)</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"> <span class="p">|</span> ^~~
+</span></span><span class="line"><span class="cl">11.c:5:15: warning:： initialization of ‘char *’ fromn‘int<span class="err">&#39;</span> makes pointer from integer without a cast <span class="o">[</span>-Wint-conversion<span class="o">]</span>
+</span></span><span class="line"><span class="cl"> 5<span class="p">|</span> char *p <span class="o">=</span> aaa<span class="o">()</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"> <span class="p">|</span> ^~~
+</span></span><span class="line"><span class="cl">./test
+</span></span><span class="line"><span class="cl">aaa--d:4b1c032----aaaa--0x560604b1c032
+</span></span><span class="line"><span class="cl"><span class="nv">p</span><span class="o">=</span>0x4b1c032
+</span></span><span class="line"><span class="cl">---
+</span></span><span class="line"><span class="cl">Segmentation fault <span class="o">(</span>core dumped<span class="o">)</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>这里并没有引用这个头文件，为什么依然可以使用呢？</p>
+<p>这就引出了一个概念：<strong>隐式声明</strong>。</p>
+<p>简单来讲就是当前文件使用没有声明的函数时，编译器会自动声明一个，但<strong>返回值是int类型</strong></p>
+<p>那为什么会出现段错误呢?
+上面编译运行的环境是64bit的:</p>
+<p>char* aaa() 返回的是一个指针8B(64bit) 但是在编译时 已经确定了是返回值类型(由于是隐式声名,编译器默认是int)  是int 4B(32bit) ,所以就会把指针的低32bit 取出来  赋给char* *p 指针p 的值就是一个截断的值, 这个指针就变成了一个非法的了,如果取访问其指向的内存,就会出现 段错误.</p>
+<p>如果是32bit 环境呢</p>
+<p>int 是4B 指针也是4B ,指针不会被截断,还是原来的值,不会出现非法访问.</p>
+<p>如何避免呢: 在Makefile 里加上 -Wall -Werror ,编译时会检测出这种错误</p>
 
 </section>
-            
-        
-    </aside>
 
 
-            <main class="main full-width">
-    <header>
-        <h3 class="section-title">
-            
-                Tags
-            
-        </h3>
-
-        <div class="section-card">
-            <div class="section-details">
-                <h3 class="section-count">1 个页面</h3>
-                <h1 class="section-term">Restful-Api</h1>
-                
-            </div>
-        </div>
-    </header>
+    <footer class="article-footer">
     
-    <section class="article-list--compact">
+    <section class="article-tags">
         
-            <article>
-    <a href="/hugo-stack/p/restful-api/">
-        <div class="article-details">
-            <h2 class="article-title">RESTful API</h2>
-            <footer class="article-time">
-                <time datetime='2025-06-26T15:22:59&#43;08:00'>2025-06-26 15:22</time>
-            </footer>
-        </div>
-    </a>
-</article>
+            <a href="/hugo-stack/tags/c/">C</a>
         
     </section>
-<footer class="site-footer">
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    
+
+    
+</footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
     <section class="copyright">
         &copy; 
         
@@ -470,6 +505,84 @@
     </section>
 </footer>
 
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
 
             </main>
         </div>
