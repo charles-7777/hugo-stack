@@ -7,7 +7,317 @@
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
         <copyright>Charles Lv</copyright>
-        <lastBuildDate>Fri, 15 Aug 2025 16:50:43 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/post/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Fri, 15 Aug 2025 20:10:35 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/post/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>IPv6 地址分配详解</title>
+        <link>https://charles-7777.github.io/hugo-stack/p/ipv6-%E5%9C%B0%E5%9D%80%E5%88%86%E9%85%8D%E8%AF%A6%E8%A7%A3/</link>
+        <pubDate>Fri, 15 Aug 2025 19:58:16 +0800</pubDate>
+        
+        <guid>https://charles-7777.github.io/hugo-stack/p/ipv6-%E5%9C%B0%E5%9D%80%E5%88%86%E9%85%8D%E8%AF%A6%E8%A7%A3/</guid>
+        <description>&lt;h2 id=&#34;ipv6-地址结构&#34;&gt;IPv6 地址结构
+&lt;/h2&gt;&lt;p&gt;一个 IPv6 地址由 128 个比特（bits）组成，通常分为 8 个 16 比特的块，每个块用冒号（&lt;code&gt;:&lt;/code&gt;）分隔，并以十六进制表示。&lt;/p&gt;
+&lt;p&gt;例如：&lt;code&gt;2001:0db8:85a3:0000:0000:8a2e:0370:7334&lt;/code&gt;&lt;/p&gt;
+&lt;h3 id=&#34;地址压缩规则&#34;&gt;地址压缩规则
+&lt;/h3&gt;&lt;p&gt;为了简化书写，IPv6 地址可以被压缩：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;dl&gt;
+&lt;dt&gt;省略前导零&lt;/dt&gt;
+&lt;dd&gt;
+&lt;p&gt;每个块中开头的&lt;/p&gt;
+&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-fallback&#34; data-lang=&#34;fallback&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;0
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;可以省略。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;0db8&lt;/code&gt; -&amp;gt; &lt;code&gt;db8&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;0000&lt;/code&gt; -&amp;gt; &lt;code&gt;0&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;0370&lt;/code&gt; -&amp;gt; &lt;code&gt;370&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;压缩连续的零&lt;/strong&gt;: 可以使用双冒号 &lt;code&gt;::&lt;/code&gt; 来替代地址中任意一段连续的、全为 &lt;code&gt;0&lt;/code&gt; 的块。&lt;strong&gt;注意：在一个地址中 &lt;code&gt;::&lt;/code&gt; 只能使用一次&lt;/strong&gt;。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;应用上述规则后，上面的地址可以被简化为：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-fallback&#34; data-lang=&#34;fallback&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;2001:db8:85a3::8a2e:370:7334
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;h2 id=&#34;ipv6-地址类型&#34;&gt;IPv6 地址类型
+&lt;/h2&gt;&lt;p&gt;IPv6 地址主要分为三种类型：单播（Unicast）、多播（Multicast）和任播（Anycast）。&lt;/p&gt;
+&lt;h3 id=&#34;单播地址-unicast&#34;&gt;单播地址 (Unicast)
+&lt;/h3&gt;&lt;p&gt;单播地址标识一个唯一的网络接口，发往单播地址的数据包将被送到该地址所标识的唯一接口。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;全球单播地址 (Global Unicast Address - GUA)&lt;/strong&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;范围&lt;/strong&gt;: 全球唯一，可在公网路由。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;前缀&lt;/strong&gt;: 通常以 &lt;code&gt;2000::/3&lt;/code&gt; 开头。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;结构&lt;/strong&gt;:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;全局路由前缀 (Global Routing Prefix)&lt;/strong&gt;: 通常为 48 位，由 ISP 分配给组织。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;子网 ID (Subnet ID)&lt;/strong&gt;: 通常为 16 位，由组织内部规划子网。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;接口 ID (Interface ID)&lt;/strong&gt;: 64 位，用于标识子网中的具体设备接口。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;链路本地地址 (Link-Local Address)&lt;/strong&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;范围&lt;/strong&gt;: 仅在同一物理或逻辑链路上有效，不能跨路由器路由。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;前缀&lt;/strong&gt;: &lt;code&gt;fe80::/10&lt;/code&gt;。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;用途&lt;/strong&gt;: 用于邻居发现、自动地址配置等链路内部通信。设备启动后会自动生成。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;唯一本地地址 (Unique Local Address - ULA)&lt;/strong&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;范围&lt;/strong&gt;: 仅在有限范围内（如一个组织或站点内部）使用，功能类似 IPv4 的私有地址。它不会在公网路由。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;前缀&lt;/strong&gt;: &lt;code&gt;fc00::/7&lt;/code&gt;。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;特殊地址&lt;/strong&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;环回地址&lt;/strong&gt;: &lt;code&gt;::1/128&lt;/code&gt;，相当于 IPv4 的 &lt;code&gt;127.0.0.1&lt;/code&gt;。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;多播地址-multicast&#34;&gt;多播地址 (Multicast)
+&lt;/h3&gt;&lt;p&gt;多播地址标识一组网络接口，发往多播地址的数据包将被送到该组中的所有接口。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;前缀&lt;/strong&gt;: &lt;code&gt;ff00::/8&lt;/code&gt;。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;常见示例&lt;/strong&gt;:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;ff02::1&lt;/code&gt;: 链路本地范围内的所有&lt;strong&gt;节点&lt;/strong&gt;。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ff02::2&lt;/code&gt;: 链路本地范围内的所有&lt;strong&gt;路由器&lt;/strong&gt;。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;任播地址-anycast&#34;&gt;任播地址 (Anycast)
+&lt;/h3&gt;&lt;p&gt;任播地址也标识一组网络接口，但发往任播地址的数据包只会被送到这组接口中&lt;strong&gt;距离最近&lt;/strong&gt;（根据路由协议的度量）的一个。任播地址的格式与单播地址相同，但通过路由配置实现。&lt;/p&gt;
+&lt;h2 id=&#34;ipv6-地址分配方法&#34;&gt;IPv6 地址分配方法
+&lt;/h2&gt;&lt;p&gt;设备获取 IPv6 地址主要有以下几种方式：&lt;/p&gt;
+&lt;h3 id=&#34;无状态地址自动配置-slaac&#34;&gt;无状态地址自动配置 (SLAAC)
+&lt;/h3&gt;&lt;p&gt;SLAAC 是 IPv6 的核心特性之一，允许设备在没有 DHCP 服务器的情况下自动配置地址。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;过程&lt;/strong&gt;:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;设备启动后，首先为自己生成一个链路本地地址。&lt;/li&gt;
+&lt;li&gt;设备向本地链路发送一个&lt;strong&gt;路由器请求 (Router Solicitation - RS)&lt;/strong&gt; 多播消息。&lt;/li&gt;
+&lt;li&gt;链路上的路由器收到 RS 后，会回复一个&lt;strong&gt;路由器通告 (Router Advertisement - RA)&lt;/strong&gt; 消息。RA 消息中包含了网络前缀（如 GUA 前缀）和其他网络信息。&lt;/li&gt;
+&lt;li&gt;设备使用 RA 中通告的前缀，并结合自己的接口 ID（通常通过 &lt;strong&gt;EUI-64&lt;/strong&gt; 算法或随机生成）来构成一个完整的全球单播地址。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;有状态-dhcpv6-stateful&#34;&gt;有状态 DHCPv6 (Stateful)
+&lt;/h3&gt;&lt;p&gt;工作方式类似于 IPv4 的 DHCP，由 DHCPv6 服务器集中管理和分配 IPv6 地址。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;优点&lt;/strong&gt;: 便于集中管理和审计，可以精确控制地址分配。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;适用场景&lt;/strong&gt;: 需要严格管理地址分配的企业网络。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;无状态-dhcpv6-stateless&#34;&gt;无状态 DHCPv6 (Stateless)
+&lt;/h3&gt;&lt;p&gt;这是一种混合模式。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;设备通过 &lt;strong&gt;SLAAC&lt;/strong&gt; 获取 IPv6 地址。&lt;/li&gt;
+&lt;li&gt;同时，设备通过 &lt;strong&gt;DHCPv6&lt;/strong&gt; 获取其他网络配置信息，例如 DNS 服务器地址、域名等。&lt;/li&gt;
+&lt;li&gt;这种方式既利用了 SLAAC 的便捷性，又弥补了其无法提供 DNS 等附加信息的不足。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;静态配置-manual&#34;&gt;静态配置 (Manual)
+&lt;/h3&gt;&lt;p&gt;管理员手动为设备配置静态的 IPv6 地址、网关和 DNS 等信息。适用于服务器、路由器等需要固定地址的设备。&lt;/p&gt;
+&lt;h3 id=&#34;dhcpv6-交互过程&#34;&gt;DHCPv6 交互过程
+&lt;/h3&gt;&lt;p&gt;DHCPv6 客户端和服务器之间的通信过程，用于获取 IPv6 地址和/或其他网络配置参数。标准的交互过程涉及四次消息交换，这确保了客户端可以选择最合适的服务器。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;四步交换 (Four-Way Exchange):&lt;/strong&gt;&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Solicit (请求)&lt;/strong&gt;:
+&lt;ul&gt;
+&lt;li&gt;客户端在本地链路上发送一个 &lt;code&gt;Solicit&lt;/code&gt; 多播消息，以发现可用的 DHCPv6 服务器。&lt;/li&gt;
+&lt;li&gt;消息发送到所有 DHCP 中继代理和服务器的多播地址 &lt;code&gt;ff02::1:2&lt;/code&gt;。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Advertise (通告)&lt;/strong&gt;:
+&lt;ul&gt;
+&lt;li&gt;收到 &lt;code&gt;Solicit&lt;/code&gt; 消息的 DHCPv6 服务器会回复一个 &lt;code&gt;Advertise&lt;/code&gt; 单播消息。&lt;/li&gt;
+&lt;li&gt;此消息中包含了服务器可以为客户端提供的地址和/或配置信息。一个客户端可能会收到多个 &lt;code&gt;Advertise&lt;/code&gt; 消息。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Request (请求)&lt;/strong&gt;:
+&lt;ul&gt;
+&lt;li&gt;客户端从收到的一个或多个 &lt;code&gt;Advertise&lt;/code&gt; 消息中选择一个服务器，并向其发送一个 &lt;code&gt;Request&lt;/code&gt; 单播消息，正式请求分配地址和/或配置参数。&lt;/li&gt;
+&lt;li&gt;消息中会包含它所选择的服务器的标识符。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Reply (回复)&lt;/strong&gt;:
+&lt;ul&gt;
+&lt;li&gt;被选中的服务器收到 &lt;code&gt;Request&lt;/code&gt; 消息后，会发送一个 &lt;code&gt;Reply&lt;/code&gt; 单播消息，确认地址分配和配置信息。&lt;/li&gt;
+&lt;li&gt;此时，客户端完成配置，可以开始使用获取到的地址。
+&lt;strong&gt;两步交换 (Two-Way Exchange) - 快速提交 (Rapid Commit):&lt;/strong&gt;
+为了加速地址分配过程，DHCPv6 引入了快速提交选项。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Solicit (请求)&lt;/strong&gt;:
+&lt;ul&gt;
+&lt;li&gt;客户端在 &lt;code&gt;Solicit&lt;/code&gt; 消息中加入 &amp;ldquo;Rapid Commit&amp;rdquo; 选项，表示希望立即完成地址分配。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Reply (回复)&lt;/strong&gt;:
+&lt;ul&gt;
+&lt;li&gt;支持快速提交的服务器如果愿意立即分配地址，会直接回复一个 &lt;code&gt;Reply&lt;/code&gt; 消息，跳过 &lt;code&gt;Advertise&lt;/code&gt; 和 &lt;code&gt;Request&lt;/code&gt; 步骤。
+这种两步交换减少了延迟，在许多场景下（如网络中只有一个 DHCPv6 服务器）非常高效&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;关键协议与技术&#34;&gt;关键协议与技术
+&lt;/h2&gt;&lt;p&gt;在一个部署 IPv6 的广播域中，相比 IPv4 一个最明显的区别就是 IPv6 路由通告；在 IPv4 时代，一个广播域中的 ipv4 网段并没有显式说明，或者说并没有一个 ipv4 网段宣称占据了这个广播域，仅使用这个广播域的广播/组播能力，多个ipv4网段共用一个广播域的情况也不鲜见；而在ipv6中，运行ipv6协议的路由器会主动发送名为&lt;strong&gt;路由通告 Router Advertisement&lt;/strong&gt;的 ICMPv6 报文，在广播域中宣告/广播*此 ipv6 网段占据了该广播域；&lt;/p&gt;
+&lt;p&gt;*（准确的讲应该是组播，IPv6 已经没有广播概念了，这里使用广播这个说法为了说明是公开发送的，在一个广播域中，广播和组播达成的功能类似，且在低端交换机中，广播和组播的转发方式是一致的）&lt;/p&gt;
+&lt;p&gt;RA（路由通告 Router Advertisement）使用 ICMPv6 报文（type 134），属于 NDP 协议的一部分&lt;/p&gt;
+&lt;p&gt;IPv6 的功能实现严重依赖于一些关键的底层协议，特别是 ICMPv6 和在其基础上构建的邻居发现协议 (NDP)，以及用于动态分配网络前缀的 DHCPv6-PD。&lt;/p&gt;
+&lt;h2 id=&#34;icmpv6&#34;&gt;ICMPv6
+&lt;/h2&gt;&lt;p&gt;IPv6 时代的ip层控制协议（类比ipv4中的arp、icmp等）均使用icmpv6报文，&lt;strong&gt;取消了IP层的广播&lt;/strong&gt;，转而广泛使用&lt;strong&gt;组播&lt;/strong&gt;。ICMPv6 中的 type 133 ~ 137 报文由&lt;strong&gt;NDP&lt;/strong&gt;协议使用，用于发现网关、邻居、地址配置等等。&lt;/p&gt;
+&lt;h3 id=&#34;icmpv6-1&#34;&gt;ICMPv6
+&lt;/h3&gt;&lt;p&gt;ICMPv6 是 IPv6 的一个核心组成部分，其功能远超 IPv4 中的 ICMP。它不仅用于传输网络错误和诊断信息，还承载了许多关键的网络控制功能。如果防火墙错误地完全阻止 ICMPv6，将导致 IPv6 网络中断。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;主要功能&lt;/strong&gt;:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;错误报告&lt;/strong&gt;: 如 &amp;ldquo;目标不可达&amp;rdquo;、&amp;ldquo;数据包过大&amp;rdquo;、&amp;ldquo;超时&amp;rdquo; 等。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;诊断查询&lt;/strong&gt;: 如 &lt;code&gt;ping&lt;/code&gt; 命令所使用的 &amp;ldquo;Echo Request&amp;rdquo; 和 &amp;ldquo;Echo Reply&amp;rdquo;。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;网络控制&lt;/strong&gt;: 为 NDP、MLD (多播侦听发现) 等协议提供消息支持。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;ndp-邻居发现协议&#34;&gt;NDP (邻居发现协议)
+&lt;/h3&gt;&lt;p&gt;NDP 是 IPv6 中一个至关重要的协议，它取代了 IPv4 中的 ARP、ICMP 路由器发现和 ICMP 重定向等多个协议的功能。NDP 基于 ICMPv6 实现，是实现即插即用和 SLAAC 的基础。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;NDP 的核心功能&lt;/strong&gt;:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;地址解析&lt;/strong&gt;: 将 IPv6 地址解析为链路层地址（如 MAC 地址），取代了 ARP。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;路由器发现&lt;/strong&gt;: 主机可以发现本地链路上的路由器。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;前缀发现&lt;/strong&gt;: 主机可以发现用于自动配置的地址前缀。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;重复地址检测 (DAD)&lt;/strong&gt;: 节点可以确认其想要使用的地址在链路上是唯一的。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;可达性跟踪&lt;/strong&gt;: 判断邻居节点是否仍然可达。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;NDP 使用的五种 ICMPv6 消息类型&lt;/strong&gt;:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;路由器请求 (Router Solicitation - RS)&lt;/strong&gt;: 通常由终端主动发送，用于在未收到周期性 RA 的情况下，请求 RA&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;路由器通告 (Router Advertisement - RA)&lt;/strong&gt;:由路由器周期性发送，也可以响应 RS 发送，用于宣告本广播域中 IPv6 相关信息。比如前缀、网关、DNS等&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;邻居请求 (Neighbor Solicitation - NS)&lt;/strong&gt;: 用于解析邻居的链路层地址或执行 DAD,和 IPv4 的 ARP request 功能一致。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;邻居通告 (Neighbor Advertisement - NA)&lt;/strong&gt;: 对 NS 消息的响应，或在链路层地址变化时主动发送和 ,IPv4 的 ARP reply功能一致。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;重定向 (Redirect)&lt;/strong&gt;: 路由器告知主机有更优的下一跳路径,类似于 IPv4 的icmp redirect功能。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;rsra&#34;&gt;RS/RA
+&lt;/h3&gt;&lt;p&gt;RS/RA 是IPv6 环境下独有的控制信令，此信令明确了一个广播域中各节点所代表的角色。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;广播域中发送RA的为路由器&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;广播域中可以存在多个路由器&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;RA 组播周期性发送&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;RS 用于在未收到 RA 情况下请求 RA&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;RA 中的&lt;code&gt;Flags&lt;/code&gt;表明当前广播域中 IPv6 地址的配置方式&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;这些 Flags 分布在两个位置&amp;mdash;-ICMPv6 报头和 prefix option，后者称为 PIO(Prefix Information Option) flag。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;M&lt;/strong&gt;(Managed address configuration):位于报头，M=1 表明终端应该使用 DHCPv6 协议配置地址和其他网络参数；如果M=1，则忽略 O Flag；此flag用于&lt;strong&gt;DHCPv6 有状态模式&lt;/strong&gt;。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;O&lt;/strong&gt;(Other configuration):位于报头，O=1且M=0 表明终端应该使用 DHCPv6 设置除了 IPv6 地址之外的其他（dns/ntp等），此 flag 用于 &lt;strong&gt;DHCPv6 无状态模式&lt;/strong&gt;。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;A&lt;/strong&gt;(Autononous address-configuration flag):位于&lt;strong&gt;PIO&lt;/strong&gt;中，A=1 表明终端应该&lt;strong&gt;使用 SLAAC&lt;/strong&gt; 配置 IPv6 地址；PIO可以包含多个 Prefix，这也就意味着一个广播域中可以存在多个 IPv6 网段。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这几种flag是可以复合使用的，以满足不同场景需求,除了手动静态配置ipv6地址，动态/自动配置或者半自动配置ipv6地址的方式都需要从ndp协议的 RA 开始，就好像 RA 引导了IPv6自动配置的开始；RA中的不同flag叠加影响地址自动配置；&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;dhcpv6-pd&#34;&gt;DHCPv6-PD
+&lt;/h3&gt;&lt;p&gt;DHCPv6前缀代理DHCPv6-PD(PrefixDelegation)是一种前缀分配机制，通过DHCPv6前缀代理机制，下游
+网络设备不需要再手工指定用户侧链路的IPv6地址前缀，它只需要向上游网络设备提出前缀分配申请，上游网
+络设备便可以分配合适的地址前缀给下游设备，下游设备把获得的前缀再通过路由通告(&lt;strong&gt;RA&lt;/strong&gt;)至与IPv6主机直连
+的用户链路上，实现IPv6主机的地址自动配置，完成整个系统层次的地址布局。&lt;/p&gt;
+&lt;p&gt;DHCP-PD 技术最早在RFC3633中提出，经过几次更新目前最新的是&lt;strong&gt;RFC8415&lt;/strong&gt;，其主要思想是把DHCPv6的地址分配方式划分为多层，dhcp client不再是仅仅获取地址用于终端通信，而是可以作为次级路由器身份把地址&lt;strong&gt;层层分配&lt;/strong&gt;下去；这样的好处是便于快速和统一部署大量地址，尤其是在大规模动态地址的情况下，此种地址分配方式在家庭宽带中已经大量部署；光猫从其上级获取一段地址用于本地网络终端的地址分配，甚至从光猫拿到的地址还能再往下一层分配.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;工作原理&lt;/strong&gt;:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;请求&lt;/strong&gt;: 家庭路由器（客户端）向其上游 ISP 的路由器（服务器）发送 DHCPv6 请求，希望获得一个 IPv6 地址&lt;strong&gt;前缀&lt;/strong&gt;（例如一个 &lt;code&gt;/56&lt;/code&gt; 或 &lt;code&gt;/48&lt;/code&gt; 的地址块），而不仅仅是一个地址。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;代理&lt;/strong&gt;: ISP 路由器从其地址池中分配一个前缀块，并通过 DHCPv6 回复将其“代理”或“授权”给家庭路由器。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;分配&lt;/strong&gt;: 家庭路由器获得该前缀后，就拥有了管理这个地址块的权限。它可以将这个前缀进一步划分为更小的子网（例如多个 &lt;code&gt;/64&lt;/code&gt; 子网），并为连接到其 LAN 口的各个内部网络（如家庭网络、访客网络）分配这些子网前缀。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;通告&lt;/strong&gt;: 家庭路由器在其内部网络上发送 &lt;strong&gt;RA&lt;/strong&gt; 消息，通告这些 &lt;code&gt;/64&lt;/code&gt; 的子网前缀，使得内部网络中的设备可以通过 &lt;strong&gt;SLAAC&lt;/strong&gt; 自动配置 IPv6 地址。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;strong&gt;优势&lt;/strong&gt;:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;自动化&lt;/strong&gt;: 无需手动配置下游路由器的子网，实现了网络部署的自动化。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;结构化&lt;/strong&gt;: 使得家庭或小型办公室可以轻松地拥有多个独立的 IPv6 子网，便于网络隔离和管理。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;高效性&lt;/strong&gt;: 相比于 NAT，每个设备都能获得全球唯一的公网地址，实现了真正的端到端连接。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;link-local&#34;&gt;link-local
+&lt;/h3&gt;&lt;p&gt;对比IPv4环境，IPv6 地址有所谓的 link-local 地址而且充当比较重要作用；由于一个接口可以配置很多IPv6地址，当这些地址作为下一跳使用的时候会出现混乱，这样不利于管理也不利于设备性能开销,使用Link Local地址唯一标识链路上的一个节点就避免了这个问题。而且在网络重新编址过程中，Link Local并不会发生变化，更利于快速更改编址&lt;/p&gt;
+&lt;h3 id=&#34;dad&#34;&gt;DAD
+&lt;/h3&gt;&lt;p&gt;DAD 基于 &lt;strong&gt;ICMPv6 Neighbor Solicitation（NS，邻居请求）&lt;/strong&gt; 和 &lt;strong&gt;Neighbor Advertisement（NA，邻居通告）&lt;/strong&gt; 消息实现，步骤如下：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;节点分配一个 IPv6 地址&lt;/strong&gt;（如通过 SLAAC 或手动配置），但该地址尚未正式启用（处于 &amp;ldquo;tentative&amp;rdquo; 状态）。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;发送 Neighbor Solicitation（NS）&lt;/strong&gt;：
+&lt;ul&gt;
+&lt;li&gt;目标地址（Target Address）设为待检测的 IPv6 地址。&lt;/li&gt;
+&lt;li&gt;源地址设为 &lt;strong&gt;未指定地址（::）&lt;/strong&gt;（因为该地址尚未正式使用）。&lt;/li&gt;
+&lt;li&gt;发送到 &lt;strong&gt;&amp;ldquo;请求节点组播地址&amp;rdquo;（Solicited-Node Multicast Address，FF02::1:FFXX:XXXX）&lt;/strong&gt;。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;等待响应&lt;/strong&gt;：
+&lt;ul&gt;
+&lt;li&gt;如果&lt;strong&gt;没有收到 Neighbor Advertisement（NA）&lt;/strong&gt;，说明地址未被占用，可以正常使用。&lt;/li&gt;
+&lt;li&gt;如果&lt;strong&gt;收到 NA&lt;/strong&gt;，说明地址已被占用，节点必须放弃该地址并重新配置（如 SLAAC 会生成新地址）。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;DAD 完成&lt;/strong&gt;：
+&lt;ul&gt;
+&lt;li&gt;成功通过检测后，地址变为 &amp;ldquo;Preferred&amp;rdquo; 或 &amp;ldquo;Valid&amp;rdquo; 状态，可以正常通信&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;邻居表&#34;&gt;邻居表
+&lt;/h3&gt;&lt;p&gt;邻居表，在IPv4环境下就是ARP表，系统维护Arp表内容由系统自己决定，比如端口、更新时间等；&lt;/p&gt;
+&lt;p&gt;到了IPv6环境，ND表代替了arp表，而且协议规定了5种邻居状态，IPv6 邻居状态，分别是：
+Incomplete、Reachable、Stale、Delay、Probe，其中只有 Stale 状态是稳定状态。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Incomplete （未完成状态）：表⽰正在解 析地址，但邻居链路层地址尚未确定。&lt;/li&gt;
+&lt;li&gt;Reachable （可达状态）：表⽰地址解析 成功，该邻居可达。&lt;/li&gt;
+&lt;li&gt;Stale（失效状态）：表⽰可达时间耗尽，未确定邻居是否可达。&lt;/li&gt;
+&lt;li&gt;Delay（延迟状态）：表⽰未确定邻居是否可达。Delay 状态不是⼀个稳定的状态，⽽是⼀个延时等待状态。&lt;/li&gt;
+&lt;li&gt;Probe （探测状态）：节点会向处于 Probe 状态的邻居持续发送 NS 报⽂。
+不同状态之间迁移如下图&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;2
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-fallback&#34; data-lang=&#34;fallback&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;ip neigh
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;ip -6 neigh
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;</description>
+        </item>
+        <item>
         <title>implicit-function-declaration</title>
         <link>https://charles-7777.github.io/hugo-stack/p/implicit-function-declaration/</link>
         <pubDate>Fri, 15 Aug 2025 16:22:16 +0800</pubDate>

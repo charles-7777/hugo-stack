@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="IPv6 地址结构 一个 IPv6 地址由 128 个比特（bits）组成，通常分为 8 个 16 比特的块，每个块用冒号（:）分隔，并以十六进制表示。\n例如：2001:0db8:85a3:0000:0000:8a2e:0370:7334\n地址压缩规则 为了简化书写，IPv6 地址可以被压缩：\n省略前导零 每个块中开头的\n1 0 可以省略。\n0db8 -&gt; db8 0000 -&gt; 0 0370 -&gt; 370 压缩连续的零: 可以使用双冒号 :: 来替代地址中任意一段连续的、全为 0 的块。注意：在一个地址中 :: 只能使用一次。\n应用上述规则后，上面的地址可以被简化为：\n1 2001:db8:85a3::8a2e:370:7334 IPv6 地址类型 IPv6 地址主要分为三种类型：单播（Unicast）、多播（Multicast）和任播（Anycast）。\n单播地址 (Unicast) 单播地址标识一个唯一的网络接口，发往单播地址的数据包将被送到该地址所标识的唯一接口。\n全球单播地址 (Global Unicast Address - GUA)\n范围: 全球唯一，可在公网路由。\n前缀: 通常以 2000::/3 开头。\n结构:\n全局路由前缀 (Global Routing Prefix): 通常为 48 位，由 ISP 分配给组织。 子网 ID (Subnet ID): 通常为 16 位，由组织内部规划子网。 接口 ID (Interface ID): 64 位，用于标识子网中的具体设备接口。 链路本地地址 (Link-Local Address)\n">
+<title>IPv6 地址分配详解</title>
+
+<link rel='canonical' href='https://charles-7777.github.io/hugo-stack/p/ipv6-%E5%9C%B0%E5%9D%80%E5%88%86%E9%85%8D%E8%AF%A6%E8%A7%A3/'>
+
+<link rel="stylesheet" href="/hugo-stack/scss/style.min.1aedf5438eb6380946ca2f7d86c958e5adeb3c679a95ad190168d7c28b43101d.css"><meta property='og:title' content="IPv6 地址分配详解">
+<meta property='og:description' content="IPv6 地址结构 一个 IPv6 地址由 128 个比特（bits）组成，通常分为 8 个 16 比特的块，每个块用冒号（:）分隔，并以十六进制表示。\n例如：2001:0db8:85a3:0000:0000:8a2e:0370:7334\n地址压缩规则 为了简化书写，IPv6 地址可以被压缩：\n省略前导零 每个块中开头的\n1 0 可以省略。\n0db8 -&gt; db8 0000 -&gt; 0 0370 -&gt; 370 压缩连续的零: 可以使用双冒号 :: 来替代地址中任意一段连续的、全为 0 的块。注意：在一个地址中 :: 只能使用一次。\n应用上述规则后，上面的地址可以被简化为：\n1 2001:db8:85a3::8a2e:370:7334 IPv6 地址类型 IPv6 地址主要分为三种类型：单播（Unicast）、多播（Multicast）和任播（Anycast）。\n单播地址 (Unicast) 单播地址标识一个唯一的网络接口，发往单播地址的数据包将被送到该地址所标识的唯一接口。\n全球单播地址 (Global Unicast Address - GUA)\n范围: 全球唯一，可在公网路由。\n前缀: 通常以 2000::/3 开头。\n结构:\n全局路由前缀 (Global Routing Prefix): 通常为 48 位，由 ISP 分配给组织。 子网 ID (Subnet ID): 通常为 16 位，由组织内部规划子网。 接口 ID (Interface ID): 64 位，用于标识子网中的具体设备接口。 链路本地地址 (Link-Local Address)\n">
+<meta property='og:url' content='https://charles-7777.github.io/hugo-stack/p/ipv6-%E5%9C%B0%E5%9D%80%E5%88%86%E9%85%8D%E8%AF%A6%E8%A7%A3/'>
+<meta property='og:site_name' content=''>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='IPv6' /><meta property='article:published_time' content='2025-08-15T19:58:16&#43;08:00'/><meta property='article:modified_time' content='2025-08-15T20:10:35&#43;08:00'/>
+<meta name="twitter:title" content="IPv6 地址分配详解">
+<meta name="twitter:description" content="IPv6 地址结构 一个 IPv6 地址由 128 个比特（bits）组成，通常分为 8 个 16 比特的块，每个块用冒号（:）分隔，并以十六进制表示。\n例如：2001:0db8:85a3:0000:0000:8a2e:0370:7334\n地址压缩规则 为了简化书写，IPv6 地址可以被压缩：\n省略前导零 每个块中开头的\n1 0 可以省略。\n0db8 -&gt; db8 0000 -&gt; 0 0370 -&gt; 370 压缩连续的零: 可以使用双冒号 :: 来替代地址中任意一段连续的、全为 0 的块。注意：在一个地址中 :: 只能使用一次。\n应用上述规则后，上面的地址可以被简化为：\n1 2001:db8:85a3::8a2e:370:7334 IPv6 地址类型 IPv6 地址主要分为三种类型：单播（Unicast）、多播（Multicast）和任播（Anycast）。\n单播地址 (Unicast) 单播地址标识一个唯一的网络接口，发往单播地址的数据包将被送到该地址所标识的唯一接口。\n全球单播地址 (Global Unicast Address - GUA)\n范围: 全球唯一，可在公网路由。\n前缀: 通常以 2000::/3 开头。\n结构:\n全局路由前缀 (Global Routing Prefix): 通常为 48 位，由 ISP 分配给组织。 子网 ID (Subnet ID): 通常为 16 位，由组织内部规划子网。 接口 ID (Interface ID): 64 位，用于标识子网中的具体设备接口。 链路本地地址 (Link-Local Address)\n">
+    <link rel="shortcut icon" href="/hugo-stack/favicon2.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/hugo-stack/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/hugo-stack/img/oi_compressed_hu_9c5e2ca2fe891746.gif" width="300"
+                            height="303" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/hugo-stack"></a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://www.bilibili.com/'
+                        target="_blank"
+                        title="bilibili"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-brand-bilibili"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 10a4 4 0 0 1 4 -4h10a4 4 0 0 1 4 4v6a4 4 0 0 1 -4 4h-10a4 4 0 0 1 -4 -4v-6z" /><path d="M8 3l2 3" /><path d="M16 3l-2 3" /><path d="M9 13v-2" /><path d="M15 11v2" /></svg>
+                        
+                    </a>
+                </li>
+            
+                <li>
+                    <a 
+                        href='https://www.douyin.com/'
+                        target="_blank"
+                        title="douyin"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-brand-tiktok"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M21 7.917v4.034a9.948 9.948 0 0 1 -5 -1.951v4.5a6.5 6.5 0 1 1 -8 -6.326v4.326a2.5 2.5 0 1 0 4 2v-11.5h4.083a6.005 6.005 0 0 0 4.917 4.917z" /></svg>
+                        
+                    </a>
+                </li>
+            
+                <li>
+                    <a 
+                        href='https://github.com/charles-7777/hugo-blog'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/hugo-stack/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                
+                <span>主页</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/archives/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                
+                <span>归档</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/cats-tags/' >
+                
+                
+                
+                    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-tags"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 8v4.172a2 2 0 0 0 .586 1.414l5.71 5.71a2.41 2.41 0 0 0 3.408 0l3.592 -3.592a2.41 2.41 0 0 0 0 -3.408l-5.71 -5.71a2 2 0 0 0 -1.414 -.586h-4.172a2 2 0 0 0 -2 2z" /><path d="M18 19l1.592 -1.592a4.82 4.82 0 0 0 0 -6.816l-4.592 -4.592" /><path d="M7 10h-.01" /></svg>
+                
+                <span>Cats&amp;Tags</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/%E9%93%BE%E6%8E%A5/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                
+                <span>链接</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/search/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+                
+                <span>搜索</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/%E5%85%B3%E4%BA%8E/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                
+                <span>关于</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/updatelog/' >
+                
+                
+                
+                    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-logs"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 12h.01" /><path d="M4 6h.01" /><path d="M4 18h.01" /><path d="M8 18h2" /><path d="M8 12h2" /><path d="M8 6h2" /><path d="M14 6h6" /><path d="M14 12h6" /><path d="M14 18h6" /></svg>
+                
+                <span>更新日志</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>暗色模式</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ol>
+    <li><a href="#ipv6-地址结构">IPv6 地址结构</a>
+      <ol>
+        <li><a href="#地址压缩规则">地址压缩规则</a></li>
+      </ol>
+    </li>
+    <li><a href="#ipv6-地址类型">IPv6 地址类型</a>
+      <ol>
+        <li><a href="#单播地址-unicast">单播地址 (Unicast)</a></li>
+        <li><a href="#多播地址-multicast">多播地址 (Multicast)</a></li>
+        <li><a href="#任播地址-anycast">任播地址 (Anycast)</a></li>
+      </ol>
+    </li>
+    <li><a href="#ipv6-地址分配方法">IPv6 地址分配方法</a>
+      <ol>
+        <li><a href="#无状态地址自动配置-slaac">无状态地址自动配置 (SLAAC)</a></li>
+        <li><a href="#有状态-dhcpv6-stateful">有状态 DHCPv6 (Stateful)</a></li>
+        <li><a href="#无状态-dhcpv6-stateless">无状态 DHCPv6 (Stateless)</a></li>
+        <li><a href="#静态配置-manual">静态配置 (Manual)</a></li>
+        <li><a href="#dhcpv6-交互过程">DHCPv6 交互过程</a></li>
+      </ol>
+    </li>
+    <li><a href="#关键协议与技术">关键协议与技术</a></li>
+    <li><a href="#icmpv6">ICMPv6</a>
+      <ol>
+        <li><a href="#icmpv6-1">ICMPv6</a></li>
+        <li><a href="#ndp-邻居发现协议">NDP (邻居发现协议)</a></li>
+        <li><a href="#rsra">RS/RA</a></li>
+        <li><a href="#dhcpv6-pd">DHCPv6-PD</a></li>
+        <li><a href="#link-local">link-local</a></li>
+        <li><a href="#dad">DAD</a></li>
+        <li><a href="#邻居表">邻居表</a></li>
+      </ol>
+    </li>
+  </ol>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/hugo-stack/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" >
+                计算机网络
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/hugo-stack/p/ipv6-%E5%9C%B0%E5%9D%80%E5%88%86%E9%85%8D%E8%AF%A6%E8%A7%A3/">IPv6 地址分配详解</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">2025-08-15 19:58</time>
+            </div>
+        <div>
+            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-edit"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg>
+            <time class="article-lastmod">2025-08-15 20:10</time>
+        </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 3 分钟
+                </time>
+            </div>
+        
+
+        
+            <div>
+                <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-file-word"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 12l1.333 5l1.667 -4l1.667 4l1.333 -5" /></svg>
+                <time class="article-words">
+                    637 字
+                </time>
+            </div>
+        
+
+
+    </footer>
+    
+
+    
+
+
+</div>
+
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h2 id="ipv6-地址结构">IPv6 地址结构
+</h2><p>一个 IPv6 地址由 128 个比特（bits）组成，通常分为 8 个 16 比特的块，每个块用冒号（<code>:</code>）分隔，并以十六进制表示。</p>
+<p>例如：<code>2001:0db8:85a3:0000:0000:8a2e:0370:7334</code></p>
+<h3 id="地址压缩规则">地址压缩规则
+</h3><p>为了简化书写，IPv6 地址可以被压缩：</p>
+<ol>
+<li>
+<dl>
+<dt>省略前导零</dt>
+<dd>
+<p>每个块中开头的</p>
+</dd>
+</dl>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">0
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>可以省略。</p>
+<ul>
+<li><code>0db8</code> -&gt; <code>db8</code></li>
+<li><code>0000</code> -&gt; <code>0</code></li>
+<li><code>0370</code> -&gt; <code>370</code></li>
+</ul>
+</li>
+<li>
+<p><strong>压缩连续的零</strong>: 可以使用双冒号 <code>::</code> 来替代地址中任意一段连续的、全为 <code>0</code> 的块。<strong>注意：在一个地址中 <code>::</code> 只能使用一次</strong>。</p>
+</li>
+</ol>
+<p>应用上述规则后，上面的地址可以被简化为：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">2001:db8:85a3::8a2e:370:7334
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="ipv6-地址类型">IPv6 地址类型
+</h2><p>IPv6 地址主要分为三种类型：单播（Unicast）、多播（Multicast）和任播（Anycast）。</p>
+<h3 id="单播地址-unicast">单播地址 (Unicast)
+</h3><p>单播地址标识一个唯一的网络接口，发往单播地址的数据包将被送到该地址所标识的唯一接口。</p>
+<ul>
+<li>
+<p><strong>全球单播地址 (Global Unicast Address - GUA)</strong></p>
+</li>
+<li>
+<p><strong>范围</strong>: 全球唯一，可在公网路由。</p>
+</li>
+<li>
+<p><strong>前缀</strong>: 通常以 <code>2000::/3</code> 开头。</p>
+</li>
+<li>
+<p><strong>结构</strong>:</p>
+<ul>
+<li><strong>全局路由前缀 (Global Routing Prefix)</strong>: 通常为 48 位，由 ISP 分配给组织。</li>
+<li><strong>子网 ID (Subnet ID)</strong>: 通常为 16 位，由组织内部规划子网。</li>
+<li><strong>接口 ID (Interface ID)</strong>: 64 位，用于标识子网中的具体设备接口。</li>
+</ul>
+</li>
+<li>
+<p><strong>链路本地地址 (Link-Local Address)</strong></p>
+</li>
+<li>
+<p><strong>范围</strong>: 仅在同一物理或逻辑链路上有效，不能跨路由器路由。</p>
+</li>
+<li>
+<p><strong>前缀</strong>: <code>fe80::/10</code>。</p>
+</li>
+<li>
+<p><strong>用途</strong>: 用于邻居发现、自动地址配置等链路内部通信。设备启动后会自动生成。</p>
+</li>
+<li>
+<p><strong>唯一本地地址 (Unique Local Address - ULA)</strong></p>
+</li>
+<li>
+<p><strong>范围</strong>: 仅在有限范围内（如一个组织或站点内部）使用，功能类似 IPv4 的私有地址。它不会在公网路由。</p>
+</li>
+<li>
+<p><strong>前缀</strong>: <code>fc00::/7</code>。</p>
+</li>
+<li>
+<p><strong>特殊地址</strong></p>
+</li>
+<li>
+<p><strong>环回地址</strong>: <code>::1/128</code>，相当于 IPv4 的 <code>127.0.0.1</code>。</p>
+</li>
+</ul>
+<h3 id="多播地址-multicast">多播地址 (Multicast)
+</h3><p>多播地址标识一组网络接口，发往多播地址的数据包将被送到该组中的所有接口。</p>
+<ul>
+<li>
+<p><strong>前缀</strong>: <code>ff00::/8</code>。</p>
+</li>
+<li>
+<p><strong>常见示例</strong>:</p>
+<ul>
+<li><code>ff02::1</code>: 链路本地范围内的所有<strong>节点</strong>。</li>
+<li><code>ff02::2</code>: 链路本地范围内的所有<strong>路由器</strong>。</li>
+</ul>
+</li>
+</ul>
+<h3 id="任播地址-anycast">任播地址 (Anycast)
+</h3><p>任播地址也标识一组网络接口，但发往任播地址的数据包只会被送到这组接口中<strong>距离最近</strong>（根据路由协议的度量）的一个。任播地址的格式与单播地址相同，但通过路由配置实现。</p>
+<h2 id="ipv6-地址分配方法">IPv6 地址分配方法
+</h2><p>设备获取 IPv6 地址主要有以下几种方式：</p>
+<h3 id="无状态地址自动配置-slaac">无状态地址自动配置 (SLAAC)
+</h3><p>SLAAC 是 IPv6 的核心特性之一，允许设备在没有 DHCP 服务器的情况下自动配置地址。</p>
+<p><strong>过程</strong>:</p>
+<ol>
+<li>设备启动后，首先为自己生成一个链路本地地址。</li>
+<li>设备向本地链路发送一个<strong>路由器请求 (Router Solicitation - RS)</strong> 多播消息。</li>
+<li>链路上的路由器收到 RS 后，会回复一个<strong>路由器通告 (Router Advertisement - RA)</strong> 消息。RA 消息中包含了网络前缀（如 GUA 前缀）和其他网络信息。</li>
+<li>设备使用 RA 中通告的前缀，并结合自己的接口 ID（通常通过 <strong>EUI-64</strong> 算法或随机生成）来构成一个完整的全球单播地址。</li>
+</ol>
+<h3 id="有状态-dhcpv6-stateful">有状态 DHCPv6 (Stateful)
+</h3><p>工作方式类似于 IPv4 的 DHCP，由 DHCPv6 服务器集中管理和分配 IPv6 地址。</p>
+<ul>
+<li><strong>优点</strong>: 便于集中管理和审计，可以精确控制地址分配。</li>
+<li><strong>适用场景</strong>: 需要严格管理地址分配的企业网络。</li>
+</ul>
+<h3 id="无状态-dhcpv6-stateless">无状态 DHCPv6 (Stateless)
+</h3><p>这是一种混合模式。</p>
+<ul>
+<li>设备通过 <strong>SLAAC</strong> 获取 IPv6 地址。</li>
+<li>同时，设备通过 <strong>DHCPv6</strong> 获取其他网络配置信息，例如 DNS 服务器地址、域名等。</li>
+<li>这种方式既利用了 SLAAC 的便捷性，又弥补了其无法提供 DNS 等附加信息的不足。</li>
+</ul>
+<h3 id="静态配置-manual">静态配置 (Manual)
+</h3><p>管理员手动为设备配置静态的 IPv6 地址、网关和 DNS 等信息。适用于服务器、路由器等需要固定地址的设备。</p>
+<h3 id="dhcpv6-交互过程">DHCPv6 交互过程
+</h3><p>DHCPv6 客户端和服务器之间的通信过程，用于获取 IPv6 地址和/或其他网络配置参数。标准的交互过程涉及四次消息交换，这确保了客户端可以选择最合适的服务器。</p>
+<p><strong>四步交换 (Four-Way Exchange):</strong></p>
+<ol>
+<li><strong>Solicit (请求)</strong>:
+<ul>
+<li>客户端在本地链路上发送一个 <code>Solicit</code> 多播消息，以发现可用的 DHCPv6 服务器。</li>
+<li>消息发送到所有 DHCP 中继代理和服务器的多播地址 <code>ff02::1:2</code>。</li>
+</ul>
+</li>
+<li><strong>Advertise (通告)</strong>:
+<ul>
+<li>收到 <code>Solicit</code> 消息的 DHCPv6 服务器会回复一个 <code>Advertise</code> 单播消息。</li>
+<li>此消息中包含了服务器可以为客户端提供的地址和/或配置信息。一个客户端可能会收到多个 <code>Advertise</code> 消息。</li>
+</ul>
+</li>
+<li><strong>Request (请求)</strong>:
+<ul>
+<li>客户端从收到的一个或多个 <code>Advertise</code> 消息中选择一个服务器，并向其发送一个 <code>Request</code> 单播消息，正式请求分配地址和/或配置参数。</li>
+<li>消息中会包含它所选择的服务器的标识符。</li>
+</ul>
+</li>
+<li><strong>Reply (回复)</strong>:
+<ul>
+<li>被选中的服务器收到 <code>Request</code> 消息后，会发送一个 <code>Reply</code> 单播消息，确认地址分配和配置信息。</li>
+<li>此时，客户端完成配置，可以开始使用获取到的地址。
+<strong>两步交换 (Two-Way Exchange) - 快速提交 (Rapid Commit):</strong>
+为了加速地址分配过程，DHCPv6 引入了快速提交选项。</li>
+</ul>
+</li>
+<li><strong>Solicit (请求)</strong>:
+<ul>
+<li>客户端在 <code>Solicit</code> 消息中加入 &ldquo;Rapid Commit&rdquo; 选项，表示希望立即完成地址分配。</li>
+</ul>
+</li>
+<li><strong>Reply (回复)</strong>:
+<ul>
+<li>支持快速提交的服务器如果愿意立即分配地址，会直接回复一个 <code>Reply</code> 消息，跳过 <code>Advertise</code> 和 <code>Request</code> 步骤。
+这种两步交换减少了延迟，在许多场景下（如网络中只有一个 DHCPv6 服务器）非常高效</li>
+</ul>
+</li>
+</ol>
+<h2 id="关键协议与技术">关键协议与技术
+</h2><p>在一个部署 IPv6 的广播域中，相比 IPv4 一个最明显的区别就是 IPv6 路由通告；在 IPv4 时代，一个广播域中的 ipv4 网段并没有显式说明，或者说并没有一个 ipv4 网段宣称占据了这个广播域，仅使用这个广播域的广播/组播能力，多个ipv4网段共用一个广播域的情况也不鲜见；而在ipv6中，运行ipv6协议的路由器会主动发送名为<strong>路由通告 Router Advertisement</strong>的 ICMPv6 报文，在广播域中宣告/广播*此 ipv6 网段占据了该广播域；</p>
+<p>*（准确的讲应该是组播，IPv6 已经没有广播概念了，这里使用广播这个说法为了说明是公开发送的，在一个广播域中，广播和组播达成的功能类似，且在低端交换机中，广播和组播的转发方式是一致的）</p>
+<p>RA（路由通告 Router Advertisement）使用 ICMPv6 报文（type 134），属于 NDP 协议的一部分</p>
+<p>IPv6 的功能实现严重依赖于一些关键的底层协议，特别是 ICMPv6 和在其基础上构建的邻居发现协议 (NDP)，以及用于动态分配网络前缀的 DHCPv6-PD。</p>
+<h2 id="icmpv6">ICMPv6
+</h2><p>IPv6 时代的ip层控制协议（类比ipv4中的arp、icmp等）均使用icmpv6报文，<strong>取消了IP层的广播</strong>，转而广泛使用<strong>组播</strong>。ICMPv6 中的 type 133 ~ 137 报文由<strong>NDP</strong>协议使用，用于发现网关、邻居、地址配置等等。</p>
+<h3 id="icmpv6-1">ICMPv6
+</h3><p>ICMPv6 是 IPv6 的一个核心组成部分，其功能远超 IPv4 中的 ICMP。它不仅用于传输网络错误和诊断信息，还承载了许多关键的网络控制功能。如果防火墙错误地完全阻止 ICMPv6，将导致 IPv6 网络中断。</p>
+<p><strong>主要功能</strong>:</p>
+<ul>
+<li><strong>错误报告</strong>: 如 &ldquo;目标不可达&rdquo;、&ldquo;数据包过大&rdquo;、&ldquo;超时&rdquo; 等。</li>
+<li><strong>诊断查询</strong>: 如 <code>ping</code> 命令所使用的 &ldquo;Echo Request&rdquo; 和 &ldquo;Echo Reply&rdquo;。</li>
+<li><strong>网络控制</strong>: 为 NDP、MLD (多播侦听发现) 等协议提供消息支持。</li>
+</ul>
+<h3 id="ndp-邻居发现协议">NDP (邻居发现协议)
+</h3><p>NDP 是 IPv6 中一个至关重要的协议，它取代了 IPv4 中的 ARP、ICMP 路由器发现和 ICMP 重定向等多个协议的功能。NDP 基于 ICMPv6 实现，是实现即插即用和 SLAAC 的基础。</p>
+<p><strong>NDP 的核心功能</strong>:</p>
+<ul>
+<li><strong>地址解析</strong>: 将 IPv6 地址解析为链路层地址（如 MAC 地址），取代了 ARP。</li>
+<li><strong>路由器发现</strong>: 主机可以发现本地链路上的路由器。</li>
+<li><strong>前缀发现</strong>: 主机可以发现用于自动配置的地址前缀。</li>
+<li><strong>重复地址检测 (DAD)</strong>: 节点可以确认其想要使用的地址在链路上是唯一的。</li>
+<li><strong>可达性跟踪</strong>: 判断邻居节点是否仍然可达。</li>
+</ul>
+<p><strong>NDP 使用的五种 ICMPv6 消息类型</strong>:</p>
+<ol>
+<li><strong>路由器请求 (Router Solicitation - RS)</strong>: 通常由终端主动发送，用于在未收到周期性 RA 的情况下，请求 RA</li>
+<li><strong>路由器通告 (Router Advertisement - RA)</strong>:由路由器周期性发送，也可以响应 RS 发送，用于宣告本广播域中 IPv6 相关信息。比如前缀、网关、DNS等</li>
+<li><strong>邻居请求 (Neighbor Solicitation - NS)</strong>: 用于解析邻居的链路层地址或执行 DAD,和 IPv4 的 ARP request 功能一致。</li>
+<li><strong>邻居通告 (Neighbor Advertisement - NA)</strong>: 对 NS 消息的响应，或在链路层地址变化时主动发送和 ,IPv4 的 ARP reply功能一致。</li>
+<li><strong>重定向 (Redirect)</strong>: 路由器告知主机有更优的下一跳路径,类似于 IPv4 的icmp redirect功能。</li>
+</ol>
+<h3 id="rsra">RS/RA
+</h3><p>RS/RA 是IPv6 环境下独有的控制信令，此信令明确了一个广播域中各节点所代表的角色。</p>
+<ul>
+<li>
+<p>广播域中发送RA的为路由器</p>
+</li>
+<li>
+<p>广播域中可以存在多个路由器</p>
+</li>
+<li>
+<p>RA 组播周期性发送</p>
+</li>
+<li>
+<p>RS 用于在未收到 RA 情况下请求 RA</p>
+</li>
+<li>
+<p>RA 中的<code>Flags</code>表明当前广播域中 IPv6 地址的配置方式</p>
+</li>
+<li>
+<p>这些 Flags 分布在两个位置&mdash;-ICMPv6 报头和 prefix option，后者称为 PIO(Prefix Information Option) flag。</p>
+<ul>
+<li><strong>M</strong>(Managed address configuration):位于报头，M=1 表明终端应该使用 DHCPv6 协议配置地址和其他网络参数；如果M=1，则忽略 O Flag；此flag用于<strong>DHCPv6 有状态模式</strong>。</li>
+<li><strong>O</strong>(Other configuration):位于报头，O=1且M=0 表明终端应该使用 DHCPv6 设置除了 IPv6 地址之外的其他（dns/ntp等），此 flag 用于 <strong>DHCPv6 无状态模式</strong>。</li>
+<li><strong>A</strong>(Autononous address-configuration flag):位于<strong>PIO</strong>中，A=1 表明终端应该<strong>使用 SLAAC</strong> 配置 IPv6 地址；PIO可以包含多个 Prefix，这也就意味着一个广播域中可以存在多个 IPv6 网段。</li>
+</ul>
+<p>这几种flag是可以复合使用的，以满足不同场景需求,除了手动静态配置ipv6地址，动态/自动配置或者半自动配置ipv6地址的方式都需要从ndp协议的 RA 开始，就好像 RA 引导了IPv6自动配置的开始；RA中的不同flag叠加影响地址自动配置；</p>
+</li>
+</ul>
+<h3 id="dhcpv6-pd">DHCPv6-PD
+</h3><p>DHCPv6前缀代理DHCPv6-PD(PrefixDelegation)是一种前缀分配机制，通过DHCPv6前缀代理机制，下游
+网络设备不需要再手工指定用户侧链路的IPv6地址前缀，它只需要向上游网络设备提出前缀分配申请，上游网
+络设备便可以分配合适的地址前缀给下游设备，下游设备把获得的前缀再通过路由通告(<strong>RA</strong>)至与IPv6主机直连
+的用户链路上，实现IPv6主机的地址自动配置，完成整个系统层次的地址布局。</p>
+<p>DHCP-PD 技术最早在RFC3633中提出，经过几次更新目前最新的是<strong>RFC8415</strong>，其主要思想是把DHCPv6的地址分配方式划分为多层，dhcp client不再是仅仅获取地址用于终端通信，而是可以作为次级路由器身份把地址<strong>层层分配</strong>下去；这样的好处是便于快速和统一部署大量地址，尤其是在大规模动态地址的情况下，此种地址分配方式在家庭宽带中已经大量部署；光猫从其上级获取一段地址用于本地网络终端的地址分配，甚至从光猫拿到的地址还能再往下一层分配.</p>
+<p><strong>工作原理</strong>:</p>
+<ol>
+<li><strong>请求</strong>: 家庭路由器（客户端）向其上游 ISP 的路由器（服务器）发送 DHCPv6 请求，希望获得一个 IPv6 地址<strong>前缀</strong>（例如一个 <code>/56</code> 或 <code>/48</code> 的地址块），而不仅仅是一个地址。</li>
+<li><strong>代理</strong>: ISP 路由器从其地址池中分配一个前缀块，并通过 DHCPv6 回复将其“代理”或“授权”给家庭路由器。</li>
+<li><strong>分配</strong>: 家庭路由器获得该前缀后，就拥有了管理这个地址块的权限。它可以将这个前缀进一步划分为更小的子网（例如多个 <code>/64</code> 子网），并为连接到其 LAN 口的各个内部网络（如家庭网络、访客网络）分配这些子网前缀。</li>
+<li><strong>通告</strong>: 家庭路由器在其内部网络上发送 <strong>RA</strong> 消息，通告这些 <code>/64</code> 的子网前缀，使得内部网络中的设备可以通过 <strong>SLAAC</strong> 自动配置 IPv6 地址。</li>
+</ol>
+<p><strong>优势</strong>:</p>
+<ul>
+<li><strong>自动化</strong>: 无需手动配置下游路由器的子网，实现了网络部署的自动化。</li>
+<li><strong>结构化</strong>: 使得家庭或小型办公室可以轻松地拥有多个独立的 IPv6 子网，便于网络隔离和管理。</li>
+<li><strong>高效性</strong>: 相比于 NAT，每个设备都能获得全球唯一的公网地址，实现了真正的端到端连接。</li>
+</ul>
+<h3 id="link-local">link-local
+</h3><p>对比IPv4环境，IPv6 地址有所谓的 link-local 地址而且充当比较重要作用；由于一个接口可以配置很多IPv6地址，当这些地址作为下一跳使用的时候会出现混乱，这样不利于管理也不利于设备性能开销,使用Link Local地址唯一标识链路上的一个节点就避免了这个问题。而且在网络重新编址过程中，Link Local并不会发生变化，更利于快速更改编址</p>
+<h3 id="dad">DAD
+</h3><p>DAD 基于 <strong>ICMPv6 Neighbor Solicitation（NS，邻居请求）</strong> 和 <strong>Neighbor Advertisement（NA，邻居通告）</strong> 消息实现，步骤如下：</p>
+<ol>
+<li><strong>节点分配一个 IPv6 地址</strong>（如通过 SLAAC 或手动配置），但该地址尚未正式启用（处于 &ldquo;tentative&rdquo; 状态）。</li>
+<li><strong>发送 Neighbor Solicitation（NS）</strong>：
+<ul>
+<li>目标地址（Target Address）设为待检测的 IPv6 地址。</li>
+<li>源地址设为 <strong>未指定地址（::）</strong>（因为该地址尚未正式使用）。</li>
+<li>发送到 <strong>&ldquo;请求节点组播地址&rdquo;（Solicited-Node Multicast Address，FF02::1:FFXX:XXXX）</strong>。</li>
+</ul>
+</li>
+<li><strong>等待响应</strong>：
+<ul>
+<li>如果<strong>没有收到 Neighbor Advertisement（NA）</strong>，说明地址未被占用，可以正常使用。</li>
+<li>如果<strong>收到 NA</strong>，说明地址已被占用，节点必须放弃该地址并重新配置（如 SLAAC 会生成新地址）。</li>
+</ul>
+</li>
+<li><strong>DAD 完成</strong>：
+<ul>
+<li>成功通过检测后，地址变为 &ldquo;Preferred&rdquo; 或 &ldquo;Valid&rdquo; 状态，可以正常通信</li>
+</ul>
+</li>
+</ol>
+<h3 id="邻居表">邻居表
+</h3><p>邻居表，在IPv4环境下就是ARP表，系统维护Arp表内容由系统自己决定，比如端口、更新时间等；</p>
+<p>到了IPv6环境，ND表代替了arp表，而且协议规定了5种邻居状态，IPv6 邻居状态，分别是：
+Incomplete、Reachable、Stale、Delay、Probe，其中只有 Stale 状态是稳定状态。</p>
+<ol>
+<li>Incomplete （未完成状态）：表⽰正在解 析地址，但邻居链路层地址尚未确定。</li>
+<li>Reachable （可达状态）：表⽰地址解析 成功，该邻居可达。</li>
+<li>Stale（失效状态）：表⽰可达时间耗尽，未确定邻居是否可达。</li>
+<li>Delay（延迟状态）：表⽰未确定邻居是否可达。Delay 状态不是⼀个稳定的状态，⽽是⼀个延时等待状态。</li>
+<li>Probe （探测状态）：节点会向处于 Probe 状态的邻居持续发送 NS 报⽂。
+不同状态之间迁移如下图</li>
+</ol>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">ip neigh
+</span></span><span class="line"><span class="cl">ip -6 neigh
+</span></span></code></pre></td></tr></table>
+</div>
+</div>
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/hugo-stack/tags/ipv6/">IPv6</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    
+
+    
+</footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+        2025 Charles Lv
+    </section>
+    
+    <section class="powerby">
+        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/hugo-stack/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+<script src=https://charles-7777.github.io/hugo-stack/background/sakura.js></script>
+
+
+
+
+
+
+<style>
+    .highlight {
+         
+        max-height: 400px;
+        overflow: hidden;
+    }
+
+    .code-show {
+        max-height: none !important;
+    }
+
+    .code-more-box {
+        width: 100%;
+        padding-top: 78px;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(rgba(255, 255, 255, 0)), to(#fff));
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1;
+    }
+
+    .code-more-btn {
+        display: block;
+        margin: auto;
+        width: 44px;
+        height: 22px;
+        background: #f0f0f5;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+        padding-top: 6px;
+        cursor: pointer;
+    }
+
+    .code-more-img {
+        cursor: pointer !important;
+        display: block;
+        margin: auto;
+        width: 22px;
+        height: 16px;
+    }
+</style>
+
+<script>
+  function initCodeMoreBox() {
+    let codeBlocks = document.querySelectorAll(".highlight");
+    if (!codeBlocks) {
+      return;
+    }
+    codeBlocks.forEach(codeBlock => {
+      
+      if (codeBlock.scrollHeight <= codeBlock.clientHeight) {
+        return;
+      }
+      
+      
+      let codeMoreBox = document.createElement('div');
+      codeMoreBox.classList.add('code-more-box');
+      
+      let codeMoreBtn = document.createElement('span');
+      codeMoreBtn.classList.add('code-more-btn');
+      codeMoreBtn.addEventListener('click', () => {
+        codeBlock.classList.add('code-show');
+        codeMoreBox.style.display = 'none';
+        
+        window.dispatchEvent(new Event('resize'))
+      })
+      
+      let img = document.createElement('img');
+      img.classList.add('code-more-img');
+      img.src = "https://charles-7777.github.io/hugo-stack/icons/codeMore.png"
+      
+      codeMoreBtn.appendChild(img);
+      codeMoreBox.appendChild(codeMoreBtn);
+      codeBlock.appendChild(codeMoreBox)
+    })
+  }
+  
+  initCodeMoreBox();
+</script>
+
+
+
+<style>
+    #backTopBtn {
+        display: none;
+        position: fixed;
+        bottom: 30px;
+        z-index: 99;
+        cursor: pointer;
+        width: 30px;
+        height: 30px;
+        background-image: url(https://charles-7777.github.io/hugo-stack/icons/backTop.svg);
+    }
+</style>
+
+<script>
+    
+
+    function initScrollTop() {
+        let rightSideBar = document.querySelector(".right-sidebar");
+        if (!rightSideBar) {
+            return;
+        }
+        
+        let btn = document.createElement("div");
+        btn.id = "backTopBtn";
+        btn.onclick = backToTop
+        rightSideBar.appendChild(btn)
+        
+        window.onscroll = function() {
+            
+            if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+                btn.style.display = "block";
+            } else {
+                btn.style.display = "none";
+            }
+        };
+    }
+
+    
+
+    function backToTop(){
+        window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+
+    initScrollTop();
+</script>
+
+
+<style>
+    #TableOfContents > ul, ol {
+        ul, ol {
+            display: none;
+        }
+        .open {
+            display: block;
+        }
+    }
+</style>
+
+<script>
+    function initTocHide() {
+        
+        let toc = document.querySelector(".widget--toc");
+        if (!toc) {
+            return;
+        }
+        
+        window.addEventListener('scroll', function() {
+            
+            let openUl = document.querySelectorAll(".open");
+            if (openUl.length > 0) {
+              openUl.forEach((ul) => {
+                ul.classList.remove("open")
+              })
+            }
+            
+            let currentLi = document.querySelector(".active-class");
+            if (!currentLi) {
+                return
+            }
+            
+            if (currentLi.children.length > 1) {
+                currentLi.children[1].classList.add("open")
+            }
+            
+            let ul = currentLi.parentElement;
+            do {
+                ul.classList.add("open");
+                ul = ul.parentElement.parentElement
+            } while (ul !== undefined && (ul.localName === 'ul' || ul.localName === 'ol'))
+        });
+    }
+    initTocHide()
+</script>
+
+
+
+
+
+
+ <script>
+  const cdnPath = "https://cdn.jsdelivr.net/gh/charles-7777/live2d-widget-v3@main";
+  const config = {
+    
+    path: {
+      homePath: "/",
+      modelPath: cdnPath + "/Resources/",
+      cssPath: cdnPath + "/waifu.css",
+      tipsJsonPath: cdnPath + "/waifu-tips.json",
+      tipsJsPath: cdnPath + "/waifu-tips.js",
+      live2dCorePath: cdnPath + "/Core/live2dcubismcore.js",
+      live2dSdkPath: cdnPath + "/live2d-sdk.js"
+    },
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    tools: ["hitokoto",  "express",  "photo", "info", "quit"],
+    
+    drag: {
+      enable: false,
+      direction: ["x", "y"]
+    },
+    
+    switchType: "order"
+  }
+
+  const local_cssPath = "https://charles-7777.github.io/hugo-stack/waifu/waifu.css";
+  const local_tipsJsonPath = "https://charles-7777.github.io/hugo-stack/waifu/waifu-tips.json";
+  const local_tipsJsPath = "https://charles-7777.github.io/hugo-stack/waifu/waifu-tips.js";
+
+  
+  if (screen.width >= 768) {
+    Promise.all([
+    
+      loadExternalResource(local_cssPath, "css"),
+      loadExternalResource(config.path.live2dCorePath, "js"),
+      loadExternalResource(config.path.live2dSdkPath, "js"),
+    
+      loadExternalResource(local_tipsJsPath, "js")
+    ]).then(() => {
+      initWidget({
+        
+        waifuPath: local_tipsJsonPath,
+        cdnPath: config.path.modelPath,
+        tools: config.tools,
+        dragEnable: config.drag.enable,
+        dragDirection: config.drag.direction,
+        switchType: config.switchType
+      });
+    });
+  }
+
+  
+  function loadExternalResource(url, type) {
+    return new Promise((resolve, reject) => {
+      let tag;
+      if (type === "css") {
+        tag = document.createElement("link");
+        tag.rel = "stylesheet";
+        tag.href = url;
+      }
+      else if (type === "js") {
+        tag = document.createElement("script");
+        tag.src = url;
+      }
+      if (tag) {
+        tag.onload = () => resolve(url);
+        tag.onerror = () => reject(url);
+        document.head.appendChild(tag);
+      }
+    });
+  }
+</script>
+
+    </body>
+</html>
