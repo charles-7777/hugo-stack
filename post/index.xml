@@ -7,7 +7,98 @@
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
         <copyright>Charles Lv</copyright>
-        <lastBuildDate>Fri, 15 Aug 2025 20:10:35 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/post/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Mon, 18 Aug 2025 20:12:04 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/post/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>CORE(Common Open Research Emulator)网络仿真工具</title>
+        <link>https://charles-7777.github.io/hugo-stack/p/corecommon-open-research-emulator%E7%BD%91%E7%BB%9C%E4%BB%BF%E7%9C%9F%E5%B7%A5%E5%85%B7/</link>
+        <pubDate>Mon, 18 Aug 2025 20:01:30 +0800</pubDate>
+        
+        <guid>https://charles-7777.github.io/hugo-stack/p/corecommon-open-research-emulator%E7%BD%91%E7%BB%9C%E4%BB%BF%E7%9C%9F%E5%B7%A5%E5%85%B7/</guid>
+        <description>&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://coreemu.github.io/core/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;官方文档&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;CORE (Common Open Research Emulator) 是一个强大的、开源的网络模拟和仿真工具，广泛应用于网络研究、教学、协议开发和网络应用测试&lt;/p&gt;
+&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;主题&lt;/th&gt;
+          &lt;th&gt;描述&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;a class=&#34;link&#34; href=&#34;https://coreemu.github.io/core/architecture.html&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Architecture&lt;/a&gt;&lt;/td&gt;
+          &lt;td&gt;体系结构概述，介绍如何使用Python、gRPC直接控制Core&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;a class=&#34;link&#34; href=&#34;https://coreemu.github.io/core/install.html&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Installation&lt;/a&gt;&lt;/td&gt;
+          &lt;td&gt;CORE的安装方法及要求&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;a class=&#34;link&#34; href=&#34;https://coreemu.github.io/core/gui.html&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;GUI&lt;/a&gt;&lt;/td&gt;
+          &lt;td&gt;如何使用GUI&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;a class=&#34;link&#34; href=&#34;https://coreemu.github.io/core/nodetypes.html&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Node Types&lt;/a&gt;&lt;/td&gt;
+          &lt;td&gt;CORE支持的节点类型概述&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;a class=&#34;link&#34; href=&#34;https://coreemu.github.io/core/pygui.html&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;(BETA) Python GUI&lt;/a&gt;&lt;/td&gt;
+          &lt;td&gt;如何使用基于Python的BETA GUI&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;a class=&#34;link&#34; href=&#34;https://coreemu.github.io/core/python.html&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Python API&lt;/a&gt;&lt;/td&gt;
+          &lt;td&gt;介绍如何使用Python直接控制Core (自己实现core-daemon)&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;a class=&#34;link&#34; href=&#34;https://coreemu.github.io/core/grpc.html&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;gRPC API&lt;/a&gt;&lt;/td&gt;
+          &lt;td&gt;介绍如何使用gRPC控制Core (连接core-daemon 调用其api)&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;a class=&#34;link&#34; href=&#34;https://coreemu.github.io/core/distributed.html&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Distributed&lt;/a&gt;&lt;/td&gt;
+          &lt;td&gt;在多个服务器上运行CORE的分布式细节&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;a class=&#34;link&#34; href=&#34;https://coreemu.github.io/core/ctrlnet.html&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;CTRLNET&lt;/a&gt;&lt;/td&gt;
+          &lt;td&gt;如何控制网络从主机与节点通信&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;a class=&#34;link&#34; href=&#34;https://coreemu.github.io/core/services.html&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Services&lt;/a&gt;&lt;/td&gt;
+          &lt;td&gt;概述所提供的服务并创建自定义服务&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;a class=&#34;link&#34; href=&#34;https://coreemu.github.io/core/performance.html&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Performance&lt;/a&gt;&lt;/td&gt;
+          &lt;td&gt;使用CORE时的性能说明&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;a class=&#34;link&#34; href=&#34;https://coreemu.github.io/core/devguide.html&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Developers Guide&lt;/a&gt;&lt;/td&gt;
+          &lt;td&gt;概述如何对CORE开发&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;a class=&#34;link&#34; href=&#34;https://coreemu.github.io/core/emane.html&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Core Emane&lt;/a&gt;&lt;/td&gt;
+          &lt;td&gt;CORE中运行和使用EMANE的高级主题和示例&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;a class=&#34;link&#34; href=&#34;https://adjacentlink.com/documentation/emane/v1.2.1/index.html&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Emane开发手册&lt;/a&gt;&lt;/td&gt;
+          &lt;td&gt;Emane的架构介绍 开发相关&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+</description>
+        </item>
+        <item>
         <title>IPv6 地址分配详解</title>
         <link>https://charles-7777.github.io/hugo-stack/p/ipv6-%E5%9C%B0%E5%9D%80%E5%88%86%E9%85%8D%E8%AF%A6%E8%A7%A3/</link>
         <pubDate>Fri, 15 Aug 2025 19:58:16 +0800</pubDate>
