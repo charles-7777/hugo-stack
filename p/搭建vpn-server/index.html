@@ -10,7 +10,7 @@
 <meta property='og:description' content="docker 搭建 hwdsl2/docker-ipsec-vpn-server: Docker image to run an IPsec VPN server, with IPsec/L2TP, Cisco IPsec and IKEv2\n1 2 3 4 5 6 7 8 9 10 docker run \\ --name ipsec-vpn-server \\ --restart=always \\ --env-file ./vpn.env \\ -v ikev2-vpn-data:/etc/ipsec.d \\ -v /lib/modules:/lib/modules:ro \\ -p 500:500/udp \\ -p 4500:4500/udp \\ -d --privileged \\ hwdsl2/ipsec-vpn-server vpn.env\n1 2 3 4 5 6 VPN_IPSEC_PSK=ipsec VPN_USER=vpnuser VPN_PASSWORD=123456 VPN_PUBLIC_IP=x.x.x.x VPN_ADDL_USERS=vpnuser1 vpnuser2 VPN_ADDL_PASSWORDS=123456 123456 查看docker启动log\n">
 <meta property='og:url' content='https://charles-7777.github.io/hugo-stack/p/%E6%90%AD%E5%BB%BAvpn-server/'>
 <meta property='og:site_name' content=''>
-<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='vpn' /><meta property='article:published_time' content='2025-09-01T19:31:02&#43;08:00'/><meta property='article:modified_time' content='2025-09-01T20:07:08&#43;08:00'/>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='vpn' /><meta property='article:published_time' content='2025-09-01T19:31:02&#43;08:00'/><meta property='article:modified_time' content='2025-09-02T14:38:31&#43;08:00'/>
 <meta name="twitter:title" content="搭建vpn server">
 <meta name="twitter:description" content="docker 搭建 hwdsl2/docker-ipsec-vpn-server: Docker image to run an IPsec VPN server, with IPsec/L2TP, Cisco IPsec and IKEv2\n1 2 3 4 5 6 7 8 9 10 docker run \\ --name ipsec-vpn-server \\ --restart=always \\ --env-file ./vpn.env \\ -v ikev2-vpn-data:/etc/ipsec.d \\ -v /lib/modules:/lib/modules:ro \\ -p 500:500/udp \\ -p 4500:4500/udp \\ -d --privileged \\ hwdsl2/ipsec-vpn-server vpn.env\n1 2 3 4 5 6 VPN_IPSEC_PSK=ipsec VPN_USER=vpnuser VPN_PASSWORD=123456 VPN_PUBLIC_IP=x.x.x.x VPN_ADDL_USERS=vpnuser1 vpnuser2 VPN_ADDL_PASSWORDS=123456 123456 查看docker启动log\n">
     <link rel="shortcut icon" href="/hugo-stack/favicon2.ico" />
@@ -299,7 +299,13 @@
   <ol>
     <li><a href="#docker-搭建">docker 搭建</a>
       <ol>
-        <li><a href="#曾遇到windows-error-809">曾遇到Windows error 809</a></li>
+        <li><a href="#连接ipsecl2tp-可能遇到的问题">连接ipsec/l2tp 可能遇到的问题</a></li>
+        <li><a href="#配置ikev2">配置Ikev2</a>
+          <ol>
+            <li><a href="#配置ikev2-clientwindows">配置IKEv2 client（windows)</a></li>
+            <li><a href="#可能遇到的问题">可能遇到的问题</a></li>
+          </ol>
+        </li>
       </ol>
     </li>
     <li><a href="#在windows-server-上搭建vpn-server">在windows server 上搭建vpn server</a></li>
@@ -356,7 +362,7 @@
             </div>
         <div>
             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-edit"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg>
-            <time class="article-lastmod">2025-09-01 20:07</time>
+            <time class="article-lastmod">2025-09-02 14:38</time>
         </div>
         
 
@@ -371,7 +377,7 @@
 
 
                 <time class="article-time--reading">
-                    阅读时长: 1 分钟
+                    阅读时长: 2 分钟
                 </time>
             </div>
         
@@ -380,7 +386,7 @@
             <div>
                 <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-file-word"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 12l1.333 5l1.667 -4l1.667 4l1.333 -5" /></svg>
                 <time class="article-words">
-                    173 字
+                    305 字
                 </time>
             </div>
         
@@ -453,8 +459,9 @@
 <p>一些client 连接可能遇到的问题</p>
 <p><a class="link" href="https://github.com/hwdsl2/setup-ipsec-vpn/blob/master/docs/clients.md"  target="_blank" rel="noopener"
     >setup-ipsec-vpn/docs/clients.md at master · hwdsl2/setup-ipsec-vpn</a></p>
-<h3 id="曾遇到windows-error-809">曾遇到Windows error 809
-</h3><blockquote>
+<h3 id="连接ipsecl2tp-可能遇到的问题">连接ipsec/l2tp 可能遇到的问题
+</h3><p><strong>Windows error 809</strong></p>
+<blockquote>
 <p>Error 809: The network connection between your computer and the VPN server could not be established because the remote server is not responding. This could be because one of the network devices (e.g, firewalls, NAT, routers, etc) between your computer and the remote server is not configured to allow VPN connections. Please contact your Administrator or your service provider to determine which device may be causing the problem.</p></blockquote>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
@@ -464,7 +471,88 @@
 <pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">REG ADD HKLM\SYSTEM\CurrentControlSet\Services\PolicyAgent /v AssumeUDPEncapsulationContextOnSendRule /t REG_DWORD /d 0x2 /f
 </span></span></code></pre></td></tr></table>
 </div>
-</div><h2 id="在windows-server-上搭建vpn-server">在windows server 上搭建vpn server
+</div><h3 id="配置ikev2">配置Ikev2
+</h3><p>可参考<a class="link" href="https://github.com/hwdsl2/docker-ipsec-vpn-server/blob/master/README-zh.md#%e9%85%8d%e7%bd%ae%e5%b9%b6%e4%bd%bf%e7%94%a8-ikev2-vpn"  target="_blank" rel="noopener"
+    >docker-ipsec-vpn-server/README-zh.md at master · hwdsl2/docker-ipsec-vpn-server</a></p>
+<p><code>docker logs ipsec-vpn-server</code>查看IKEv2 相关配置信息</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">IKEv2 is already set up. Details for IKEv2 mode:
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">VPN server address: 208.216.217.35
+</span></span><span class="line"><span class="cl">VPN client name: vpnclient
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Client configuration is available inside the
+</span></span><span class="line"><span class="cl">Docker container at:
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>首次启动时，可能使用的是默认配置，需要手动更改</p>
+<p>进入docker<code>docker exec  -it ipsec-vpn-server /bin/sh</code></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">wget https://get.vpnsetup.net/ikev2addr -O ikev2addr.sh
+</span></span><span class="line"><span class="cl">bash ikev2addr.sh
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>执行<code>ikev2addr.sh</code>去手动更改vpnserver address</p>
+<h4 id="配置ikev2-clientwindows">配置IKEv2 client（windows)
+</h4><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl"># 查看容器内的 /etc/ipsec.d 目录的文件
+</span></span><span class="line"><span class="cl">docker exec -it ipsec-vpn-server ls -l /etc/ipsec.d
+</span></span><span class="line"><span class="cl"># 示例：将一个客户端配置文件从容器复制到 Docker 主机当前目录
+</span></span><span class="line"><span class="cl">docker cp ipsec-vpn-server:/etc/ipsec.d/vpnclient.p12 ./
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>在创建IKEv2连接之前，需要在windows 客户端 导入证书</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl"># Import .p12 file (replace with your own value)
+</span></span><span class="line"><span class="cl">certutil -f -importpfx &#34;\path\to\your\file.p12&#34; NoExport
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h4 id="可能遇到的问题">可能遇到的问题
+</h4><ul>
+<li>
+<p>IKE authentication credentials are unacceptable</p>
+<p>可能是IKEv2 vpn server中 server address配置不对，可以尝试更改VPN server address</p>
+</li>
+<li>
+<p>Policy match error</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">REG ADD HKLM\SYSTEM\CurrentControlSet\Services\RasMan\Parameters /v NegotiateDH2048_AES256 /t REG_DWORD /d 0x1 /f
+</span></span></code></pre></td></tr></table>
+</div>
+</div></li>
+</ul>
+<h2 id="在windows-server-上搭建vpn-server">在windows server 上搭建vpn server
 </h2><p>可参考<a class="link" href="https://blog.cpmsxe.net/2020/04/01/windows-server-2012-r2-%e5%ae%89%e8%a3%85sstp-l2tp-pptp/"  target="_blank" rel="noopener"
     >Windows Server 2012 R2 安装SSTP/L2TP/PPTP – Noname</a></p>
 
