@@ -161,6 +161,99 @@
 &lt;h2 id=&#34;在windows-server-上搭建vpn-server&#34;&gt;在windows server 上搭建vpn server
 &lt;/h2&gt;&lt;p&gt;可参考&lt;a class=&#34;link&#34; href=&#34;https://blog.cpmsxe.net/2020/04/01/windows-server-2012-r2-%e5%ae%89%e8%a3%85sstp-l2tp-pptp/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
     &gt;Windows Server 2012 R2 安装SSTP/L2TP/PPTP – Noname&lt;/a&gt;&lt;/p&gt;
+&lt;h2 id=&#34;在windows-上安装并使用openvpn&#34;&gt;在windows 上安装并使用openvpn
+&lt;/h2&gt;&lt;p&gt;参考链接&lt;/p&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://blog.eyyyye.com/article/21&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;openvpn安装配置说明(windows系统) &lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://www.cnblogs.com/cj1698/p/14530448.html&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;OpenVPN Windows 平台安装部署教程 &lt;/a&gt;&lt;/p&gt;
+&lt;h3 id=&#34;安装openvpn&#34;&gt;安装openvpn
+&lt;/h3&gt;&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://github.com/OpenVPN/openvpn&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://github.com/OpenVPN/openvpn&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://openvpn.net/community-downloads/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://openvpn.net/community-downloads/&lt;/a&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;openvpn软件服务端和客户端都是同一个安装包&lt;/li&gt;
+&lt;li&gt;安装服务端的时候要选择&lt;strong&gt;Customize&lt;/strong&gt;，勾选openvpn service和&lt;strong&gt;EasyRSA3&lt;/strong&gt; 安装，用于服务端配置和证书生成使用。&lt;/li&gt;
+&lt;li&gt;安装客户端时可直接点击&lt;strong&gt;Install Now&lt;/strong&gt;进行安装&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;证书生成&#34;&gt;证书生成
+&lt;/h3&gt;&lt;p&gt;安装服务端的时候已经安装了证书生成工具**EasyRSA3，**使用此工具即可生成所需证书&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;进入EasyRSA shell 环境dos窗口&lt;/p&gt;
+&lt;p&gt;进入&lt;code&gt;C:\Program Files\OpenVPN\easy-rsa&lt;/code&gt;目录，双击&lt;code&gt;EasyRSA-Start.bat&lt;/code&gt; 进入&lt;code&gt;EasyRSA shell&lt;/code&gt; 环境dos窗口中&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;初始化证书生成程序&lt;/p&gt;
+&lt;p&gt;弹出的dos窗口中输入&lt;code&gt;./easyrsa init-pki&lt;/code&gt; 初始化证书生成程序，初始化成功后会在C:\Program Files\OpenVPN\easy-rsa目录下新建文件夹&lt;strong&gt;kpi&lt;/strong&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;生成ca证书&lt;/p&gt;
+&lt;p&gt;在dos窗口中输入&lt;code&gt;./easyrsa build-ca nopass&lt;/code&gt;生成无密码CA证书，生成过程中会要求输入证书名称，随意输入即可，生成结束后会打印出证书所在目录&lt;code&gt;easy-rsa\pki\ca.crt&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;生成服务端证书&lt;/p&gt;
+&lt;p&gt;输入&lt;code&gt;./easyrsa build-server-full server nopass&lt;/code&gt; 生成无密码服务端证书,生成后证书文件在&lt;code&gt;C:\Program Files\OpenVPN\easy-rsa\pki\issued&lt;/code&gt;文件夹&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;生成客户端证书&lt;/p&gt;
+&lt;p&gt;输入&lt;code&gt;./easyrsa build-client-full client nopass&lt;/code&gt;生成无密码客户端证书,生成后证书在&lt;code&gt;C:\Program Files\OpenVPN\easy-rsa\pki\issued&lt;/code&gt;文件夹&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;生成DH密钥交换协议&lt;/p&gt;
+&lt;p&gt;输入&lt;code&gt;./easyrsa gen-dh&lt;/code&gt;生成DH密钥交换协议文件,生成文件在&lt;code&gt;C:\Program Files\OpenVPN\easy-rsa\pk&lt;/code&gt;i目录下&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;目录&lt;code&gt;C:\Program Files\OpenVPN\easy-rsa\pki\private&lt;/code&gt;下为证书key&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;openvpn --genkey tls-auth ta.key&lt;/code&gt;to help block DoS attacks and UDP port flooding.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;配置文件&#34;&gt;配置文件
+&lt;/h3&gt;&lt;p&gt;服务端配置文件模板为server.ovpn，客户端配置文件client.ovpn，在 C:\Program Files\OpenVPN\sample-config目录下有。在服务端或客户端的windows主机上复制对应配置文件模板到C:\Program Files\OpenVPN\config目录下&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;配置文件中  &lt;strong&gt;；&lt;/strong&gt; &lt;strong&gt;#&lt;/strong&gt;  都可以用作注释，但是不支持在配置指令的同一行后面添加注释&lt;/p&gt;
+&lt;p&gt;例如 &lt;code&gt;cipher AES-256-CBC #选择加密算法&lt;/code&gt;   这样写是错误的，解析时会将cipher 后的&lt;code&gt;AES-256-CBC #选择加密算法&lt;/code&gt;整个字符串当成参数值，从而导致错误&lt;/p&gt;&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;服务端server.ovpn 修改&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;端口：（公网需要对应开通此端口）port udp 1194&lt;/li&gt;
+&lt;li&gt;协议文件名：dh dh2048.pem修改为dh dh.pem&lt;/li&gt;
+&lt;li&gt;运行多用户使用同一客户端证书：;duplicate-cn取消注释（前面;号删除）修改为duplicate-cn&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;客户端client.ovpn修改&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;修改连接服务器地址: remote my-server-1 1194修改为remote 服务器公网ip 1194&lt;/li&gt;
+&lt;li&gt;取消注释掉此行:  ;tls-auth ta.key 1修改为 tls-auth ta.key 1（前面;号删除）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;证书复制&#34;&gt;证书复制
+&lt;/h3&gt;&lt;p&gt;配置文件server.ovpn client.ovpn 中的证书 和 key 都是只有文件名 ，没有规定具体路径&lt;/p&gt;
+&lt;p&gt;需要将其copy 到&lt;code&gt;C:\Program Files\OpenVPN\config&lt;/code&gt; 下&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;将服务端证书，服务端key，ca证书，dh文件,  ta.key复制到文件夹C:\Program Files\OpenVPN\config下&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;将客户端证书，客户端key，ca证书 , ta.key复制到目录C:\Program Files\OpenVPN\config下&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;连接&#34;&gt;连接
+&lt;/h3&gt;&lt;p&gt;右键点击任务栏带锁小电脑图标，点击连接,连接成功后系统分配ip，小电脑变绿&lt;/p&gt;
+&lt;h3 id=&#34;其它&#34;&gt;其它
+&lt;/h3&gt;&lt;ol&gt;
+&lt;li&gt;tls-auth ta.key 配置为防御 DoS,UDP 淹没等恶意攻击行为的选项，如配置需要生成ta.key证书，生成方式：跳转到openvpn软件的bin目录下，在dos窗口中输入：&lt;code&gt;openvpn.exe --genkey --secret ta.key &lt;/code&gt;，便在bin目录下生成ta.key证书了，复制到配置文件目录即可。&lt;/li&gt;
+&lt;li&gt;证书时间等参数可以在vars文件中设置，设置后重新启动EasyRSA-Start即可加载新配置。&lt;/li&gt;
+&lt;li&gt;;client-to-client为客户端之间是否能直接访问的配置，去掉注释后生效。&lt;/li&gt;
+&lt;li&gt;;push &amp;ldquo;redirect-gateway def1 bypass-dhcp&amp;rdquo; 配置开启后客户端所有流量将路由至服务器，需要在访问端服务器上配置路由转发后才可以访问公网。&lt;/li&gt;
+&lt;li&gt;开启第4步后，可在客户端配置文件中增加&lt;code&gt;route 192.168.1.0 255.255.255.0 net_gateway&lt;/code&gt;配置，使该网段不通过openvpn路由&lt;/li&gt;
+&lt;/ol&gt;
 </description>
         </item>
         <item>

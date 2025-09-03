@@ -10,7 +10,7 @@
 <meta property='og:description' content="docker 搭建 hwdsl2/docker-ipsec-vpn-server: Docker image to run an IPsec VPN server, with IPsec/L2TP, Cisco IPsec and IKEv2\n1 2 3 4 5 6 7 8 9 10 docker run \\ --name ipsec-vpn-server \\ --restart=always \\ --env-file ./vpn.env \\ -v ikev2-vpn-data:/etc/ipsec.d \\ -v /lib/modules:/lib/modules:ro \\ -p 500:500/udp \\ -p 4500:4500/udp \\ -d --privileged \\ hwdsl2/ipsec-vpn-server vpn.env\n1 2 3 4 5 6 VPN_IPSEC_PSK=ipsec VPN_USER=vpnuser VPN_PASSWORD=123456 VPN_PUBLIC_IP=x.x.x.x VPN_ADDL_USERS=vpnuser1 vpnuser2 VPN_ADDL_PASSWORDS=123456 123456 查看docker启动log\n">
 <meta property='og:url' content='https://charles-7777.github.io/hugo-stack/p/%E6%90%AD%E5%BB%BAvpn-server/'>
 <meta property='og:site_name' content=''>
-<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='vpn' /><meta property='article:published_time' content='2025-09-01T19:31:02&#43;08:00'/><meta property='article:modified_time' content='2025-09-02T14:38:31&#43;08:00'/>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='vpn' /><meta property='article:published_time' content='2025-09-01T19:31:02&#43;08:00'/><meta property='article:modified_time' content='2025-09-03T19:31:51&#43;08:00'/>
 <meta name="twitter:title" content="搭建vpn server">
 <meta name="twitter:description" content="docker 搭建 hwdsl2/docker-ipsec-vpn-server: Docker image to run an IPsec VPN server, with IPsec/L2TP, Cisco IPsec and IKEv2\n1 2 3 4 5 6 7 8 9 10 docker run \\ --name ipsec-vpn-server \\ --restart=always \\ --env-file ./vpn.env \\ -v ikev2-vpn-data:/etc/ipsec.d \\ -v /lib/modules:/lib/modules:ro \\ -p 500:500/udp \\ -p 4500:4500/udp \\ -d --privileged \\ hwdsl2/ipsec-vpn-server vpn.env\n1 2 3 4 5 6 VPN_IPSEC_PSK=ipsec VPN_USER=vpnuser VPN_PASSWORD=123456 VPN_PUBLIC_IP=x.x.x.x VPN_ADDL_USERS=vpnuser1 vpnuser2 VPN_ADDL_PASSWORDS=123456 123456 查看docker启动log\n">
     <link rel="shortcut icon" href="/hugo-stack/favicon2.ico" />
@@ -309,6 +309,16 @@
       </ol>
     </li>
     <li><a href="#在windows-server-上搭建vpn-server">在windows server 上搭建vpn server</a></li>
+    <li><a href="#在windows-上安装并使用openvpn">在windows 上安装并使用openvpn</a>
+      <ol>
+        <li><a href="#安装openvpn">安装openvpn</a></li>
+        <li><a href="#证书生成">证书生成</a></li>
+        <li><a href="#配置文件">配置文件</a></li>
+        <li><a href="#证书复制">证书复制</a></li>
+        <li><a href="#连接">连接</a></li>
+        <li><a href="#其它">其它</a></li>
+      </ol>
+    </li>
   </ol>
 </nav>
         </div>
@@ -362,7 +372,7 @@
             </div>
         <div>
             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-edit"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg>
-            <time class="article-lastmod">2025-09-02 14:38</time>
+            <time class="article-lastmod">2025-09-03 19:31</time>
         </div>
         
 
@@ -377,7 +387,7 @@
 
 
                 <time class="article-time--reading">
-                    阅读时长: 2 分钟
+                    阅读时长: 3 分钟
                 </time>
             </div>
         
@@ -386,7 +396,7 @@
             <div>
                 <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-file-word"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 12l1.333 5l1.667 -4l1.667 4l1.333 -5" /></svg>
                 <time class="article-words">
-                    305 字
+                    452 字
                 </time>
             </div>
         
@@ -555,6 +565,99 @@
 <h2 id="在windows-server-上搭建vpn-server">在windows server 上搭建vpn server
 </h2><p>可参考<a class="link" href="https://blog.cpmsxe.net/2020/04/01/windows-server-2012-r2-%e5%ae%89%e8%a3%85sstp-l2tp-pptp/"  target="_blank" rel="noopener"
     >Windows Server 2012 R2 安装SSTP/L2TP/PPTP – Noname</a></p>
+<h2 id="在windows-上安装并使用openvpn">在windows 上安装并使用openvpn
+</h2><p>参考链接</p>
+<p><a class="link" href="https://blog.eyyyye.com/article/21"  target="_blank" rel="noopener"
+    >openvpn安装配置说明(windows系统) </a></p>
+<p><a class="link" href="https://www.cnblogs.com/cj1698/p/14530448.html"  target="_blank" rel="noopener"
+    >OpenVPN Windows 平台安装部署教程 </a></p>
+<h3 id="安装openvpn">安装openvpn
+</h3><p><a class="link" href="https://github.com/OpenVPN/openvpn"  target="_blank" rel="noopener"
+    >https://github.com/OpenVPN/openvpn</a></p>
+<p><a class="link" href="https://openvpn.net/community-downloads/"  target="_blank" rel="noopener"
+    >https://openvpn.net/community-downloads/</a></p>
+<ul>
+<li>openvpn软件服务端和客户端都是同一个安装包</li>
+<li>安装服务端的时候要选择<strong>Customize</strong>，勾选openvpn service和<strong>EasyRSA3</strong> 安装，用于服务端配置和证书生成使用。</li>
+<li>安装客户端时可直接点击<strong>Install Now</strong>进行安装</li>
+</ul>
+<h3 id="证书生成">证书生成
+</h3><p>安装服务端的时候已经安装了证书生成工具**EasyRSA3，**使用此工具即可生成所需证书</p>
+<ol>
+<li>
+<p>进入EasyRSA shell 环境dos窗口</p>
+<p>进入<code>C:\Program Files\OpenVPN\easy-rsa</code>目录，双击<code>EasyRSA-Start.bat</code> 进入<code>EasyRSA shell</code> 环境dos窗口中</p>
+</li>
+<li>
+<p>初始化证书生成程序</p>
+<p>弹出的dos窗口中输入<code>./easyrsa init-pki</code> 初始化证书生成程序，初始化成功后会在C:\Program Files\OpenVPN\easy-rsa目录下新建文件夹<strong>kpi</strong></p>
+</li>
+<li>
+<p>生成ca证书</p>
+<p>在dos窗口中输入<code>./easyrsa build-ca nopass</code>生成无密码CA证书，生成过程中会要求输入证书名称，随意输入即可，生成结束后会打印出证书所在目录<code>easy-rsa\pki\ca.crt</code></p>
+</li>
+<li>
+<p>生成服务端证书</p>
+<p>输入<code>./easyrsa build-server-full server nopass</code> 生成无密码服务端证书,生成后证书文件在<code>C:\Program Files\OpenVPN\easy-rsa\pki\issued</code>文件夹</p>
+</li>
+<li>
+<p>生成客户端证书</p>
+<p>输入<code>./easyrsa build-client-full client nopass</code>生成无密码客户端证书,生成后证书在<code>C:\Program Files\OpenVPN\easy-rsa\pki\issued</code>文件夹</p>
+</li>
+<li>
+<p>生成DH密钥交换协议</p>
+<p>输入<code>./easyrsa gen-dh</code>生成DH密钥交换协议文件,生成文件在<code>C:\Program Files\OpenVPN\easy-rsa\pk</code>i目录下</p>
+</li>
+<li>
+<p>目录<code>C:\Program Files\OpenVPN\easy-rsa\pki\private</code>下为证书key</p>
+</li>
+<li>
+<p><code>openvpn --genkey tls-auth ta.key</code>to help block DoS attacks and UDP port flooding.</p>
+</li>
+</ol>
+<h3 id="配置文件">配置文件
+</h3><p>服务端配置文件模板为server.ovpn，客户端配置文件client.ovpn，在 C:\Program Files\OpenVPN\sample-config目录下有。在服务端或客户端的windows主机上复制对应配置文件模板到C:\Program Files\OpenVPN\config目录下</p>
+<blockquote>
+<p>配置文件中  <strong>；</strong> <strong>#</strong>  都可以用作注释，但是不支持在配置指令的同一行后面添加注释</p>
+<p>例如 <code>cipher AES-256-CBC #选择加密算法</code>   这样写是错误的，解析时会将cipher 后的<code>AES-256-CBC #选择加密算法</code>整个字符串当成参数值，从而导致错误</p></blockquote>
+<ul>
+<li>
+<p>服务端server.ovpn 修改</p>
+<ul>
+<li>端口：（公网需要对应开通此端口）port udp 1194</li>
+<li>协议文件名：dh dh2048.pem修改为dh dh.pem</li>
+<li>运行多用户使用同一客户端证书：;duplicate-cn取消注释（前面;号删除）修改为duplicate-cn</li>
+</ul>
+</li>
+<li>
+<p>客户端client.ovpn修改</p>
+<ul>
+<li>修改连接服务器地址: remote my-server-1 1194修改为remote 服务器公网ip 1194</li>
+<li>取消注释掉此行:  ;tls-auth ta.key 1修改为 tls-auth ta.key 1（前面;号删除）</li>
+</ul>
+</li>
+</ul>
+<h3 id="证书复制">证书复制
+</h3><p>配置文件server.ovpn client.ovpn 中的证书 和 key 都是只有文件名 ，没有规定具体路径</p>
+<p>需要将其copy 到<code>C:\Program Files\OpenVPN\config</code> 下</p>
+<ul>
+<li>
+<p>将服务端证书，服务端key，ca证书，dh文件,  ta.key复制到文件夹C:\Program Files\OpenVPN\config下</p>
+</li>
+<li>
+<p>将客户端证书，客户端key，ca证书 , ta.key复制到目录C:\Program Files\OpenVPN\config下</p>
+</li>
+</ul>
+<h3 id="连接">连接
+</h3><p>右键点击任务栏带锁小电脑图标，点击连接,连接成功后系统分配ip，小电脑变绿</p>
+<h3 id="其它">其它
+</h3><ol>
+<li>tls-auth ta.key 配置为防御 DoS,UDP 淹没等恶意攻击行为的选项，如配置需要生成ta.key证书，生成方式：跳转到openvpn软件的bin目录下，在dos窗口中输入：<code>openvpn.exe --genkey --secret ta.key </code>，便在bin目录下生成ta.key证书了，复制到配置文件目录即可。</li>
+<li>证书时间等参数可以在vars文件中设置，设置后重新启动EasyRSA-Start即可加载新配置。</li>
+<li>;client-to-client为客户端之间是否能直接访问的配置，去掉注释后生效。</li>
+<li>;push &ldquo;redirect-gateway def1 bypass-dhcp&rdquo; 配置开启后客户端所有流量将路由至服务器，需要在访问端服务器上配置路由转发后才可以访问公网。</li>
+<li>开启第4步后，可在客户端配置文件中增加<code>route 192.168.1.0 255.255.255.0 net_gateway</code>配置，使该网段不通过openvpn路由</li>
+</ol>
 
 </section>
 
