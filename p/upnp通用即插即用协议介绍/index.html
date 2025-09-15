@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="什么是 UPnP？ UPnP（Universal Plug and Play，通用即插即用）是一种网络协议标准，旨在让网络设备（如计算机、打印机、摄像头、智能电视、路由器、IoT设备等）在接入网络时能够自动发现彼此并建立功能性的网络服务，无需用户手动配置。其设计目标是实现“零配置”网络体验。 UPnP 基于开放的互联网标准和技术，如 TCP/IP、HTTP、XML、SOAP 和 SSDP，使其能在多种操作系统和硬件平台上运行。\nUPnP 基本原理 UPnP 网络通常包含三种角色：\n设备 (Device)：提供一项或多项服务的网络实体（如智能灯泡、网络摄像头）。\n服务 (Service)：设备提供的最小功能控制单元（如开关服务、亮度调节服务）。\n控制点 (Control Point)：发现并控制设备的控制器（如手机App、电脑上的软件）。\nUPnP 的工作流程可分为以下几个核心阶段：\n寻址（Addressing） 设备接入网络后，首先通过 DHCP 获取 IP 地址；若 DHCP 不可用，则使用 Auto-IP（如 169.254.x.x）自行分配一个局域网内可用的 IP。\n发现（Discovery） 设备使用 SSDP（Simple Service Discovery Protocol，简单服务发现协议）向局域网广播自己的存在：\n广播消息：设备发送 M-SEARCH 请求或 NOTIFY 通知。\n响应机制：控制点（如手机App或PC）监听这些广播，并向感兴趣的设备发送请求获取详细信息。\n使用组播地址 239.255.255.250:1900 进行通信。\n描述（Description） 控制点通过 HTTP GET 请求从设备提供的 URL 获取 XML 描述文件，该文件包含：\n设备类型、厂商信息、型号、序列号\n支持的服务列表（如端口映射、音量控制等）\n每个服务的控制URL、事件URL、描述URL\n控制（Control） 控制点通过 SOAP（Simple Object Access Protocol）协议向设备发送控制指令，调用其服务方法。例如：\n调用“AddPortMapping”在路由器上添加端口转发规则\n调用“SetVolume”调节音响音量 请求和响应均使用 XML 格式封装，通过 HTTP POST 发送。\n">
+<title>upnp(通用即插即用)协议介绍</title>
+
+<link rel='canonical' href='https://charles-7777.github.io/hugo-stack/p/upnp%E9%80%9A%E7%94%A8%E5%8D%B3%E6%8F%92%E5%8D%B3%E7%94%A8%E5%8D%8F%E8%AE%AE%E4%BB%8B%E7%BB%8D/'>
+
+<link rel="stylesheet" href="/hugo-stack/scss/style.min.1aedf5438eb6380946ca2f7d86c958e5adeb3c679a95ad190168d7c28b43101d.css"><meta property='og:title' content="upnp(通用即插即用)协议介绍">
+<meta property='og:description' content="什么是 UPnP？ UPnP（Universal Plug and Play，通用即插即用）是一种网络协议标准，旨在让网络设备（如计算机、打印机、摄像头、智能电视、路由器、IoT设备等）在接入网络时能够自动发现彼此并建立功能性的网络服务，无需用户手动配置。其设计目标是实现“零配置”网络体验。 UPnP 基于开放的互联网标准和技术，如 TCP/IP、HTTP、XML、SOAP 和 SSDP，使其能在多种操作系统和硬件平台上运行。\nUPnP 基本原理 UPnP 网络通常包含三种角色：\n设备 (Device)：提供一项或多项服务的网络实体（如智能灯泡、网络摄像头）。\n服务 (Service)：设备提供的最小功能控制单元（如开关服务、亮度调节服务）。\n控制点 (Control Point)：发现并控制设备的控制器（如手机App、电脑上的软件）。\nUPnP 的工作流程可分为以下几个核心阶段：\n寻址（Addressing） 设备接入网络后，首先通过 DHCP 获取 IP 地址；若 DHCP 不可用，则使用 Auto-IP（如 169.254.x.x）自行分配一个局域网内可用的 IP。\n发现（Discovery） 设备使用 SSDP（Simple Service Discovery Protocol，简单服务发现协议）向局域网广播自己的存在：\n广播消息：设备发送 M-SEARCH 请求或 NOTIFY 通知。\n响应机制：控制点（如手机App或PC）监听这些广播，并向感兴趣的设备发送请求获取详细信息。\n使用组播地址 239.255.255.250:1900 进行通信。\n描述（Description） 控制点通过 HTTP GET 请求从设备提供的 URL 获取 XML 描述文件，该文件包含：\n设备类型、厂商信息、型号、序列号\n支持的服务列表（如端口映射、音量控制等）\n每个服务的控制URL、事件URL、描述URL\n控制（Control） 控制点通过 SOAP（Simple Object Access Protocol）协议向设备发送控制指令，调用其服务方法。例如：\n调用“AddPortMapping”在路由器上添加端口转发规则\n调用“SetVolume”调节音响音量 请求和响应均使用 XML 格式封装，通过 HTTP POST 发送。\n">
+<meta property='og:url' content='https://charles-7777.github.io/hugo-stack/p/upnp%E9%80%9A%E7%94%A8%E5%8D%B3%E6%8F%92%E5%8D%B3%E7%94%A8%E5%8D%8F%E8%AE%AE%E4%BB%8B%E7%BB%8D/'>
+<meta property='og:site_name' content=''>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='upnp' /><meta property='article:published_time' content='2025-09-15T14:53:06&#43;08:00'/><meta property='article:modified_time' content='2025-09-15T15:10:27&#43;08:00'/>
+<meta name="twitter:title" content="upnp(通用即插即用)协议介绍">
+<meta name="twitter:description" content="什么是 UPnP？ UPnP（Universal Plug and Play，通用即插即用）是一种网络协议标准，旨在让网络设备（如计算机、打印机、摄像头、智能电视、路由器、IoT设备等）在接入网络时能够自动发现彼此并建立功能性的网络服务，无需用户手动配置。其设计目标是实现“零配置”网络体验。 UPnP 基于开放的互联网标准和技术，如 TCP/IP、HTTP、XML、SOAP 和 SSDP，使其能在多种操作系统和硬件平台上运行。\nUPnP 基本原理 UPnP 网络通常包含三种角色：\n设备 (Device)：提供一项或多项服务的网络实体（如智能灯泡、网络摄像头）。\n服务 (Service)：设备提供的最小功能控制单元（如开关服务、亮度调节服务）。\n控制点 (Control Point)：发现并控制设备的控制器（如手机App、电脑上的软件）。\nUPnP 的工作流程可分为以下几个核心阶段：\n寻址（Addressing） 设备接入网络后，首先通过 DHCP 获取 IP 地址；若 DHCP 不可用，则使用 Auto-IP（如 169.254.x.x）自行分配一个局域网内可用的 IP。\n发现（Discovery） 设备使用 SSDP（Simple Service Discovery Protocol，简单服务发现协议）向局域网广播自己的存在：\n广播消息：设备发送 M-SEARCH 请求或 NOTIFY 通知。\n响应机制：控制点（如手机App或PC）监听这些广播，并向感兴趣的设备发送请求获取详细信息。\n使用组播地址 239.255.255.250:1900 进行通信。\n描述（Description） 控制点通过 HTTP GET 请求从设备提供的 URL 获取 XML 描述文件，该文件包含：\n设备类型、厂商信息、型号、序列号\n支持的服务列表（如端口映射、音量控制等）\n每个服务的控制URL、事件URL、描述URL\n控制（Control） 控制点通过 SOAP（Simple Object Access Protocol）协议向设备发送控制指令，调用其服务方法。例如：\n调用“AddPortMapping”在路由器上添加端口转发规则\n调用“SetVolume”调节音响音量 请求和响应均使用 XML 格式封装，通过 HTTP POST 发送。\n">
+    <link rel="shortcut icon" href="/hugo-stack/favicon2.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/hugo-stack/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/hugo-stack/img/oi_compressed_hu_9c5e2ca2fe891746.gif" width="300"
+                            height="303" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/hugo-stack"></a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://www.bilibili.com/'
+                        target="_blank"
+                        title="bilibili"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-brand-bilibili"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 10a4 4 0 0 1 4 -4h10a4 4 0 0 1 4 4v6a4 4 0 0 1 -4 4h-10a4 4 0 0 1 -4 -4v-6z" /><path d="M8 3l2 3" /><path d="M16 3l-2 3" /><path d="M9 13v-2" /><path d="M15 11v2" /></svg>
+                        
+                    </a>
+                </li>
+            
+                <li>
+                    <a 
+                        href='https://www.douyin.com/'
+                        target="_blank"
+                        title="douyin"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-brand-tiktok"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M21 7.917v4.034a9.948 9.948 0 0 1 -5 -1.951v4.5a6.5 6.5 0 1 1 -8 -6.326v4.326a2.5 2.5 0 1 0 4 2v-11.5h4.083a6.005 6.005 0 0 0 4.917 4.917z" /></svg>
+                        
+                    </a>
+                </li>
+            
+                <li>
+                    <a 
+                        href='https://github.com/charles-7777/hugo-blog'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/hugo-stack/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                
+                <span>主页</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/archives/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                
+                <span>归档</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/cats-tags/' >
+                
+                
+                
+                    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-tags"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 8v4.172a2 2 0 0 0 .586 1.414l5.71 5.71a2.41 2.41 0 0 0 3.408 0l3.592 -3.592a2.41 2.41 0 0 0 0 -3.408l-5.71 -5.71a2 2 0 0 0 -1.414 -.586h-4.172a2 2 0 0 0 -2 2z" /><path d="M18 19l1.592 -1.592a4.82 4.82 0 0 0 0 -6.816l-4.592 -4.592" /><path d="M7 10h-.01" /></svg>
+                
+                <span>Cats&amp;Tags</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/%E9%93%BE%E6%8E%A5/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                
+                <span>链接</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/search/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+                
+                <span>搜索</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/%E5%85%B3%E4%BA%8E/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                
+                <span>关于</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/updatelog/' >
+                
+                
+                
+                    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-logs"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 12h.01" /><path d="M4 6h.01" /><path d="M4 18h.01" /><path d="M8 18h2" /><path d="M8 12h2" /><path d="M8 6h2" /><path d="M14 6h6" /><path d="M14 12h6" /><path d="M14 18h6" /></svg>
+                
+                <span>更新日志</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>暗色模式</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ol>
+    <li><a href="#什么是-upnp">什么是 UPnP？</a></li>
+    <li><a href="#upnp-基本原理">UPnP 基本原理</a>
+      <ol>
+        <li><a href="#寻址addressing">寻址（Addressing）</a></li>
+        <li><a href="#发现discovery">发现（Discovery）</a></li>
+        <li><a href="#描述description">描述（Description）</a></li>
+        <li><a href="#控制control">控制（Control）</a></li>
+        <li><a href="#事件通知eventing">事件通知（Eventing）</a></li>
+        <li><a href="#展示presentation可选">展示（Presentation，可选）</a></li>
+      </ol>
+    </li>
+    <li><a href="#upnp-主要功能">UPnP 主要功能</a>
+      <ol>
+        <li><a href="#自动设备发现与互操作">自动设备发现与互操作</a></li>
+        <li><a href="#自动端口映射nat-穿透">自动端口映射（NAT 穿透）</a></li>
+        <li><a href="#设备控制与状态同步">设备控制与状态同步</a></li>
+        <li><a href="#零配置网络体验">零配置网络体验</a></li>
+        <li><a href="#支持多种设备类型">支持多种设备类型</a></li>
+      </ol>
+    </li>
+    <li><a href="#upnp-的优缺点">UPnP 的优缺点</a>
+      <ol>
+        <li><a href="#-优点">✅ 优点：</a></li>
+        <li><a href="#-缺点与风险">❌ 缺点与风险：</a></li>
+      </ol>
+    </li>
+    <li><a href="#典型应用场景">典型应用场景</a></li>
+    <li><a href="#相关协议与标准组织">相关协议与标准组织</a></li>
+    <li><a href="#总结">总结</a></li>
+  </ol>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/hugo-stack/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" >
+                计算机网络
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/hugo-stack/p/upnp%E9%80%9A%E7%94%A8%E5%8D%B3%E6%8F%92%E5%8D%B3%E7%94%A8%E5%8D%8F%E8%AE%AE%E4%BB%8B%E7%BB%8D/">upnp(通用即插即用)协议介绍</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">2025-09-15 14:53</time>
+            </div>
+        <div>
+            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-edit"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg>
+            <time class="article-lastmod">2025-09-15 15:10</time>
+        </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 1 分钟
+                </time>
+            </div>
+        
+
+        
+            <div>
+                <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-file-word"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 12l1.333 5l1.667 -4l1.667 4l1.333 -5" /></svg>
+                <time class="article-words">
+                    210 字
+                </time>
+            </div>
+        
+
+
+    </footer>
+    
+
+    
+
+
+</div>
+
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h2 id="什么是-upnp">什么是 UPnP？
+</h2><p><strong>UPnP</strong>（Universal Plug and Play，通用即插即用）是一种网络协议标准，旨在让网络设备（如计算机、打印机、摄像头、智能电视、路由器、IoT设备等）在接入网络时能够<strong>自动发现彼此并建立功能性的网络服务</strong>，无需用户手动配置。其设计目标是实现“零配置”网络体验。
+UPnP 基于开放的互联网标准和技术，如 TCP/IP、HTTP、XML、SOAP 和 SSDP，使其能在多种操作系统和硬件平台上运行。</p>
+<hr>
+<h2 id="upnp-基本原理">UPnP 基本原理
+</h2><p>UPnP 网络通常包含三种角色：</p>
+<ul>
+<li>
+<p><strong>设备 (Device)</strong>：提供一项或多项服务的网络实体（如智能灯泡、网络摄像头）。</p>
+</li>
+<li>
+<p><strong>服务 (Service)</strong>：设备提供的最小功能控制单元（如开关服务、亮度调节服务）。</p>
+</li>
+<li>
+<p><strong>控制点 (Control Point)</strong>：发现并控制设备的控制器（如手机App、电脑上的软件）。</p>
+</li>
+</ul>
+<p>UPnP 的工作流程可分为以下几个核心阶段：</p>
+<h3 id="寻址addressing">寻址（Addressing）
+</h3><p>设备接入网络后，首先通过 DHCP 获取 IP 地址；若 DHCP 不可用，则使用 Auto-IP（如 169.254.x.x）自行分配一个局域网内可用的 IP。</p>
+<h3 id="发现discovery">发现（Discovery）
+</h3><p>设备使用 <strong>SSDP</strong>（Simple Service Discovery Protocol，简单服务发现协议）向局域网广播自己的存在：</p>
+<ul>
+<li>
+<p><strong>广播消息</strong>：设备发送 <code>M-SEARCH</code> 请求或 <code>NOTIFY</code> 通知。</p>
+</li>
+<li>
+<p><strong>响应机制</strong>：控制点（如手机App或PC）监听这些广播，并向感兴趣的设备发送请求获取详细信息。</p>
+</li>
+<li>
+<p>使用组播地址 <code>239.255.255.250:1900</code> 进行通信。</p>
+</li>
+</ul>
+<h3 id="描述description">描述（Description）
+</h3><p>控制点通过 HTTP GET 请求从设备提供的 URL 获取 <strong>XML 描述文件</strong>，该文件包含：</p>
+<ul>
+<li>
+<p>设备类型、厂商信息、型号、序列号</p>
+</li>
+<li>
+<p>支持的服务列表（如端口映射、音量控制等）</p>
+</li>
+<li>
+<p>每个服务的控制URL、事件URL、描述URL</p>
+</li>
+</ul>
+<h3 id="控制control">控制（Control）
+</h3><p>控制点通过 <strong>SOAP</strong>（Simple Object Access Protocol）协议向设备发送控制指令，调用其服务方法。例如：</p>
+<ul>
+<li>
+<p>调用“AddPortMapping”在路由器上添加端口转发规则</p>
+</li>
+<li>
+<p>调用“SetVolume”调节音响音量
+请求和响应均使用 XML 格式封装，通过 HTTP POST 发送。</p>
+</li>
+</ul>
+<h3 id="事件通知eventing">事件通知（Eventing）
+</h3><p>设备状态变化时（如播放状态改变、端口映射成功），可通过 <strong>GENA</strong>（General Event Notification Architecture）协议向订阅的控制点推送事件通知（也是 XML 格式），实现状态同步。</p>
+<h3 id="展示presentation可选">展示（Presentation，可选）
+</h3><p>设备可提供一个内置的 Web 界面（URL 包含在描述文件中），用户可通过浏览器访问进行图形化控制或查看状态。</p>
+<hr>
+<h2 id="upnp-主要功能">UPnP 主要功能
+</h2><h3 id="自动设备发现与互操作">自动设备发现与互操作
+</h3><ul>
+<li>
+<p>局域网内设备自动广播身份，无需手动输入 IP 或配置。</p>
+</li>
+<li>
+<p>不同厂商设备只要遵循 UPnP 标准即可互通（如智能灯泡 + 手机App）。</p>
+</li>
+</ul>
+<h3 id="自动端口映射nat-穿透">自动端口映射（NAT 穿透）
+</h3><ul>
+<li>
+<p><strong>最重要功能之一</strong>：允许内网设备（如游戏主机、P2P软件、监控摄像头）<strong>自动在路由器上创建端口转发规则</strong>，实现从外网访问。</p>
+</li>
+<li>
+<p>应用场景：在线游戏联机、远程访问家庭摄像头、BT下载加速等。</p>
+</li>
+<li>
+<p>无需用户登录路由器后台手动设置端口转发。</p>
+</li>
+</ul>
+<h3 id="设备控制与状态同步">设备控制与状态同步
+</h3><ul>
+<li>
+<p>可远程控制设备功能（播放/暂停、开关机、调节参数等）。</p>
+</li>
+<li>
+<p>实时接收设备状态变更通知（如“播放结束”、“电量低”）。</p>
+</li>
+</ul>
+<h3 id="零配置网络体验">零配置网络体验
+</h3><ul>
+<li>
+<p>用户无需了解网络知识，插上网线或连上WiFi即可使用设备功能。</p>
+</li>
+<li>
+<p>特别适合家庭用户和 IoT 设备。</p>
+</li>
+</ul>
+<h3 id="支持多种设备类型">支持多种设备类型
+</h3><ul>
+<li>路由器、打印机、NAS、媒体服务器（DLNA）、智能家电、安防设备等均可支持 UPnP。</li>
+</ul>
+<hr>
+<h2 id="upnp-的优缺点">UPnP 的优缺点
+</h2><h3 id="-优点">✅ 优点：
+</h3><ul>
+<li>
+<p><strong>简单易用</strong>：真正实现“即插即用”。</p>
+</li>
+<li>
+<p><strong>跨平台兼容</strong>：基于标准互联网协议，支持 Windows、Linux、macOS、Android、iOS 等。</p>
+</li>
+<li>
+<p><strong>自动化程度高</strong>：减少人工配置错误。</p>
+<h3 id="-缺点与风险">❌ 缺点与风险：
+</h3></li>
+<li>
+<p><strong>安全风险</strong>：恶意软件可能利用 UPnP 自动在路由器上开洞，暴露内网服务（如勒索软件、僵尸网络）。</p>
+</li>
+<li>
+<p><strong>缺乏认证机制</strong>：默认无用户权限控制，局域网内任何设备都可操作。</p>
+</li>
+<li>
+<p><strong>稳定性问题</strong>：部分设备实现不规范，可能导致冲突或失效。</p>
+<blockquote>
+<p>🛡️ <strong>安全建议</strong>：</p>
+<ul>
+<li>家庭用户如无远程访问需求，建议在路由器中<strong>关闭 UPnP 功能</strong>。</li>
+<li>企业网络应严格禁用 UPnP。</li>
+<li>使用支持 UPnP-IGD v2 的设备，其安全性有所增强（支持 PIN 验证等）。</li>
+</ul></blockquote>
+</li>
+</ul>
+<hr>
+<h2 id="典型应用场景">典型应用场景
+</h2><div class="table-wrapper"><table>
+  <thead>
+      <tr>
+          <th>场景</th>
+          <th>说明</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>在线游戏主机联网</td>
+          <td>Xbox/PS 自动请求端口映射，实现 NAT 开放或中等。</td>
+      </tr>
+      <tr>
+          <td>P2P 下载（如 BitTorrent）</td>
+          <td>客户端自动映射端口，提高连接数和下载速度。</td>
+      </tr>
+      <tr>
+          <td>远程访问家庭摄像头/NAS</td>
+          <td>自动在路由器上映射端口，便于外网访问。</td>
+      </tr>
+      <tr>
+          <td>DLNA 媒体共享</td>
+          <td>电视自动发现局域网内的媒体服务器并播放影片。</td>
+      </tr>
+      <tr>
+          <td>智能家居控制</td>
+          <td>手机 App 自动发现并控制智能插座、灯泡等。</td>
+      </tr>
+  </tbody>
+</table></div>
+<hr>
+<h2 id="相关协议与标准组织">相关协议与标准组织
+</h2><ul>
+<li><strong>标准组织</strong>：UPnP Forum（现由 Open Connectivity Foundation 接管）</li>
+<li><strong>核心协议</strong>：
+<ul>
+<li>SSDP（发现）</li>
+<li>HTTP + XML（描述）</li>
+<li>SOAP（控制）</li>
+<li>GENA（事件）</li>
+</ul>
+</li>
+<li><strong>扩展标准</strong>：
+<ul>
+<li><strong>UPnP-IGD</strong>（Internet Gateway Device）：专用于路由器端口映射。</li>
+<li><strong>DLNA</strong>（Digital Living Network Alliance）：基于 UPnP 的媒体共享标准。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2 id="总结">总结
+</h2><p>UPnP 是一项旨在简化家庭和小型办公网络设备互联的技术，通过标准化的发现、描述、控制和事件机制，实现了真正的“零配置”体验。尤其在自动端口映射方面极大地方便了普通用户。然而，其安全机制的缺失也带来潜在风险，用户应根据实际需求权衡是否启用。
+随着 IoT 和智能家居的普及，UPnP 仍在广泛使用，但正逐步被更安全的替代方案（如 NAT-PMP、PCP、mDNS + DNS-SD）所补充或取代。</p>
+<hr>
+<blockquote>
+<p>📚 参考资料：UPnP Device Architecture 2.0, IETF RFC 6970, OCF Specifications</p></blockquote>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/hugo-stack/tags/upnp/">Upnp</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    
+
+    
+</footer>
+
+
+    
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="">
+    <a href="/hugo-stack/p/ipv6-%E5%9C%B0%E5%9D%80%E5%88%86%E9%85%8D%E8%AF%A6%E8%A7%A3/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">IPv6 地址分配详解</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+        2025 Charles Lv
+    </section>
+    
+    <section class="powerby">
+        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/hugo-stack/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+<script src=https://charles-7777.github.io/hugo-stack/background/sakura.js></script>
+
+
+
+
+
+
+<style>
+    .highlight {
+         
+        max-height: 400px;
+        overflow: hidden;
+    }
+
+    .code-show {
+        max-height: none !important;
+    }
+
+    .code-more-box {
+        width: 100%;
+        padding-top: 78px;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(rgba(255, 255, 255, 0)), to(#fff));
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1;
+    }
+
+    .code-more-btn {
+        display: block;
+        margin: auto;
+        width: 44px;
+        height: 22px;
+        background: #f0f0f5;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+        padding-top: 6px;
+        cursor: pointer;
+    }
+
+    .code-more-img {
+        cursor: pointer !important;
+        display: block;
+        margin: auto;
+        width: 22px;
+        height: 16px;
+    }
+</style>
+
+<script>
+  function initCodeMoreBox() {
+    let codeBlocks = document.querySelectorAll(".highlight");
+    if (!codeBlocks) {
+      return;
+    }
+    codeBlocks.forEach(codeBlock => {
+      
+      if (codeBlock.scrollHeight <= codeBlock.clientHeight) {
+        return;
+      }
+      
+      
+      let codeMoreBox = document.createElement('div');
+      codeMoreBox.classList.add('code-more-box');
+      
+      let codeMoreBtn = document.createElement('span');
+      codeMoreBtn.classList.add('code-more-btn');
+      codeMoreBtn.addEventListener('click', () => {
+        codeBlock.classList.add('code-show');
+        codeMoreBox.style.display = 'none';
+        
+        window.dispatchEvent(new Event('resize'))
+      })
+      
+      let img = document.createElement('img');
+      img.classList.add('code-more-img');
+      img.src = "https://charles-7777.github.io/hugo-stack/icons/codeMore.png"
+      
+      codeMoreBtn.appendChild(img);
+      codeMoreBox.appendChild(codeMoreBtn);
+      codeBlock.appendChild(codeMoreBox)
+    })
+  }
+  
+  initCodeMoreBox();
+</script>
+
+
+
+<style>
+    #backTopBtn {
+        display: none;
+        position: fixed;
+        bottom: 30px;
+        z-index: 99;
+        cursor: pointer;
+        width: 30px;
+        height: 30px;
+        background-image: url(https://charles-7777.github.io/hugo-stack/icons/backTop.svg);
+    }
+</style>
+
+<script>
+    
+
+    function initScrollTop() {
+        let rightSideBar = document.querySelector(".right-sidebar");
+        if (!rightSideBar) {
+            return;
+        }
+        
+        let btn = document.createElement("div");
+        btn.id = "backTopBtn";
+        btn.onclick = backToTop
+        rightSideBar.appendChild(btn)
+        
+        window.onscroll = function() {
+            
+            if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+                btn.style.display = "block";
+            } else {
+                btn.style.display = "none";
+            }
+        };
+    }
+
+    
+
+    function backToTop(){
+        window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+
+    initScrollTop();
+</script>
+
+
+<style>
+    #TableOfContents > ul, ol {
+        ul, ol {
+            display: none;
+        }
+        .open {
+            display: block;
+        }
+    }
+</style>
+
+<script>
+    function initTocHide() {
+        
+        let toc = document.querySelector(".widget--toc");
+        if (!toc) {
+            return;
+        }
+        
+        window.addEventListener('scroll', function() {
+            
+            let openUl = document.querySelectorAll(".open");
+            if (openUl.length > 0) {
+              openUl.forEach((ul) => {
+                ul.classList.remove("open")
+              })
+            }
+            
+            let currentLi = document.querySelector(".active-class");
+            if (!currentLi) {
+                return
+            }
+            
+            if (currentLi.children.length > 1) {
+                currentLi.children[1].classList.add("open")
+            }
+            
+            let ul = currentLi.parentElement;
+            do {
+                ul.classList.add("open");
+                ul = ul.parentElement.parentElement
+            } while (ul !== undefined && (ul.localName === 'ul' || ul.localName === 'ol'))
+        });
+    }
+    initTocHide()
+</script>
+
+
+
+
+
+
+ <script>
+  const cdnPath = "https://cdn.jsdelivr.net/gh/charles-7777/live2d-widget-v3@main";
+  const config = {
+    
+    path: {
+      homePath: "/",
+      modelPath: cdnPath + "/Resources/",
+      cssPath: cdnPath + "/waifu.css",
+      tipsJsonPath: cdnPath + "/waifu-tips.json",
+      tipsJsPath: cdnPath + "/waifu-tips.js",
+      live2dCorePath: cdnPath + "/Core/live2dcubismcore.js",
+      live2dSdkPath: cdnPath + "/live2d-sdk.js"
+    },
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    tools: ["hitokoto",  "express",  "photo", "info", "quit"],
+    
+    drag: {
+      enable: false,
+      direction: ["x", "y"]
+    },
+    
+    switchType: "order"
+  }
+
+  const local_cssPath = "https://charles-7777.github.io/hugo-stack/waifu/waifu.css";
+  const local_tipsJsonPath = "https://charles-7777.github.io/hugo-stack/waifu/waifu-tips.json";
+  const local_tipsJsPath = "https://charles-7777.github.io/hugo-stack/waifu/waifu-tips.js";
+
+  
+  if (screen.width >= 768) {
+    Promise.all([
+    
+      loadExternalResource(local_cssPath, "css"),
+      loadExternalResource(config.path.live2dCorePath, "js"),
+      loadExternalResource(config.path.live2dSdkPath, "js"),
+    
+      loadExternalResource(local_tipsJsPath, "js")
+    ]).then(() => {
+      initWidget({
+        
+        waifuPath: local_tipsJsonPath,
+        cdnPath: config.path.modelPath,
+        tools: config.tools,
+        dragEnable: config.drag.enable,
+        dragDirection: config.drag.direction,
+        switchType: config.switchType
+      });
+    });
+  }
+
+  
+  function loadExternalResource(url, type) {
+    return new Promise((resolve, reject) => {
+      let tag;
+      if (type === "css") {
+        tag = document.createElement("link");
+        tag.rel = "stylesheet";
+        tag.href = url;
+      }
+      else if (type === "js") {
+        tag = document.createElement("script");
+        tag.src = url;
+      }
+      if (tag) {
+        tag.onload = () => resolve(url);
+        tag.onerror = () => reject(url);
+        document.head.appendChild(tag);
+      }
+    });
+  }
+</script>
+
+    </body>
+</html>
