@@ -7,7 +7,7 @@
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
         <copyright>Charles Lv</copyright>
-        <lastBuildDate>Fri, 19 Sep 2025 14:19:01 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/categories/%E5%85%B6%E5%AE%83/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Tue, 23 Sep 2025 10:31:19 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/categories/%E5%85%B6%E5%AE%83/index.xml" rel="self" type="application/rss+xml" /><item>
         <title>弹性碰撞与pi</title>
         <link>https://charles-7777.github.io/hugo-stack/p/%E5%BC%B9%E6%80%A7%E7%A2%B0%E6%92%9E%E4%B8%8Epi/</link>
         <pubDate>Fri, 19 Sep 2025 14:10:10 +0800</pubDate>
@@ -22,7 +22,7 @@
 	
 &gt;&lt;/p&gt;
 &lt;blockquote&gt;
-&lt;p&gt;光滑的地面上放着大小两个滑块，左边是墙。大滑块的质量是小滑块的  倍。给大滑块一个向左的初速度，两个滑块之间，以及小滑块与墙之间会发生多次碰撞。假设碰撞没有能量损失，问一共会发生多少次碰撞？&lt;/p&gt;&lt;/blockquote&gt;
+&lt;p&gt;光滑的地面上放着大小两个滑块，左边是墙。大滑块的质量是小滑块的N倍。给大滑块一个向左的初速度，两个滑块之间会发生多次碰撞。假设碰撞没有能量损失，问一共会发生多少次碰撞？&lt;/p&gt;&lt;/blockquote&gt;
 &lt;ul&gt;
 &lt;li&gt;能量守恒&lt;/li&gt;
 &lt;/ul&gt;
@@ -31,7 +31,7 @@ $$
 \frac{1}{2}MV_0^2
 $$$$
 \frac{v^2}{M/m} + V^2 = V_0^2
-$$&lt;p&gt;若M=Nm&lt;/p&gt;
+$$&lt;p&gt;由M=Nm&lt;/p&gt;
 $$
 \frac{v^2}{N}+V^2=V_0^2
 $$$$
