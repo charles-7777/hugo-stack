@@ -1,0 +1,2379 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="Linux网桥的实现 linux内核实现虚拟的网桥设备，并绑定若干个以太网口（目前网桥只支持以太网接口）。 交换机对收到的数据包，只能丢弃或转发。但是linux内核设备不一样，他可能本身就是数据包的目的地。所以除了丢弃转发，他还会发往协议层自己消化。 网桥是在数据链路层实现的，他的上面是邻居子系统和网络层。\nlinux网桥数据结构 虚拟网桥也是一个网络设备，基本结构体为net_device，net_device –&gt; priv下存储了网桥数据结构的私有变量net_bridge。上图中一些重要的数据结构如下：\nnet_bridge：网桥私有数据\nnet_bridge_port网桥要绑定的以太网端口的结构体\nnet_bridge_fdb_entry：单播转发数据库条目\nnet_bridge_mdb_entry：组播转发数据库条目\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 int br_add_bridge(struct net *net, const char *name) { struct net_device *dev; int res; dev = alloc_netdev(sizeof(struct net_bridge), name, NET_NAME_UNKNOWN, br_dev_setup); ////// if (!dev) return -ENOMEM; dev_net_set(dev, net); dev-&gt;rtnl_link_ops = &amp;br_link_ops; res = register_netdevice(dev); if (res) free_netdev(dev); return res; } 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 void br_dev_setup(struct net_device *dev) { struct net_bridge *br = netdev_priv(dev); ///////// eth_hw_addr_random(dev); ether_setup(dev); dev-&gt;netdev_ops = &amp;br_netdev_ops; dev-&gt;needs_free_netdev = true; dev-&gt;ethtool_ops = &amp;br_ethtool_ops; SET_NETDEV_DEVTYPE(dev, &amp;br_type); dev-&gt;priv_flags = IFF_EBRIDGE | IFF_NO_QUEUE; dev-&gt;features = COMMON_FEATURES | NETIF_F_LLTX | NETIF_F_NETNS_LOCAL | NETIF_F_HW_VLAN_CTAG_TX | NETIF_F_HW_VLAN_STAG_TX; dev-&gt;hw_features = COMMON_FEATURES | NETIF_F_HW_VLAN_CTAG_TX | NETIF_F_HW_VLAN_STAG_TX; dev-&gt;vlan_features = COMMON_FEATURES; br-&gt;dev = dev; ////////////////// spin_lock_init(&amp;br-&gt;lock); INIT_LIST_HEAD(&amp;br-&gt;port_list); //////////// INIT_HLIST_HEAD(&amp;br-&gt;fdb_list); //////////// INIT_HLIST_HEAD(&amp;br-&gt;frame_type_list); #if IS_ENABLED(CONFIG_BRIDGE_MRP) INIT_HLIST_HEAD(&amp;br-&gt;mrp_list); #endif #if IS_ENABLED(CONFIG_BRIDGE_CFM) INIT_HLIST_HEAD(&amp;br-&gt;mep_list); #endif spin_lock_init(&amp;br-&gt;hash_lock); br-&gt;bridge_id.prio[0] = 0x80; br-&gt;bridge_id.prio[1] = 0x00; ether_addr_copy(br-&gt;group_addr, eth_stp_addr); br-&gt;stp_enabled = BR_NO_STP; br-&gt;group_fwd_mask = BR_GROUPFWD_DEFAULT; br-&gt;group_fwd_mask_required = BR_GROUPFWD_DEFAULT; br-&gt;designated_root = br-&gt;bridge_id; br-&gt;bridge_max_age = br-&gt;max_age = 20 * HZ; br-&gt;bridge_hello_time = br-&gt;hello_time = 2 * HZ; br-&gt;bridge_forward_delay = br-&gt;forward_delay = 15 * HZ; br-&gt;bridge_ageing_time = br-&gt;ageing_time = BR_DEFAULT_AGEING_TIME; dev-&gt;max_mtu = ETH_MAX_MTU; br_netfilter_rtable_init(br); br_stp_timer_init(br); br_multicast_init(br); INIT_DELAYED_WORK(&amp;br-&gt;gc_work, br_fdb_cleanup); } 1 2 3 4 static inline void *netdev_priv(const struct net_device *dev) { return (char *)dev + ALIGN(sizeof(struct net_device), NETDEV_ALIGN); } 简单来说，struct net_device 是桥的“外壳”或“接口”，而 struct net_bridge 是桥的“大脑”或“核心逻辑”。它们通过一个关键的指针相互关联。下面我们进行详细分解。\n">
+<title>Linux 网桥</title>
+
+<link rel='canonical' href='https://charles-7777.github.io/hugo-stack/p/linux-%E7%BD%91%E6%A1%A5/'>
+
+<link rel="stylesheet" href="/hugo-stack/scss/style.min.1aedf5438eb6380946ca2f7d86c958e5adeb3c679a95ad190168d7c28b43101d.css"><meta property='og:title' content="Linux 网桥">
+<meta property='og:description' content="Linux网桥的实现 linux内核实现虚拟的网桥设备，并绑定若干个以太网口（目前网桥只支持以太网接口）。 交换机对收到的数据包，只能丢弃或转发。但是linux内核设备不一样，他可能本身就是数据包的目的地。所以除了丢弃转发，他还会发往协议层自己消化。 网桥是在数据链路层实现的，他的上面是邻居子系统和网络层。\nlinux网桥数据结构 虚拟网桥也是一个网络设备，基本结构体为net_device，net_device –&gt; priv下存储了网桥数据结构的私有变量net_bridge。上图中一些重要的数据结构如下：\nnet_bridge：网桥私有数据\nnet_bridge_port网桥要绑定的以太网端口的结构体\nnet_bridge_fdb_entry：单播转发数据库条目\nnet_bridge_mdb_entry：组播转发数据库条目\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 int br_add_bridge(struct net *net, const char *name) { struct net_device *dev; int res; dev = alloc_netdev(sizeof(struct net_bridge), name, NET_NAME_UNKNOWN, br_dev_setup); ////// if (!dev) return -ENOMEM; dev_net_set(dev, net); dev-&gt;rtnl_link_ops = &amp;br_link_ops; res = register_netdevice(dev); if (res) free_netdev(dev); return res; } 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 void br_dev_setup(struct net_device *dev) { struct net_bridge *br = netdev_priv(dev); ///////// eth_hw_addr_random(dev); ether_setup(dev); dev-&gt;netdev_ops = &amp;br_netdev_ops; dev-&gt;needs_free_netdev = true; dev-&gt;ethtool_ops = &amp;br_ethtool_ops; SET_NETDEV_DEVTYPE(dev, &amp;br_type); dev-&gt;priv_flags = IFF_EBRIDGE | IFF_NO_QUEUE; dev-&gt;features = COMMON_FEATURES | NETIF_F_LLTX | NETIF_F_NETNS_LOCAL | NETIF_F_HW_VLAN_CTAG_TX | NETIF_F_HW_VLAN_STAG_TX; dev-&gt;hw_features = COMMON_FEATURES | NETIF_F_HW_VLAN_CTAG_TX | NETIF_F_HW_VLAN_STAG_TX; dev-&gt;vlan_features = COMMON_FEATURES; br-&gt;dev = dev; ////////////////// spin_lock_init(&amp;br-&gt;lock); INIT_LIST_HEAD(&amp;br-&gt;port_list); //////////// INIT_HLIST_HEAD(&amp;br-&gt;fdb_list); //////////// INIT_HLIST_HEAD(&amp;br-&gt;frame_type_list); #if IS_ENABLED(CONFIG_BRIDGE_MRP) INIT_HLIST_HEAD(&amp;br-&gt;mrp_list); #endif #if IS_ENABLED(CONFIG_BRIDGE_CFM) INIT_HLIST_HEAD(&amp;br-&gt;mep_list); #endif spin_lock_init(&amp;br-&gt;hash_lock); br-&gt;bridge_id.prio[0] = 0x80; br-&gt;bridge_id.prio[1] = 0x00; ether_addr_copy(br-&gt;group_addr, eth_stp_addr); br-&gt;stp_enabled = BR_NO_STP; br-&gt;group_fwd_mask = BR_GROUPFWD_DEFAULT; br-&gt;group_fwd_mask_required = BR_GROUPFWD_DEFAULT; br-&gt;designated_root = br-&gt;bridge_id; br-&gt;bridge_max_age = br-&gt;max_age = 20 * HZ; br-&gt;bridge_hello_time = br-&gt;hello_time = 2 * HZ; br-&gt;bridge_forward_delay = br-&gt;forward_delay = 15 * HZ; br-&gt;bridge_ageing_time = br-&gt;ageing_time = BR_DEFAULT_AGEING_TIME; dev-&gt;max_mtu = ETH_MAX_MTU; br_netfilter_rtable_init(br); br_stp_timer_init(br); br_multicast_init(br); INIT_DELAYED_WORK(&amp;br-&gt;gc_work, br_fdb_cleanup); } 1 2 3 4 static inline void *netdev_priv(const struct net_device *dev) { return (char *)dev + ALIGN(sizeof(struct net_device), NETDEV_ALIGN); } 简单来说，struct net_device 是桥的“外壳”或“接口”，而 struct net_bridge 是桥的“大脑”或“核心逻辑”。它们通过一个关键的指针相互关联。下面我们进行详细分解。\n">
+<meta property='og:url' content='https://charles-7777.github.io/hugo-stack/p/linux-%E7%BD%91%E6%A1%A5/'>
+<meta property='og:site_name' content=''>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='linux' /><meta property='article:published_time' content='2025-09-26T16:36:08&#43;08:00'/><meta property='article:modified_time' content='2025-09-26T17:19:38&#43;08:00'/>
+<meta name="twitter:title" content="Linux 网桥">
+<meta name="twitter:description" content="Linux网桥的实现 linux内核实现虚拟的网桥设备，并绑定若干个以太网口（目前网桥只支持以太网接口）。 交换机对收到的数据包，只能丢弃或转发。但是linux内核设备不一样，他可能本身就是数据包的目的地。所以除了丢弃转发，他还会发往协议层自己消化。 网桥是在数据链路层实现的，他的上面是邻居子系统和网络层。\nlinux网桥数据结构 虚拟网桥也是一个网络设备，基本结构体为net_device，net_device –&gt; priv下存储了网桥数据结构的私有变量net_bridge。上图中一些重要的数据结构如下：\nnet_bridge：网桥私有数据\nnet_bridge_port网桥要绑定的以太网端口的结构体\nnet_bridge_fdb_entry：单播转发数据库条目\nnet_bridge_mdb_entry：组播转发数据库条目\n1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 int br_add_bridge(struct net *net, const char *name) { struct net_device *dev; int res; dev = alloc_netdev(sizeof(struct net_bridge), name, NET_NAME_UNKNOWN, br_dev_setup); ////// if (!dev) return -ENOMEM; dev_net_set(dev, net); dev-&gt;rtnl_link_ops = &amp;br_link_ops; res = register_netdevice(dev); if (res) free_netdev(dev); return res; } 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 void br_dev_setup(struct net_device *dev) { struct net_bridge *br = netdev_priv(dev); ///////// eth_hw_addr_random(dev); ether_setup(dev); dev-&gt;netdev_ops = &amp;br_netdev_ops; dev-&gt;needs_free_netdev = true; dev-&gt;ethtool_ops = &amp;br_ethtool_ops; SET_NETDEV_DEVTYPE(dev, &amp;br_type); dev-&gt;priv_flags = IFF_EBRIDGE | IFF_NO_QUEUE; dev-&gt;features = COMMON_FEATURES | NETIF_F_LLTX | NETIF_F_NETNS_LOCAL | NETIF_F_HW_VLAN_CTAG_TX | NETIF_F_HW_VLAN_STAG_TX; dev-&gt;hw_features = COMMON_FEATURES | NETIF_F_HW_VLAN_CTAG_TX | NETIF_F_HW_VLAN_STAG_TX; dev-&gt;vlan_features = COMMON_FEATURES; br-&gt;dev = dev; ////////////////// spin_lock_init(&amp;br-&gt;lock); INIT_LIST_HEAD(&amp;br-&gt;port_list); //////////// INIT_HLIST_HEAD(&amp;br-&gt;fdb_list); //////////// INIT_HLIST_HEAD(&amp;br-&gt;frame_type_list); #if IS_ENABLED(CONFIG_BRIDGE_MRP) INIT_HLIST_HEAD(&amp;br-&gt;mrp_list); #endif #if IS_ENABLED(CONFIG_BRIDGE_CFM) INIT_HLIST_HEAD(&amp;br-&gt;mep_list); #endif spin_lock_init(&amp;br-&gt;hash_lock); br-&gt;bridge_id.prio[0] = 0x80; br-&gt;bridge_id.prio[1] = 0x00; ether_addr_copy(br-&gt;group_addr, eth_stp_addr); br-&gt;stp_enabled = BR_NO_STP; br-&gt;group_fwd_mask = BR_GROUPFWD_DEFAULT; br-&gt;group_fwd_mask_required = BR_GROUPFWD_DEFAULT; br-&gt;designated_root = br-&gt;bridge_id; br-&gt;bridge_max_age = br-&gt;max_age = 20 * HZ; br-&gt;bridge_hello_time = br-&gt;hello_time = 2 * HZ; br-&gt;bridge_forward_delay = br-&gt;forward_delay = 15 * HZ; br-&gt;bridge_ageing_time = br-&gt;ageing_time = BR_DEFAULT_AGEING_TIME; dev-&gt;max_mtu = ETH_MAX_MTU; br_netfilter_rtable_init(br); br_stp_timer_init(br); br_multicast_init(br); INIT_DELAYED_WORK(&amp;br-&gt;gc_work, br_fdb_cleanup); } 1 2 3 4 static inline void *netdev_priv(const struct net_device *dev) { return (char *)dev + ALIGN(sizeof(struct net_device), NETDEV_ALIGN); } 简单来说，struct net_device 是桥的“外壳”或“接口”，而 struct net_bridge 是桥的“大脑”或“核心逻辑”。它们通过一个关键的指针相互关联。下面我们进行详细分解。\n">
+    <link rel="shortcut icon" href="/hugo-stack/favicon2.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/hugo-stack/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/hugo-stack/img/oi_compressed_hu_9c5e2ca2fe891746.gif" width="300"
+                            height="303" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/hugo-stack"></a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://www.bilibili.com/'
+                        target="_blank"
+                        title="bilibili"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-brand-bilibili"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 10a4 4 0 0 1 4 -4h10a4 4 0 0 1 4 4v6a4 4 0 0 1 -4 4h-10a4 4 0 0 1 -4 -4v-6z" /><path d="M8 3l2 3" /><path d="M16 3l-2 3" /><path d="M9 13v-2" /><path d="M15 11v2" /></svg>
+                        
+                    </a>
+                </li>
+            
+                <li>
+                    <a 
+                        href='https://www.douyin.com/'
+                        target="_blank"
+                        title="douyin"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-brand-tiktok"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M21 7.917v4.034a9.948 9.948 0 0 1 -5 -1.951v4.5a6.5 6.5 0 1 1 -8 -6.326v4.326a2.5 2.5 0 1 0 4 2v-11.5h4.083a6.005 6.005 0 0 0 4.917 4.917z" /></svg>
+                        
+                    </a>
+                </li>
+            
+                <li>
+                    <a 
+                        href='https://github.com/charles-7777/hugo-blog'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/hugo-stack/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                
+                <span>主页</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/archives/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                
+                <span>归档</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/cats-tags/' >
+                
+                
+                
+                    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-tags"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 8v4.172a2 2 0 0 0 .586 1.414l5.71 5.71a2.41 2.41 0 0 0 3.408 0l3.592 -3.592a2.41 2.41 0 0 0 0 -3.408l-5.71 -5.71a2 2 0 0 0 -1.414 -.586h-4.172a2 2 0 0 0 -2 2z" /><path d="M18 19l1.592 -1.592a4.82 4.82 0 0 0 0 -6.816l-4.592 -4.592" /><path d="M7 10h-.01" /></svg>
+                
+                <span>Cats&amp;Tags</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/%E9%93%BE%E6%8E%A5/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                
+                <span>链接</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/search/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+                
+                <span>搜索</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/%E5%85%B3%E4%BA%8E/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                
+                <span>关于</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/updatelog/' >
+                
+                
+                
+                    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-logs"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 12h.01" /><path d="M4 6h.01" /><path d="M4 18h.01" /><path d="M8 18h2" /><path d="M8 12h2" /><path d="M8 6h2" /><path d="M14 6h6" /><path d="M14 12h6" /><path d="M14 18h6" /></svg>
+                
+                <span>更新日志</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>暗色模式</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ol>
+    <li><a href="#linux网桥的实现">Linux网桥的实现</a>
+      <ol>
+        <li><a href="#linux网桥数据结构">linux网桥数据结构</a>
+          <ol>
+            <li><a href="#网桥私有数据net_bridge">网桥私有数据：net_bridge</a></li>
+            <li><a href="#网桥端口net_bridge_port">网桥端口：net_bridge_port</a></li>
+            <li><a href="#单播转发数据库条目net_bridge_fdb_entry">单播转发数据库条目：net_bridge_fdb_entry</a></li>
+            <li><a href="#组播转发数据库条目net_bridge_mdb_entry">组播转发数据库条目：net_bridge_mdb_entry</a></li>
+          </ol>
+        </li>
+        <li><a href="#网桥设备对数据包处理">网桥设备对数据包处理</a>
+          <ol>
+            <li><a href="#__netif_receive_skb_core">__netif_receive_skb_core</a></li>
+          </ol>
+        </li>
+        <li><a href="#网桥设备处理skb-br_handle_frame">网桥设备处理skb: br_handle_frame</a></li>
+        <li><a href="#br_handle_frame_finish">br_handle_frame_finish</a></li>
+        <li><a href="#数据包发往本地br_pass_frame_up">数据包发往本地：br_pass_frame_up</a></li>
+        <li><a href="#数据包转发">数据包转发</a></li>
+      </ol>
+    </li>
+  </ol>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/hugo-stack/categories/linux/" >
+                Linux
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/hugo-stack/p/linux-%E7%BD%91%E6%A1%A5/">Linux 网桥</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">2025-09-26 16:36</time>
+            </div>
+        <div>
+            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-edit"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg>
+            <time class="article-lastmod">2025-09-26 17:19</time>
+        </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 11 分钟
+                </time>
+            </div>
+        
+
+        
+            <div>
+                <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-file-word"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 12l1.333 5l1.667 -4l1.667 4l1.333 -5" /></svg>
+                <time class="article-words">
+                    2296 字
+                </time>
+            </div>
+        
+
+
+    </footer>
+    
+
+    
+
+
+</div>
+
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h2 id="linux网桥的实现">Linux网桥的实现
+</h2><p>linux内核实现虚拟的网桥设备，并绑定若干个以太网口（目前网桥只支持以太网接口）。
+交换机对收到的数据包，只能丢弃或转发。但是linux内核设备不一样，他可能本身就是数据包的目的地。所以除了丢弃转发，他还会发往协议层自己消化。
+网桥是在数据链路层实现的，他的上面是邻居子系统和网络层。</p>
+<h3 id="linux网桥数据结构">linux网桥数据结构
+</h3><p><img src="https://cdn.jsdelivr.net/gh/charles-7777/ImageBed@main/blog/v2-76480cda5789c2e8504139248bd16331_1440w.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p>虚拟网桥也是一个网络设备，基本结构体为<strong>net_device</strong>，<strong>net_device –&gt; priv</strong>下存储了网桥数据结构的私有变量<strong>net_bridge</strong>。上图中一些重要的数据结构如下：</p>
+<ul>
+<li>
+<p>net_bridge：网桥私有数据</p>
+</li>
+<li>
+<p>net_bridge_port网桥要绑定的以太网端口的结构体</p>
+</li>
+<li>
+<p>net_bridge_fdb_entry：单播转发数据库条目</p>
+</li>
+<li>
+<p>net_bridge_mdb_entry：组播转发数据库条目</p>
+</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">br_add_bridge</span><span class="p">(</span><span class="k">struct</span> <span class="n">net</span> <span class="o">*</span><span class="n">net</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">net_device</span> <span class="o">*</span><span class="n">dev</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">res</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">dev</span> <span class="o">=</span> <span class="nf">alloc_netdev</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">net_bridge</span><span class="p">),</span> <span class="n">name</span><span class="p">,</span> <span class="n">NET_NAME_UNKNOWN</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">               <span class="n">br_dev_setup</span><span class="p">);</span> <span class="c1">//////
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">dev</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="o">-</span><span class="n">ENOMEM</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nf">dev_net_set</span><span class="p">(</span><span class="n">dev</span><span class="p">,</span> <span class="n">net</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">dev</span><span class="o">-&gt;</span><span class="n">rtnl_link_ops</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">br_link_ops</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">res</span> <span class="o">=</span> <span class="nf">register_netdevice</span><span class="p">(</span><span class="n">dev</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">res</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">free_netdev</span><span class="p">(</span><span class="n">dev</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">res</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">br_dev_setup</span><span class="p">(</span><span class="k">struct</span> <span class="n">net_device</span> <span class="o">*</span><span class="n">dev</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">net_bridge</span> <span class="o">*</span><span class="n">br</span> <span class="o">=</span> <span class="nf">netdev_priv</span><span class="p">(</span><span class="n">dev</span><span class="p">);</span>   <span class="c1">/////////
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">    <span class="nf">eth_hw_addr_random</span><span class="p">(</span><span class="n">dev</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">ether_setup</span><span class="p">(</span><span class="n">dev</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">dev</span><span class="o">-&gt;</span><span class="n">netdev_ops</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">br_netdev_ops</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">dev</span><span class="o">-&gt;</span><span class="n">needs_free_netdev</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">dev</span><span class="o">-&gt;</span><span class="n">ethtool_ops</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">br_ethtool_ops</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">SET_NETDEV_DEVTYPE</span><span class="p">(</span><span class="n">dev</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">br_type</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">dev</span><span class="o">-&gt;</span><span class="n">priv_flags</span> <span class="o">=</span> <span class="n">IFF_EBRIDGE</span> <span class="o">|</span> <span class="n">IFF_NO_QUEUE</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">dev</span><span class="o">-&gt;</span><span class="n">features</span> <span class="o">=</span> <span class="n">COMMON_FEATURES</span> <span class="o">|</span> <span class="n">NETIF_F_LLTX</span> <span class="o">|</span> <span class="n">NETIF_F_NETNS_LOCAL</span> <span class="o">|</span>
+</span></span><span class="line"><span class="cl">            <span class="n">NETIF_F_HW_VLAN_CTAG_TX</span> <span class="o">|</span> <span class="n">NETIF_F_HW_VLAN_STAG_TX</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">dev</span><span class="o">-&gt;</span><span class="n">hw_features</span> <span class="o">=</span> <span class="n">COMMON_FEATURES</span> <span class="o">|</span> <span class="n">NETIF_F_HW_VLAN_CTAG_TX</span> <span class="o">|</span>
+</span></span><span class="line"><span class="cl">               <span class="n">NETIF_F_HW_VLAN_STAG_TX</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">dev</span><span class="o">-&gt;</span><span class="n">vlan_features</span> <span class="o">=</span> <span class="n">COMMON_FEATURES</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">br</span><span class="o">-&gt;</span><span class="n">dev</span> <span class="o">=</span> <span class="n">dev</span><span class="p">;</span>  <span class="c1">////////////////// 
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="nf">spin_lock_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">br</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">INIT_LIST_HEAD</span><span class="p">(</span><span class="o">&amp;</span><span class="n">br</span><span class="o">-&gt;</span><span class="n">port_list</span><span class="p">);</span> <span class="c1">//////////// 
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="nf">INIT_HLIST_HEAD</span><span class="p">(</span><span class="o">&amp;</span><span class="n">br</span><span class="o">-&gt;</span><span class="n">fdb_list</span><span class="p">);</span> <span class="c1">////////////
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="nf">INIT_HLIST_HEAD</span><span class="p">(</span><span class="o">&amp;</span><span class="n">br</span><span class="o">-&gt;</span><span class="n">frame_type_list</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="cp">#if IS_ENABLED(CONFIG_BRIDGE_MRP)
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>    <span class="nf">INIT_HLIST_HEAD</span><span class="p">(</span><span class="o">&amp;</span><span class="n">br</span><span class="o">-&gt;</span><span class="n">mrp_list</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="cp">#endif
+</span></span></span><span class="line"><span class="cl"><span class="cp">#if IS_ENABLED(CONFIG_BRIDGE_CFM)
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>    <span class="nf">INIT_HLIST_HEAD</span><span class="p">(</span><span class="o">&amp;</span><span class="n">br</span><span class="o">-&gt;</span><span class="n">mep_list</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="cp">#endif
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>    <span class="nf">spin_lock_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">br</span><span class="o">-&gt;</span><span class="n">hash_lock</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">br</span><span class="o">-&gt;</span><span class="n">bridge_id</span><span class="p">.</span><span class="n">prio</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mh">0x80</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">br</span><span class="o">-&gt;</span><span class="n">bridge_id</span><span class="p">.</span><span class="n">prio</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mh">0x00</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nf">ether_addr_copy</span><span class="p">(</span><span class="n">br</span><span class="o">-&gt;</span><span class="n">group_addr</span><span class="p">,</span> <span class="n">eth_stp_addr</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">br</span><span class="o">-&gt;</span><span class="n">stp_enabled</span> <span class="o">=</span> <span class="n">BR_NO_STP</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">br</span><span class="o">-&gt;</span><span class="n">group_fwd_mask</span> <span class="o">=</span> <span class="n">BR_GROUPFWD_DEFAULT</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">br</span><span class="o">-&gt;</span><span class="n">group_fwd_mask_required</span> <span class="o">=</span> <span class="n">BR_GROUPFWD_DEFAULT</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">br</span><span class="o">-&gt;</span><span class="n">designated_root</span> <span class="o">=</span> <span class="n">br</span><span class="o">-&gt;</span><span class="n">bridge_id</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">br</span><span class="o">-&gt;</span><span class="n">bridge_max_age</span> <span class="o">=</span> <span class="n">br</span><span class="o">-&gt;</span><span class="n">max_age</span> <span class="o">=</span> <span class="mi">20</span> <span class="o">*</span> <span class="n">HZ</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">br</span><span class="o">-&gt;</span><span class="n">bridge_hello_time</span> <span class="o">=</span> <span class="n">br</span><span class="o">-&gt;</span><span class="n">hello_time</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">HZ</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">br</span><span class="o">-&gt;</span><span class="n">bridge_forward_delay</span> <span class="o">=</span> <span class="n">br</span><span class="o">-&gt;</span><span class="n">forward_delay</span> <span class="o">=</span> <span class="mi">15</span> <span class="o">*</span> <span class="n">HZ</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">br</span><span class="o">-&gt;</span><span class="n">bridge_ageing_time</span> <span class="o">=</span> <span class="n">br</span><span class="o">-&gt;</span><span class="n">ageing_time</span> <span class="o">=</span> <span class="n">BR_DEFAULT_AGEING_TIME</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">dev</span><span class="o">-&gt;</span><span class="n">max_mtu</span> <span class="o">=</span> <span class="n">ETH_MAX_MTU</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nf">br_netfilter_rtable_init</span><span class="p">(</span><span class="n">br</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">br_stp_timer_init</span><span class="p">(</span><span class="n">br</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">br_multicast_init</span><span class="p">(</span><span class="n">br</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">INIT_DELAYED_WORK</span><span class="p">(</span><span class="o">&amp;</span><span class="n">br</span><span class="o">-&gt;</span><span class="n">gc_work</span><span class="p">,</span> <span class="n">br_fdb_cleanup</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">static</span> <span class="kr">inline</span> <span class="kt">void</span> <span class="o">*</span><span class="nf">netdev_priv</span><span class="p">(</span><span class="k">const</span> <span class="k">struct</span> <span class="n">net_device</span> <span class="o">*</span><span class="n">dev</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="n">dev</span> <span class="o">+</span> <span class="nf">ALIGN</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">net_device</span><span class="p">),</span> <span class="n">NETDEV_ALIGN</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><blockquote>
+<p>简单来说，struct net_device 是桥的“外壳”或“接口”，而 struct net_bridge 是桥的“大脑”或“核心逻辑”。它们通过一个关键的指针相互关联。下面我们进行详细分解。</p>
+<ul>
+<li>
+<p>核心数据结构</p>
+<ul>
+<li>
+<p>struct net_device： 这个结构体代表一个网络接口，无论它是物理的（如 eth0）还是虚拟的（如 br-lan, veth0）。它包含了所有网络设备共有的信息，例如：</p>
+<ul>
+<li>
+<p>接口名称（name，如 &ldquo;br-lan&rdquo;）</p>
+</li>
+<li>
+<p>MAC 地址（dev_addr）</p>
+</li>
+<li>
+<p>接口状态（UP/DOWN）</p>
+</li>
+<li>
+<p>发送和接收数据包的函数指针（netdev_ops）</p>
+</li>
+<li>
+<p>统计信息（包计数、错误计数等）</p>
+</li>
+<li>
+<p>一个非常重要的成员：priv_flags 和 rx_handler（后面会讲到）</p>
+</li>
+<li>
+<p>指向net_device私有数据的一个通用指针：priv（对于桥设备，它指向 struct net_bridge,通过 netdev_priv(dev) 宏来获取 priv 指针的地址</p>
+</li>
+</ul>
+</li>
+<li>
+<p>struct net_bridge： 这个结构体是专门为桥接功能定义的，它包含了管理一个桥所需的所有信息，例如：</p>
+<ul>
+<li>
+<p>桥的 STP（生成树协议）状态和配置。</p>
+</li>
+<li>
+<p>桥的 MAC 地址（通常取自第一个被加入的端口）。</p>
+</li>
+<li>
+<p>端口列表（port_list）： 一个链表，包含了所有加入这个桥的端口（如 eth0, eth1）。每个端口由一个 struct net_bridge_port 表示。</p>
+</li>
+<li>
+<p>转发数据库（FDB）：一个哈希表，用于学习和管理 MAC 地址到端口的映射。</p>
+</li>
+<li>
+<p>指向其对应的 net_device 的指针。</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>关键关联机制
+关联是在创建桥设备（例如使用 brctl addbr br-lan 或 ip link add br-lan type bridge）时建立的。整个过程的核心是 netdev_priv() 机制。</p>
+<ul>
+<li>
+<p>分配 net_device 并嵌入 net_bridge
+当内核需要创建一个新的桥设备时，它并不是先分配一个 net_device，再分配一个 net_bridge，然后用指针连接它们。相反，它使用了一种更高效、更常见的“嵌入式”方法：</p>
+<ul>
+<li>
+<p>一次性分配内存： 内核调用 alloc_netdev(sizeof(struct net_bridge), &ldquo;br-lan&rdquo;, NET_NAME_UNKNOWN, br_dev_setup)。
+alloc_netdev 会分配一块足够大的内存，这块内存的大小 = sizeof(struct net_device) + sizeof(struct net_bridge) + 一些对齐填充。这样，net_bridge 结构体就直接内嵌在 net_device 结构体之后的内存中。</p>
+</li>
+<li>
+<p>关联指针： 在 br_dev_setup 初始化函数中，会进行关键设置:设置 net_device-&gt;priv_flags 为 IFF_EBRIDGE，标记这是一个桥设备。设置 net_device-&gt;netdev_ops 为 br_netdev_ops，这意味着所有针对 br-lan 这个网络设备的操作（如打开、关闭、发送数据包）都由桥接模块提供的函数处理。最关键的一步：通过 netdev_priv(dev) 宏来获取 priv 指针的地址。由于内存布局是内嵌的，也就是紧跟着 net_device 结构体的那块内存的起始地址——而这正好就是我们为 net_bridge 分配的地方。
+br-&gt;dev = dev; // net_bridge 也保存一个指回 net_device 的指针</p>
+</li>
+</ul>
+</li>
+<li>
+<p>数据包流向（接收路径）
+关联建立后，数据包如何被桥处理呢？这涉及到另一个关键机制：RX 处理程序（RX handler）。当一个网络接口（例如 eth0）被加入到桥 br-lan 时（使用 brctl addif br-lan eth0），内核会调用 br_add_if()。
+在这个函数中，会为 eth0 这个 net_device 安装一个RX处理程序：dev-&gt;rx_handler = br_handle_frame。从此以后，所有从 eth0 接收到的数据包，在进入网络协议栈的更上层（如IP层）之前，会先被 br_handle_frame 这个函数截获。br_handle_frame 函数可以判断这个数据包所属的桥（通过 eth0 对应的 struct net_bridge_port 找到其所属的 struct net_bridge），然后进行桥接逻辑（学习MAC地址、转发、过滤等）。</p>
+</li>
+</ul>
+</li>
+</ul></blockquote>
+<h4 id="网桥私有数据net_bridge">网桥私有数据：net_bridge
+</h4><p>网桥相关信息保存在这里：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
+</span><span class="lnt">74
+</span><span class="lnt">75
+</span><span class="lnt">76
+</span><span class="lnt">77
+</span><span class="lnt">78
+</span><span class="lnt">79
+</span><span class="lnt">80
+</span><span class="lnt">81
+</span><span class="lnt">82
+</span><span class="lnt">83
+</span><span class="lnt">84
+</span><span class="lnt">85
+</span><span class="lnt">86
+</span><span class="lnt">87
+</span><span class="lnt">88
+</span><span class="lnt">89
+</span><span class="lnt">90
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">struct</span> <span class="n">net_bridge</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">spinlock_t</span>            <span class="n">lock</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">spinlock_t</span>            <span class="n">hash_lock</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">hlist_head</span>        <span class="n">frame_type_list</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">net_device</span>        <span class="o">*</span><span class="n">dev</span><span class="p">;</span>    <span class="c1">///////
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="kt">unsigned</span> <span class="kt">long</span>            <span class="n">options</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="cm">/* These fields are accessed on each packet */</span>
+</span></span><span class="line"><span class="cl"><span class="cp">#ifdef CONFIG_BRIDGE_VLAN_FILTERING
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>    <span class="n">__be16</span>                <span class="n">vlan_proto</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">u16</span>                <span class="n">default_pvid</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">net_bridge_vlan_group</span>    <span class="n">__rcu</span> <span class="o">*</span><span class="n">vlgrp</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="cp">#endif
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">rhashtable</span>        <span class="n">fdb_hash_tbl</span><span class="p">;</span> <span class="c1">/////
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">struct</span> <span class="n">list_head</span>        <span class="n">port_list</span><span class="p">;</span>  <span class="c1">/////
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="cp">#if IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>    <span class="k">union</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">struct</span> <span class="n">rtable</span>        <span class="n">fake_rtable</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">struct</span> <span class="n">rt6_info</span>        <span class="n">fake_rt6_info</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">};</span>
+</span></span><span class="line"><span class="cl"><span class="cp">#endif
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>    <span class="n">u16</span>                <span class="n">group_fwd_mask</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">u16</span>                <span class="n">group_fwd_mask_required</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="cm">/* STP */</span>
+</span></span><span class="line"><span class="cl">    <span class="n">bridge_id</span>            <span class="n">designated_root</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">bridge_id</span>            <span class="n">bridge_id</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">char</span>            <span class="n">topology_change</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">char</span>            <span class="n">topology_change_detected</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">u16</span>                <span class="n">root_port</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">long</span>            <span class="n">max_age</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">long</span>            <span class="n">hello_time</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">long</span>            <span class="n">forward_delay</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">long</span>            <span class="n">ageing_time</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">long</span>            <span class="n">bridge_max_age</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">long</span>            <span class="n">bridge_hello_time</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">long</span>            <span class="n">bridge_forward_delay</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">long</span>            <span class="n">bridge_ageing_time</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">u32</span>                <span class="n">root_path_cost</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">u8</span>                <span class="n">group_addr</span><span class="p">[</span><span class="n">ETH_ALEN</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">enum</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">BR_NO_STP</span><span class="p">,</span>         <span class="cm">/* no spanning tree */</span>
+</span></span><span class="line"><span class="cl">        <span class="n">BR_KERNEL_STP</span><span class="p">,</span>        <span class="cm">/* old STP in kernel */</span>
+</span></span><span class="line"><span class="cl">        <span class="n">BR_USER_STP</span><span class="p">,</span>        <span class="cm">/* new RSTP in userspace */</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span> <span class="n">stp_enabled</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">net_bridge_mcast</span>        <span class="n">multicast_ctx</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="cp">#ifdef CONFIG_BRIDGE_IGMP_SNOOPING
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>    <span class="k">struct</span> <span class="n">bridge_mcast_stats</span>    <span class="n">__percpu</span> <span class="o">*</span><span class="n">mcast_stats</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">u32</span>                <span class="n">hash_max</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="kt">spinlock_t</span>            <span class="n">multicast_lock</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">rhashtable</span>        <span class="n">mdb_hash_tbl</span><span class="p">;</span>  <span class="c1">////////
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">struct</span> <span class="n">rhashtable</span>        <span class="n">sg_port_tbl</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">hlist_head</span>        <span class="n">mcast_gc_list</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">hlist_head</span>        <span class="n">mdb_list</span><span class="p">;</span>    <span class="c1">//////
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">work_struct</span>        <span class="n">mcast_gc_work</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="cp">#endif
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">timer_list</span>        <span class="n">hello_timer</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">timer_list</span>        <span class="n">tcn_timer</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">timer_list</span>        <span class="n">topology_change_timer</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">delayed_work</span>        <span class="n">gc_work</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">kobject</span>            <span class="o">*</span><span class="n">ifobj</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">u32</span>                <span class="n">auto_cnt</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="cp">#ifdef CONFIG_NET_SWITCHDEV
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>    <span class="cm">/* Counter used to make sure that hardware domains get unique
+</span></span></span><span class="line"><span class="cl"><span class="cm">     * identifiers in case a bridge spans multiple switchdev instances.
+</span></span></span><span class="line"><span class="cl"><span class="cm">     */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span>                <span class="n">last_hwdom</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="cm">/* Bit mask of hardware domain numbers in use */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">long</span>            <span class="n">busy_hwdoms</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="cp">#endif
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>    <span class="k">struct</span> <span class="n">hlist_head</span>        <span class="n">fdb_list</span><span class="p">;</span>  <span class="c1">/////
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl"><span class="cp">#if IS_ENABLED(CONFIG_BRIDGE_MRP)
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>    <span class="k">struct</span> <span class="n">hlist_head</span>        <span class="n">mrp_list</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="cp">#endif
+</span></span></span><span class="line"><span class="cl"><span class="cp">#if IS_ENABLED(CONFIG_BRIDGE_CFM)
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>    <span class="k">struct</span> <span class="n">hlist_head</span>        <span class="n">mep_list</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="cp">#endif
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span><span class="p">};</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h4 id="网桥端口net_bridge_port">网桥端口：net_bridge_port
+</h4><p>一个网桥可以和若干以太网端口绑定，每个端口信息保存在net_bridge_port结构中，并被net_bridge{} –&gt;port_list链接。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">struct</span> <span class="n">net_bridge_port</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">net_bridge</span>        <span class="o">*</span><span class="n">br</span><span class="p">;</span>  <span class="c1">////
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">struct</span> <span class="n">net_device</span>        <span class="o">*</span><span class="n">dev</span><span class="p">;</span>  <span class="c1">////
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">netdevice_tracker</span>        <span class="n">dev_tracker</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">list_head</span>        <span class="n">list</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">long</span>            <span class="n">flags</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="cp">#ifdef CONFIG_BRIDGE_VLAN_FILTERING
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>    <span class="k">struct</span> <span class="n">net_bridge_vlan_group</span>    <span class="n">__rcu</span> <span class="o">*</span><span class="n">vlgrp</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="cp">#endif
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>    <span class="k">struct</span> <span class="n">net_bridge_port</span>        <span class="n">__rcu</span> <span class="o">*</span><span class="n">backup_port</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="cm">/* STP */</span>
+</span></span><span class="line"><span class="cl">    <span class="n">u8</span>                <span class="n">priority</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">u8</span>                <span class="n">state</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">u16</span>                <span class="n">port_no</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">char</span>            <span class="n">topology_change_ack</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">char</span>            <span class="n">config_pending</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">port_id</span>                <span class="n">port_id</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">port_id</span>                <span class="n">designated_port</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">bridge_id</span>            <span class="n">designated_root</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">bridge_id</span>            <span class="n">designated_bridge</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">u32</span>                <span class="n">path_cost</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">u32</span>                <span class="n">designated_cost</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">long</span>            <span class="n">designated_age</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">timer_list</span>        <span class="n">forward_delay_timer</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">timer_list</span>        <span class="n">hold_timer</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">timer_list</span>        <span class="n">message_age_timer</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">kobject</span>            <span class="n">kobj</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">rcu_head</span>            <span class="n">rcu</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">net_bridge_mcast_port</span>    <span class="n">multicast_ctx</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="cp">#ifdef CONFIG_BRIDGE_IGMP_SNOOPING
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>    <span class="k">struct</span> <span class="n">bridge_mcast_stats</span>    <span class="n">__percpu</span> <span class="o">*</span><span class="n">mcast_stats</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">u32</span>                <span class="n">multicast_eht_hosts_limit</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">u32</span>                <span class="n">multicast_eht_hosts_cnt</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">hlist_head</span>        <span class="n">mglist</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="cp">#endif
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="cp">#ifdef CONFIG_SYSFS
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>    <span class="kt">char</span>                <span class="n">sysfs_name</span><span class="p">[</span><span class="n">IFNAMSIZ</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl"><span class="cp">#endif
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="cp">#ifdef CONFIG_NET_POLL_CONTROLLER
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>    <span class="k">struct</span> <span class="n">netpoll</span>            <span class="o">*</span><span class="n">np</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="cp">#endif
+</span></span></span><span class="line"><span class="cl"><span class="cp">#ifdef CONFIG_NET_SWITCHDEV
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>    <span class="cm">/* Identifier used to group ports that share the same switchdev
+</span></span></span><span class="line"><span class="cl"><span class="cm">     * hardware domain.
+</span></span></span><span class="line"><span class="cl"><span class="cm">     */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span>                <span class="n">hwdom</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span>                <span class="n">offload_count</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">netdev_phys_item_id</span>    <span class="n">ppid</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="cp">#endif
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>    <span class="n">u16</span>                <span class="n">group_fwd_mask</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">u16</span>                <span class="n">backup_redirected_cnt</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">bridge_stp_xstats</span>    <span class="n">stp_xstats</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h4 id="单播转发数据库条目net_bridge_fdb_entry">单播转发数据库条目：net_bridge_fdb_entry
+</h4><p>net_bridge中有两个字段与该结构体相关，fdb_hash_tbl与fdb_list，函数fdb_create（）可以看到net_bridge_fdb_entry与这连个字段的关系。每一条新建的fdb表项会加入br-&gt;fdb_hash_tbl这个哈希表中，准确的说是br-&gt;fdb_hash_tbl-&gt;tbl，对应的键值是fdb表项的key字段（addr与vlan）。插入成功，则将该fdb表项的fdb_node插入br-&gt;fdb_hash_tbl中。
+也就说fdb表项分别以哈希表与链表的形式存储在br中。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">struct net_bridge_fdb_entry {
+</span></span><span class="line"><span class="cl">    struct rhash_head        rhnode;
+</span></span><span class="line"><span class="cl">    struct net_bridge_port        *dst;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    struct net_bridge_fdb_key    key;
+</span></span><span class="line"><span class="cl">    struct hlist_node        fdb_node;
+</span></span><span class="line"><span class="cl">    unsigned long            flags;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    /* write-heavy members should not affect lookups */
+</span></span><span class="line"><span class="cl">    unsigned long            updated ____cacheline_aligned_in_smp;
+</span></span><span class="line"><span class="cl">    unsigned long            used;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    struct rcu_head            rcu;
+</span></span><span class="line"><span class="cl">};
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h4 id="组播转发数据库条目net_bridge_mdb_entry">组播转发数据库条目：net_bridge_mdb_entry
+</h4><p>该条目描述一个多播组转发项，将多播形式的mac地址与一组端口对应，timer链表为这些端口的失效定时器链表，某一个端口定时器超时则将其移除</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">struct</span> <span class="n">net_bridge_mdb_entry</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">rhash_head</span>        <span class="n">rhnode</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">net_bridge</span>        <span class="o">*</span><span class="n">br</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">net_bridge_port_group</span> <span class="n">__rcu</span> <span class="o">*</span><span class="n">ports</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">br_ip</span>            <span class="n">addr</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">bool</span>                <span class="n">host_joined</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">timer_list</span>        <span class="n">timer</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">hlist_node</span>        <span class="n">mdb_node</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">net_bridge_mcast_gc</span>    <span class="n">mcast_gc</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">rcu_head</span>            <span class="n">rcu</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="网桥设备对数据包处理">网桥设备对数据包处理
+</h3><p>以收包为例。</p>
+<p>网络中有数据包到来，当网卡接受到数据时，网卡向cpu发中断，cpu调用驱动程序，将数据包放到对应的cpu输入队列。接着唤醒软中断，调用netif_receive_skb函数，在这里判断数据包需要转到上层协议栈，还是向网桥接口处理。数据流向如下，这里默认网桥设备为非disable状态</p>
+<p><img src="https://cdn.jsdelivr.net/gh/charles-7777/ImageBed@main/blog/2025-09-26-15-46-12-v2-c198d5d972a29d5ae6ca4c5494386c22_1440w-a8e38a82-9a23-4b0a-89d6-f193ed2778a0.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<p>具体流程：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">1. netif_receive_skb 
+</span></span><span class="line"><span class="cl"> 2. --&gt;netif_receive_skb_internal /* 记录收包时间, rps机制，将报文在多个cpu之间做负载均衡以及提高报文处理的缓存命中率 */
+</span></span><span class="line"><span class="cl"> 3.     --&gt;__netif_receive_skb 
+</span></span><span class="line"><span class="cl"> 4.         --&gt;__netif_receive_skb_core  
+</span></span><span class="line"><span class="cl"> 5.     --&gt; skb_reset_network_header //重置network_header字段
+</span></span><span class="line"><span class="cl"> 6.  --&gt; skb_vlan_untag //802.1Q、802.1AD,剥除vxlan头
+</span></span><span class="line"><span class="cl"> 7.    --&gt; paket_type.func() //处理 ptype_all 上所有的 packet_type-&gt;func()
+</span></span><span class="line"><span class="cl"> 8.    --&gt; vlan_do_receive
+</span></span><span class="line"><span class="cl"> 9.    --&gt; dev-&gt;rx_handler () //实际执行函数br_handle_frame(),数据包逻辑分发，网桥处理转发就在这里进行
+</span></span><span class="line"><span class="cl"> 10.    --&gt; deliver_ptype_list_skb //向L3分发
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h4 id="__netif_receive_skb_core">__netif_receive_skb_core
+</h4><p><img src="https://cdn.jsdelivr.net/gh/charles-7777/ImageBed@main/blog/2025-09-26-16-00-28-v2-fe8fae4e05ac36dbe6208b95faa038dc_r-c8522349-b2e5-4d0e-a0c0-c52550b29b54.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">  1
+</span><span class="lnt">  2
+</span><span class="lnt">  3
+</span><span class="lnt">  4
+</span><span class="lnt">  5
+</span><span class="lnt">  6
+</span><span class="lnt">  7
+</span><span class="lnt">  8
+</span><span class="lnt">  9
+</span><span class="lnt"> 10
+</span><span class="lnt"> 11
+</span><span class="lnt"> 12
+</span><span class="lnt"> 13
+</span><span class="lnt"> 14
+</span><span class="lnt"> 15
+</span><span class="lnt"> 16
+</span><span class="lnt"> 17
+</span><span class="lnt"> 18
+</span><span class="lnt"> 19
+</span><span class="lnt"> 20
+</span><span class="lnt"> 21
+</span><span class="lnt"> 22
+</span><span class="lnt"> 23
+</span><span class="lnt"> 24
+</span><span class="lnt"> 25
+</span><span class="lnt"> 26
+</span><span class="lnt"> 27
+</span><span class="lnt"> 28
+</span><span class="lnt"> 29
+</span><span class="lnt"> 30
+</span><span class="lnt"> 31
+</span><span class="lnt"> 32
+</span><span class="lnt"> 33
+</span><span class="lnt"> 34
+</span><span class="lnt"> 35
+</span><span class="lnt"> 36
+</span><span class="lnt"> 37
+</span><span class="lnt"> 38
+</span><span class="lnt"> 39
+</span><span class="lnt"> 40
+</span><span class="lnt"> 41
+</span><span class="lnt"> 42
+</span><span class="lnt"> 43
+</span><span class="lnt"> 44
+</span><span class="lnt"> 45
+</span><span class="lnt"> 46
+</span><span class="lnt"> 47
+</span><span class="lnt"> 48
+</span><span class="lnt"> 49
+</span><span class="lnt"> 50
+</span><span class="lnt"> 51
+</span><span class="lnt"> 52
+</span><span class="lnt"> 53
+</span><span class="lnt"> 54
+</span><span class="lnt"> 55
+</span><span class="lnt"> 56
+</span><span class="lnt"> 57
+</span><span class="lnt"> 58
+</span><span class="lnt"> 59
+</span><span class="lnt"> 60
+</span><span class="lnt"> 61
+</span><span class="lnt"> 62
+</span><span class="lnt"> 63
+</span><span class="lnt"> 64
+</span><span class="lnt"> 65
+</span><span class="lnt"> 66
+</span><span class="lnt"> 67
+</span><span class="lnt"> 68
+</span><span class="lnt"> 69
+</span><span class="lnt"> 70
+</span><span class="lnt"> 71
+</span><span class="lnt"> 72
+</span><span class="lnt"> 73
+</span><span class="lnt"> 74
+</span><span class="lnt"> 75
+</span><span class="lnt"> 76
+</span><span class="lnt"> 77
+</span><span class="lnt"> 78
+</span><span class="lnt"> 79
+</span><span class="lnt"> 80
+</span><span class="lnt"> 81
+</span><span class="lnt"> 82
+</span><span class="lnt"> 83
+</span><span class="lnt"> 84
+</span><span class="lnt"> 85
+</span><span class="lnt"> 86
+</span><span class="lnt"> 87
+</span><span class="lnt"> 88
+</span><span class="lnt"> 89
+</span><span class="lnt"> 90
+</span><span class="lnt"> 91
+</span><span class="lnt"> 92
+</span><span class="lnt"> 93
+</span><span class="lnt"> 94
+</span><span class="lnt"> 95
+</span><span class="lnt"> 96
+</span><span class="lnt"> 97
+</span><span class="lnt"> 98
+</span><span class="lnt"> 99
+</span><span class="lnt">100
+</span><span class="lnt">101
+</span><span class="lnt">102
+</span><span class="lnt">103
+</span><span class="lnt">104
+</span><span class="lnt">105
+</span><span class="lnt">106
+</span><span class="lnt">107
+</span><span class="lnt">108
+</span><span class="lnt">109
+</span><span class="lnt">110
+</span><span class="lnt">111
+</span><span class="lnt">112
+</span><span class="lnt">113
+</span><span class="lnt">114
+</span><span class="lnt">115
+</span><span class="lnt">116
+</span><span class="lnt">117
+</span><span class="lnt">118
+</span><span class="lnt">119
+</span><span class="lnt">120
+</span><span class="lnt">121
+</span><span class="lnt">122
+</span><span class="lnt">123
+</span><span class="lnt">124
+</span><span class="lnt">125
+</span><span class="lnt">126
+</span><span class="lnt">127
+</span><span class="lnt">128
+</span><span class="lnt">129
+</span><span class="lnt">130
+</span><span class="lnt">131
+</span><span class="lnt">132
+</span><span class="lnt">133
+</span><span class="lnt">134
+</span><span class="lnt">135
+</span><span class="lnt">136
+</span><span class="lnt">137
+</span><span class="lnt">138
+</span><span class="lnt">139
+</span><span class="lnt">140
+</span><span class="lnt">141
+</span><span class="lnt">142
+</span><span class="lnt">143
+</span><span class="lnt">144
+</span><span class="lnt">145
+</span><span class="lnt">146
+</span><span class="lnt">147
+</span><span class="lnt">148
+</span><span class="lnt">149
+</span><span class="lnt">150
+</span><span class="lnt">151
+</span><span class="lnt">152
+</span><span class="lnt">153
+</span><span class="lnt">154
+</span><span class="lnt">155
+</span><span class="lnt">156
+</span><span class="lnt">157
+</span><span class="lnt">158
+</span><span class="lnt">159
+</span><span class="lnt">160
+</span><span class="lnt">161
+</span><span class="lnt">162
+</span><span class="lnt">163
+</span><span class="lnt">164
+</span><span class="lnt">165
+</span><span class="lnt">166
+</span><span class="lnt">167
+</span><span class="lnt">168
+</span><span class="lnt">169
+</span><span class="lnt">170
+</span><span class="lnt">171
+</span><span class="lnt">172
+</span><span class="lnt">173
+</span><span class="lnt">174
+</span><span class="lnt">175
+</span><span class="lnt">176
+</span><span class="lnt">177
+</span><span class="lnt">178
+</span><span class="lnt">179
+</span><span class="lnt">180
+</span><span class="lnt">181
+</span><span class="lnt">182
+</span><span class="lnt">183
+</span><span class="lnt">184
+</span><span class="lnt">185
+</span><span class="lnt">186
+</span><span class="lnt">187
+</span><span class="lnt">188
+</span><span class="lnt">189
+</span><span class="lnt">190
+</span><span class="lnt">191
+</span><span class="lnt">192
+</span><span class="lnt">193
+</span><span class="lnt">194
+</span><span class="lnt">195
+</span><span class="lnt">196
+</span><span class="lnt">197
+</span><span class="lnt">198
+</span><span class="lnt">199
+</span><span class="lnt">200
+</span><span class="lnt">201
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">static</span> <span class="kt">int</span> <span class="nf">__netif_receive_skb_core</span><span class="p">(</span><span class="k">struct</span> <span class="n">sk_buff</span> <span class="o">**</span><span class="n">pskb</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">pfmemalloc</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">                    <span class="k">struct</span> <span class="n">packet_type</span> <span class="o">**</span><span class="n">ppt_prev</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">packet_type</span> <span class="o">*</span><span class="n">ptype</span><span class="p">,</span> <span class="o">*</span><span class="n">pt_prev</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">rx_handler_func_t</span> <span class="o">*</span><span class="n">rx_handler</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">sk_buff</span> <span class="o">*</span><span class="n">skb</span> <span class="o">=</span> <span class="o">*</span><span class="n">pskb</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">net_device</span> <span class="o">*</span><span class="n">orig_dev</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">bool</span> <span class="n">deliver_exact</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">ret</span> <span class="o">=</span> <span class="n">NET_RX_DROP</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">__be16</span> <span class="n">type</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nf">net_timestamp_check</span><span class="p">(</span><span class="o">!</span><span class="nf">READ_ONCE</span><span class="p">(</span><span class="n">netdev_tstamp_prequeue</span><span class="p">),</span> <span class="n">skb</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nf">trace_netif_receive_skb</span><span class="p">(</span><span class="n">skb</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">orig_dev</span> <span class="o">=</span> <span class="n">skb</span><span class="o">-&gt;</span><span class="n">dev</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nf">skb_reset_network_header</span><span class="p">(</span><span class="n">skb</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nf">skb_transport_header_was_set</span><span class="p">(</span><span class="n">skb</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">skb_reset_transport_header</span><span class="p">(</span><span class="n">skb</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">skb_reset_mac_len</span><span class="p">(</span><span class="n">skb</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">pt_prev</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nl">another_round</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="n">skb</span><span class="o">-&gt;</span><span class="n">skb_iif</span> <span class="o">=</span> <span class="n">skb</span><span class="o">-&gt;</span><span class="n">dev</span><span class="o">-&gt;</span><span class="n">ifindex</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nf">__this_cpu_inc</span><span class="p">(</span><span class="n">softnet_data</span><span class="p">.</span><span class="n">processed</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="nf">static_branch_unlikely</span><span class="p">(</span><span class="o">&amp;</span><span class="n">generic_xdp_needed_key</span><span class="p">))</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="kt">int</span> <span class="n">ret2</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="nf">migrate_disable</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">        <span class="n">ret2</span> <span class="o">=</span> <span class="nf">do_xdp_generic</span><span class="p">(</span><span class="nf">rcu_dereference</span><span class="p">(</span><span class="n">skb</span><span class="o">-&gt;</span><span class="n">dev</span><span class="o">-&gt;</span><span class="n">xdp_prog</span><span class="p">),</span> <span class="n">skb</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">migrate_enable</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">ret2</span> <span class="o">!=</span> <span class="n">XDP_PASS</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="n">ret</span> <span class="o">=</span> <span class="n">NET_RX_DROP</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="k">goto</span> <span class="n">out</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="nf">eth_type_vlan</span><span class="p">(</span><span class="n">skb</span><span class="o">-&gt;</span><span class="n">protocol</span><span class="p">))</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">skb</span> <span class="o">=</span> <span class="nf">skb_vlan_untag</span><span class="p">(</span><span class="n">skb</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="nf">unlikely</span><span class="p">(</span><span class="o">!</span><span class="n">skb</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">            <span class="k">goto</span> <span class="n">out</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="nf">skb_skip_tc_classify</span><span class="p">(</span><span class="n">skb</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">        <span class="k">goto</span> <span class="n">skip_classify</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">pfmemalloc</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">goto</span> <span class="n">skip_taps</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nf">list_for_each_entry_rcu</span><span class="p">(</span><span class="n">ptype</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ptype_all</span><span class="p">,</span> <span class="n">list</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">pt_prev</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="n">ret</span> <span class="o">=</span> <span class="nf">deliver_skb</span><span class="p">(</span><span class="n">skb</span><span class="p">,</span> <span class="n">pt_prev</span><span class="p">,</span> <span class="n">orig_dev</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="n">pt_prev</span> <span class="o">=</span> <span class="n">ptype</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nf">list_for_each_entry_rcu</span><span class="p">(</span><span class="n">ptype</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">skb</span><span class="o">-&gt;</span><span class="n">dev</span><span class="o">-&gt;</span><span class="n">ptype_all</span><span class="p">,</span> <span class="n">list</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">pt_prev</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="n">ret</span> <span class="o">=</span> <span class="nf">deliver_skb</span><span class="p">(</span><span class="n">skb</span><span class="p">,</span> <span class="n">pt_prev</span><span class="p">,</span> <span class="n">orig_dev</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="n">pt_prev</span> <span class="o">=</span> <span class="n">ptype</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nl">skip_taps</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl"><span class="cp">#ifdef CONFIG_NET_INGRESS
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>    <span class="k">if</span> <span class="p">(</span><span class="nf">static_branch_unlikely</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ingress_needed_key</span><span class="p">))</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="kt">bool</span> <span class="n">another</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="n">skb</span> <span class="o">=</span> <span class="nf">sch_handle_ingress</span><span class="p">(</span><span class="n">skb</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">pt_prev</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ret</span><span class="p">,</span> <span class="n">orig_dev</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">                     <span class="o">&amp;</span><span class="n">another</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">another</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="k">goto</span> <span class="n">another_round</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">skb</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="k">goto</span> <span class="n">out</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="nf">nf_ingress</span><span class="p">(</span><span class="n">skb</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">pt_prev</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ret</span><span class="p">,</span> <span class="n">orig_dev</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="k">goto</span> <span class="n">out</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="cp">#endif
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>    <span class="nf">skb_reset_redirect</span><span class="p">(</span><span class="n">skb</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="nl">skip_classify</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">pfmemalloc</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="nf">skb_pfmemalloc_protocol</span><span class="p">(</span><span class="n">skb</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">        <span class="k">goto</span> <span class="n">drop</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="nf">skb_vlan_tag_present</span><span class="p">(</span><span class="n">skb</span><span class="p">))</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">pt_prev</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="n">ret</span> <span class="o">=</span> <span class="nf">deliver_skb</span><span class="p">(</span><span class="n">skb</span><span class="p">,</span> <span class="n">pt_prev</span><span class="p">,</span> <span class="n">orig_dev</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">            <span class="n">pt_prev</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="nf">vlan_do_receive</span><span class="p">(</span><span class="o">&amp;</span><span class="n">skb</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">            <span class="k">goto</span> <span class="n">another_round</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nf">unlikely</span><span class="p">(</span><span class="o">!</span><span class="n">skb</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">            <span class="k">goto</span> <span class="n">out</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">rx_handler</span> <span class="o">=</span> <span class="nf">rcu_dereference</span><span class="p">(</span><span class="n">skb</span><span class="o">-&gt;</span><span class="n">dev</span><span class="o">-&gt;</span><span class="n">rx_handler</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">rx_handler</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">pt_prev</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="n">ret</span> <span class="o">=</span> <span class="nf">deliver_skb</span><span class="p">(</span><span class="n">skb</span><span class="p">,</span> <span class="n">pt_prev</span><span class="p">,</span> <span class="n">orig_dev</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">            <span class="n">pt_prev</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">        <span class="k">switch</span> <span class="p">(</span><span class="nf">rx_handler</span><span class="p">(</span><span class="o">&amp;</span><span class="n">skb</span><span class="p">))</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">case</span> <span class="nl">RX_HANDLER_CONSUMED</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">ret</span> <span class="o">=</span> <span class="n">NET_RX_SUCCESS</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="k">goto</span> <span class="n">out</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">case</span> <span class="nl">RX_HANDLER_ANOTHER</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="k">goto</span> <span class="n">another_round</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">case</span> <span class="nl">RX_HANDLER_EXACT</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">deliver_exact</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="k">break</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">case</span> <span class="nl">RX_HANDLER_PASS</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="k">break</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">default</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">            <span class="nf">BUG</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="nf">unlikely</span><span class="p">(</span><span class="nf">skb_vlan_tag_present</span><span class="p">(</span><span class="n">skb</span><span class="p">))</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="nf">netdev_uses_dsa</span><span class="p">(</span><span class="n">skb</span><span class="o">-&gt;</span><span class="n">dev</span><span class="p">))</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl"><span class="nl">check_vlan_id</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="nf">skb_vlan_tag_get_id</span><span class="p">(</span><span class="n">skb</span><span class="p">))</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="cm">/* Vlan id is non 0 and vlan_do_receive() above couldn&#39;t
+</span></span></span><span class="line"><span class="cl"><span class="cm">             * find vlan device.
+</span></span></span><span class="line"><span class="cl"><span class="cm">             */</span>
+</span></span><span class="line"><span class="cl">            <span class="n">skb</span><span class="o">-&gt;</span><span class="n">pkt_type</span> <span class="o">=</span> <span class="n">PACKET_OTHERHOST</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nf">eth_type_vlan</span><span class="p">(</span><span class="n">skb</span><span class="o">-&gt;</span><span class="n">protocol</span><span class="p">))</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="cm">/* Outer header is 802.1P with vlan 0, inner header is
+</span></span></span><span class="line"><span class="cl"><span class="cm">             * 802.1Q or 802.1AD and vlan_do_receive() above could
+</span></span></span><span class="line"><span class="cl"><span class="cm">             * not find vlan dev for vlan id 0.
+</span></span></span><span class="line"><span class="cl"><span class="cm">             */</span>
+</span></span><span class="line"><span class="cl">            <span class="nf">__vlan_hwaccel_clear_tag</span><span class="p">(</span><span class="n">skb</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">            <span class="n">skb</span> <span class="o">=</span> <span class="nf">skb_vlan_untag</span><span class="p">(</span><span class="n">skb</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">            <span class="k">if</span> <span class="p">(</span><span class="nf">unlikely</span><span class="p">(</span><span class="o">!</span><span class="n">skb</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">                <span class="k">goto</span> <span class="n">out</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="k">if</span> <span class="p">(</span><span class="nf">vlan_do_receive</span><span class="p">(</span><span class="o">&amp;</span><span class="n">skb</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">                <span class="cm">/* After stripping off 802.1P header with vlan 0
+</span></span></span><span class="line"><span class="cl"><span class="cm">                 * vlan dev is found for inner header.
+</span></span></span><span class="line"><span class="cl"><span class="cm">                 */</span>
+</span></span><span class="line"><span class="cl">                <span class="k">goto</span> <span class="n">another_round</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nf">unlikely</span><span class="p">(</span><span class="o">!</span><span class="n">skb</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">                <span class="k">goto</span> <span class="n">out</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="k">else</span>
+</span></span><span class="line"><span class="cl">                <span class="cm">/* We have stripped outer 802.1P vlan 0 header.
+</span></span></span><span class="line"><span class="cl"><span class="cm">                 * But could not find vlan dev.
+</span></span></span><span class="line"><span class="cl"><span class="cm">                 * check again for vlan id to set OTHERHOST.
+</span></span></span><span class="line"><span class="cl"><span class="cm">                 */</span>
+</span></span><span class="line"><span class="cl">                <span class="k">goto</span> <span class="n">check_vlan_id</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">        <span class="cm">/* Note: we might in the future use prio bits
+</span></span></span><span class="line"><span class="cl"><span class="cm">         * and set skb-&gt;priority like in vlan_do_receive()
+</span></span></span><span class="line"><span class="cl"><span class="cm">         * For the time being, just ignore Priority Code Point
+</span></span></span><span class="line"><span class="cl"><span class="cm">         */</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">__vlan_hwaccel_clear_tag</span><span class="p">(</span><span class="n">skb</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">type</span> <span class="o">=</span> <span class="n">skb</span><span class="o">-&gt;</span><span class="n">protocol</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="cm">/* deliver only exact match when indicated */</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="nf">likely</span><span class="p">(</span><span class="o">!</span><span class="n">deliver_exact</span><span class="p">))</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">deliver_ptype_list_skb</span><span class="p">(</span><span class="n">skb</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">pt_prev</span><span class="p">,</span> <span class="n">orig_dev</span><span class="p">,</span> <span class="n">type</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">                       <span class="o">&amp;</span><span class="n">ptype_base</span><span class="p">[</span><span class="nf">ntohs</span><span class="p">(</span><span class="n">type</span><span class="p">)</span> <span class="o">&amp;</span>
+</span></span><span class="line"><span class="cl">                           <span class="n">PTYPE_HASH_MASK</span><span class="p">]);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nf">deliver_ptype_list_skb</span><span class="p">(</span><span class="n">skb</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">pt_prev</span><span class="p">,</span> <span class="n">orig_dev</span><span class="p">,</span> <span class="n">type</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">                   <span class="o">&amp;</span><span class="n">orig_dev</span><span class="o">-&gt;</span><span class="n">ptype_specific</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="nf">unlikely</span><span class="p">(</span><span class="n">skb</span><span class="o">-&gt;</span><span class="n">dev</span> <span class="o">!=</span> <span class="n">orig_dev</span><span class="p">))</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">deliver_ptype_list_skb</span><span class="p">(</span><span class="n">skb</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">pt_prev</span><span class="p">,</span> <span class="n">orig_dev</span><span class="p">,</span> <span class="n">type</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">                       <span class="o">&amp;</span><span class="n">skb</span><span class="o">-&gt;</span><span class="n">dev</span><span class="o">-&gt;</span><span class="n">ptype_specific</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">pt_prev</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="nf">unlikely</span><span class="p">(</span><span class="nf">skb_orphan_frags_rx</span><span class="p">(</span><span class="n">skb</span><span class="p">,</span> <span class="n">GFP_ATOMIC</span><span class="p">)))</span>
+</span></span><span class="line"><span class="cl">            <span class="k">goto</span> <span class="n">drop</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="o">*</span><span class="n">ppt_prev</span> <span class="o">=</span> <span class="n">pt_prev</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl"><span class="nl">drop</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">deliver_exact</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="nf">atomic_long_inc</span><span class="p">(</span><span class="o">&amp;</span><span class="n">skb</span><span class="o">-&gt;</span><span class="n">dev</span><span class="o">-&gt;</span><span class="n">rx_dropped</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">else</span>
+</span></span><span class="line"><span class="cl">            <span class="nf">atomic_long_inc</span><span class="p">(</span><span class="o">&amp;</span><span class="n">skb</span><span class="o">-&gt;</span><span class="n">dev</span><span class="o">-&gt;</span><span class="n">rx_nohandler</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">kfree_skb</span><span class="p">(</span><span class="n">skb</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="cm">/* Jamal, now you will not able to escape explaining
+</span></span></span><span class="line"><span class="cl"><span class="cm">         * me how you were going to use this. :-)
+</span></span></span><span class="line"><span class="cl"><span class="cm">         */</span>
+</span></span><span class="line"><span class="cl">        <span class="n">ret</span> <span class="o">=</span> <span class="n">NET_RX_DROP</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nl">out</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="cm">/* The invariant here is that if *ppt_prev is not NULL
+</span></span></span><span class="line"><span class="cl"><span class="cm">     * then skb should also be non-NULL.
+</span></span></span><span class="line"><span class="cl"><span class="cm">     *
+</span></span></span><span class="line"><span class="cl"><span class="cm">     * Apparently *ppt_prev assignment above holds this invariant due to
+</span></span></span><span class="line"><span class="cl"><span class="cm">     * skb dereferencing near it.
+</span></span></span><span class="line"><span class="cl"><span class="cm">     */</span>
+</span></span><span class="line"><span class="cl">    <span class="o">*</span><span class="n">pskb</span> <span class="o">=</span> <span class="n">skb</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">ret</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h5 id="config_net_ingress">CONFIG_NET_INGRESS
+</h5><p>是 Linux 内核的一个配置选项，用于启用或禁用网络设备的 Ingress 功能。启用 CONFIG_NET_INGRESS 配置选项后，Linux 内核将支持对网络设备的入口流量进行控制和处理。网络设备的 Ingress 功能可以用于实现以下功能：</p>
+<p>Ø 数据包过滤：根据预先设置的过滤规则，判断数据包是否符合要求。如果数据包被过滤，可以根据策略进行丢弃或处理。</p>
+<p>Ø 数据包处理：根据网络设备的配置，对数据包进行处理。例如，进行 QoS 处理、修改数据包头部、更改目标端口等操作。</p>
+<p>Ø 数据包转发：根据策略和路由表，决定数据包的转发目的地，并将数据包发送到相应的网络接口。</p>
+<p>上述功能通过函数sch_handle_ingress实现</p>
+<h5 id="对vlan的处理"><strong>对vlan的处理</strong>
+</h5><p>判断skb协议是否为8021Q 8021AD，若是vlan包，则调用skb_vlan_untag()函数，该函数读出数据流中的vlan_id，并填写入skb-&gt;vlan_tci中，然后删除vlan_head，从而实现对上层的透明。注意这里的skb-&gt;vlan_tci标志仅是为了保存skb数据的vlan头信息，而skb中的数据是透明的以太网包.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">static</span> <span class="kr">inline</span> <span class="kt">bool</span> <span class="nf">eth_type_vlan</span><span class="p">(</span><span class="n">__be16</span> <span class="n">ethertype</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">switch</span> <span class="p">(</span><span class="n">ethertype</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">case</span> <span class="nf">htons</span><span class="p">(</span><span class="n">ETH_P_8021Q</span><span class="p">)</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">    <span class="k">case</span> <span class="nf">htons</span><span class="p">(</span><span class="n">ETH_P_8021AD</span><span class="p">)</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">default</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>  
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="nf">eth_type_vlan</span><span class="p">(</span><span class="n">skb</span><span class="o">-&gt;</span><span class="n">protocol</span><span class="p">))</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">skb</span> <span class="o">=</span> <span class="nf">skb_vlan_untag</span><span class="p">(</span><span class="n">skb</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="nf">unlikely</span><span class="p">(</span><span class="o">!</span><span class="n">skb</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">            <span class="k">goto</span> <span class="n">out</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>vlan信息转移到skb结构中后，会获取数据包真实协议类型（三层协议类型），更新到skb的protocol字段，替换了之前的ETH_P_8021Q或者ETH_P_8021AD。将vlan信息存在skb字段后，调用vlan_do_receive，该函数由skb-&gt;vlan_tci得到该skb包所要发往的vlan_dev，并且重定向skb-&gt;dev为该vlan_dev，最后消除skb中的vlan_tci标志。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="nf">skb_vlan_tag_present</span><span class="p">(</span><span class="n">skb</span><span class="p">))</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">pt_prev</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="n">ret</span> <span class="o">=</span> <span class="nf">deliver_skb</span><span class="p">(</span><span class="n">skb</span><span class="p">,</span> <span class="n">pt_prev</span><span class="p">,</span> <span class="n">orig_dev</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">            <span class="n">pt_prev</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="nf">vlan_do_receive</span><span class="p">(</span><span class="o">&amp;</span><span class="n">skb</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">            <span class="k">goto</span> <span class="n">another_round</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="nf">unlikely</span><span class="p">(</span><span class="o">!</span><span class="n">skb</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">            <span class="k">goto</span> <span class="n">out</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">rx_handler</span> <span class="o">=</span> <span class="nf">rcu_dereference</span><span class="p">(</span><span class="n">skb</span><span class="o">-&gt;</span><span class="n">dev</span><span class="o">-&gt;</span><span class="n">rx_handler</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">rx_handler</span><span class="p">)</span> <span class="p">{</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>样之后vlan_do_receive()返回，不过此时的skb已经是一个普通的数据包了（实现了对上层的透明），且它看起来就像是由vlan_dev接收的数据包。</p>
+<p>接下来是关键处理dev-&gt;rx_handler，这个函数在之前将网口添加到网桥设备的过程，调用br_add_if函数中定义</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl"> br_add_if  ()
+</span></span><span class="line"><span class="cl">     --&gt;netdev_rx_handler_register  
+</span></span><span class="line"><span class="cl">         --&gt;netdev_rx_handler_register(dev, br_get_rx_handler(dev), p); // 
+</span></span><span class="line"><span class="cl">              {rcu_assign_pointer(dev-&gt;rx_handler_data, p)  
+</span></span><span class="line"><span class="cl">              rcu_assign_pointer(dev-&gt;rx_handler, br_get_rx_handler)}  
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>看到在netdev_rx_handler_register函数：</p>
+<ul>
+<li>
+<p>将dev-&gt;rx_handle与br_get_rx_handler绑定</p>
+</li>
+<li>
+<p>dev-&gt;rx_handler_data与以太网端口p绑定</p>
+</li>
+</ul>
+<p>所以这里网桥操作skb包，主要在br_get_rx_handler函数中进行。</p>
+<p>经过dev-&gt;rx_handler函数处理，返回值有四种类型：</p>
+<p>Ø RX_HANDLER_CONSUMED：数据包已处理消化，无需进一步处理。（什么场景） 直接跳转到out标签退出。</p>
+<p>Ø RX_HANDLER_ANOTHER：修改了skb-&gt;dev，再处理一次，比如数据包设备是网桥设备，但经过判断，需要经过网桥设备转发到另一个网桥关联的端口，这时就从bridge_dev转换到了port_dev</p>
+<p>Ø RX_HANDLER_EXACT：精确指定要传递到ptype-&gt;dev == skb-&gt;dev（什么场景）</p>
+<p>Ø RX_HANDLER_PASS：1.数据包类型是回环类型PACKET_LOOPBACK</p>
+<p>后两种情况会继续往下执行，最终将数据包提交到L3层协议栈</p>
+<h3 id="网桥设备处理skb-br_handle_frame">网桥设备处理skb: br_handle_frame
+</h3><p>从这里开始才是对数据包的处理分流转发，之前可以看作netif_receive_skb函数对数据包的预处理。br_get_rx_handler被设置为br_handle_frame，具体路径：net/bridge/br_input.c。</p>
+<p>br_handle_frame函数根据数据包的类型，对数据的处理进行分流.</p>
+<p>Ø 网桥处于disable状态：</p>
+<p>1.数据包目的地址是网桥端口地址：将pkt_type设为PACKET_HOST</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl"> if (ether_addr_equal(p-&gt;br-&gt;dev-&gt;dev_addr, dest))
+</span></span><span class="line"><span class="cl"> skb-&gt;pkt_type = PACKET_HOST;
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>2.否则，br_handle_local_finish函数设置到网桥预处理节点，该函数在网桥状态部位disable时，会学习mac与端口信息并记录fdb表中</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl"> if (NF_HOOK(NFPROTO_BRIDGE, NF_BR_PRE_ROUTING,
+</span></span><span class="line"><span class="cl"> dev_net(skb-&gt;dev), NULL, skb, skb-&gt;dev, NULL,
+</span></span><span class="line"><span class="cl"> br_handle_local_finish) == 1) {
+</span></span><span class="line"><span class="cl"> return RX_HANDLER_PASS;
+</span></span><span class="line"><span class="cl">        }
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>Ø 网桥处于learning或forwarding状态：</p>
+<p>调用函数nf_hook_bridge_pre-&gt; br_handle_frame_finish</p>
+<h3 id="br_handle_frame_finish">br_handle_frame_finish
+</h3><p>br_handle_frame_finish：决策将不同类别的数据包做不同的分发路径。具体处理逻辑如下图.</p>
+<p><img src="https://cdn.jsdelivr.net/gh/charles-7777/ImageBed@main/blog/v2-e18ee44f595064f674e2e81e828d97ba_r-5c9e87d5-d5ea-41a0-ad61-984f69cfeae8.png"
+	
+	
+	
+	loading="lazy"
+	
+	
+>
+首先这里有一个比较重要的特性，arp proxy，接口如果是能了此功能，对于收到的arp request，通过查询本地的arp表构造arp reply报文回应。</p>
+<p>根据目标地址skb-&gt;hdr-&gt;h_dest判断是单播、广播、多播的哪一种：</p>
+<p>Ø 单播：调用br_fdb_find_rcu查找fdb表项， （1）若命中，调用br_forward()将数据包转发， （2）若表项为空，调用函数br_flood() br_flood(br, skb, pkt_type, local_rcv, false); 注意，如果发现目标地址是本地地址（判断方法目标表项dst-&gt;flags为BR_FDB_LOCAL），则直接调用br_pass_frame_up()发往本地，该函数会再次进入netif_receive_skb函数。</p>
+<p>Ø 广播：由于广播目标地址包含本机，所以会再次调用br_pass_frame_up()，并调用br_flood()</p>
+<p>Ø 多播：因为当目的mac地址是0x01开头时，既可以是igmp类型的多播协议控制报文，也可以是多播数据流报文。先调用br_multicast_rcv处理igmp类型数据包，多播数据表也通过该类型数据表维护。接着查看多播数据表项， （1）如果命中，调用br_multicast_flood()， （2）如果未命中也会调用br_flood()。 最后多播也会判断本机是否加入多播组，加入的话也会调用函数br_pass_frame_up()将数据发往本地。</p>
+<p>这里看到单播，多播，广播都会调用br_flood()函数，分别在以下情况：</p>
+<ul>
+<li>
+<p>单播，fdb表项未命中</p>
+</li>
+<li>
+<p>广播下都会调用</p>
+</li>
+<li>
+<p>多播，mdb表未命中</p>
+</li>
+</ul>
+<p>不同情况，通过函数参数pkt_type进行的区分。</p>
+<ul>
+<li>
+<p>单播：pkt_type = BR_PKT_UNICAST</p>
+</li>
+<li>
+<p>广播：pkt_type = BR_PKT_BROADCAST</p>
+</li>
+<li>
+<p>多播：pkt_type = BR_PKT_MULTICAST</p>
+</li>
+</ul>
+<h3 id="数据包发往本地br_pass_frame_up">数据包发往本地：br_pass_frame_up
+</h3><p>数据进入br_pass_frame_up，是打算经由Bridge设备，输入到本地Host的。数据包从网桥端口设备进入，经过网桥设备，然后再进入协议栈，其实是“两次经过net_device”，一次是端口设备，另一次是网桥设备。现在数据包离开网桥端口进入网桥设备，需要修改skb-&gt;dev字段。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl"> indev = skb-&gt;dev;
+</span></span><span class="line"><span class="cl"> skb-&gt;dev = brdev
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>递交的最后一步是经过NF_BR_LOCAL_IN钩子点，然后是我们熟悉的netif_receive_skb，只不过这次进入该函数的时候skb-&gt;dev已经被换成了Bridge设备。这可以理解为进入了Bridge设备的处理。它的skb-&gt;dev-&gt;rx_handler 为空，所以不会再次进入br_handler_frame，而是会进上层协议栈。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">return NF_HOOK(NFPROTO_BRIDGE, NF_BR_LOCAL_IN,
+</span></span><span class="line"><span class="cl"> dev_net(indev), NULL, skb, indev, NULL,
+</span></span><span class="line"><span class="cl"> br_netif_receive_skb);
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>数据被修改skb-&gt;dev后再次进入netif_receive_skb，上次执行的netif_receive_skb因为rx_handler返回CONSUMED而结束。</p>
+<h3 id="数据包转发">数据包转发
+</h3><ul>
+<li>
+<p>单端口转发：br_forward</p>
+<p>br_forward经过一系列的检查与前期准备，最终调用dev_queue_xmit(skb)将数据包放到网卡输出队列中发送出去。之后对应具体的网卡驱动函数。</p>
+</li>
+<li>
+<p>多播：br_multicast_flood</p>
+<p>桥的多播功能需要使能igmp snooping功能</p>
+<p>转发端口获取：</p>
+<ol>
+<li>从mdb中获取多播组的端口p1，</li>
+<li>从br-&gt;router_list获取桥接端口p2</li>
+<li>p = p1&gt;p2? p1: p2 （为什么这样比较）</li>
+<li>若p=p1时，如果该端口支持多播对单播转发， 则以单播形式转发（也是调用br_forward，与普通多播貌似没有不同）</li>
+<li>复制skb数据，调用br_forward从p端口转发数据</li>
+</ol>
+<p>下面br_flood一样每次转发的端口都是上次遍历得到的端口，最后一次端口使用原始skb数据，这样减少一次clone操作</p>
+</li>
+<li>
+<p>flood到各端口br_flood</p>
+<p>如果没有查找到对应的表项（单播、组播），或者要进行广播模式，系统调用br_flood，向网桥的每个端口转发。br_flood函数遍历网桥下的每个端口，根据允许的flags条件，调用deliver_clone或__br_forward将sbk从该端口转发出去</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl">  <span class="kt">void</span> <span class="nf">br_flood</span><span class="p">(</span><span class="k">struct</span> <span class="n">net_bridge</span> <span class="o">*</span><span class="n">br</span><span class="p">,</span> <span class="k">struct</span> <span class="n">sk_buff</span> <span class="o">*</span><span class="n">skb</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">          <span class="k">enum</span> <span class="n">br_pkt_type</span> <span class="n">pkt_type</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">local_rcv</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">local_orig</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">net_bridge_port</span> <span class="o">*</span><span class="n">prev</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">net_bridge_port</span> <span class="o">*</span><span class="n">p</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nf">list_for_each_entry_rcu</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">br</span><span class="o">-&gt;</span><span class="n">port_list</span><span class="p">,</span> <span class="n">list</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="cm">/* Do not flood unicast traffic to ports that turn it off, nor
+</span></span></span><span class="line"><span class="cl"><span class="cm">         * other traffic if flood off, except for traffic we originate
+</span></span></span><span class="line"><span class="cl"><span class="cm">         */</span>
+</span></span><span class="line"><span class="cl">        <span class="k">switch</span> <span class="p">(</span><span class="n">pkt_type</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">case</span> <span class="nl">BR_PKT_UNICAST</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">BR_FLOOD</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">                <span class="k">continue</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="k">break</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">case</span> <span class="nl">BR_PKT_MULTICAST</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">BR_MCAST_FLOOD</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">skb</span><span class="o">-&gt;</span><span class="n">dev</span> <span class="o">!=</span> <span class="n">br</span><span class="o">-&gt;</span><span class="n">dev</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">                <span class="k">continue</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="k">break</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">case</span> <span class="nl">BR_PKT_BROADCAST</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">BR_BCAST_FLOOD</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">skb</span><span class="o">-&gt;</span><span class="n">dev</span> <span class="o">!=</span> <span class="n">br</span><span class="o">-&gt;</span><span class="n">dev</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">                <span class="k">continue</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="k">break</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="cm">/* Do not flood to ports that enable proxy ARP */</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">BR_PROXYARP</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="k">continue</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">((</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">BR_PROXYARP_WIFI</span> <span class="o">|</span> <span class="n">BR_NEIGH_SUPPRESS</span><span class="p">))</span> <span class="o">&amp;&amp;</span>
+</span></span><span class="line"><span class="cl">            <span class="nf">BR_INPUT_SKB_CB</span><span class="p">(</span><span class="n">skb</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">proxyarp_replied</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="k">continue</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="n">prev</span> <span class="o">=</span> <span class="nf">maybe_deliver</span><span class="p">(</span><span class="n">prev</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">skb</span><span class="p">,</span> <span class="n">local_orig</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="nf">IS_ERR</span><span class="p">(</span><span class="n">prev</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">            <span class="k">goto</span> <span class="n">out</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">prev</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">goto</span> <span class="n">out</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">local_rcv</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">deliver_clone</span><span class="p">(</span><span class="n">prev</span><span class="p">,</span> <span class="n">skb</span><span class="p">,</span> <span class="n">local_orig</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">else</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">__br_forward</span><span class="p">(</span><span class="n">prev</span><span class="p">,</span> <span class="n">skb</span><span class="p">,</span> <span class="n">local_orig</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nl">out</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">local_rcv</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">kfree_skb</span><span class="p">(</span><span class="n">skb</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>在向每个端口转发时，都会复制一份新的skb数据。
+maybe_deliver是deliver_clone的包装，每次遍历端口后，会在下一个遍历周期，将数 据从本次遍历端口发送，最后一个端口的数据则是直接使用原始的skb，这样可以少一次数据复制开销。</p>
+<hr>
+<blockquote>
+<p>参考链接
+<a class="link" href="https://zhuanlan.zhihu.com/p/649350329"  target="_blank" rel="noopener"
+    >linux网桥驱动与二层对数据包分发 - 知乎</a></p></blockquote>
+</li>
+</ul>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/hugo-stack/tags/linux/">Linux</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    
+
+    
+</footer>
+
+
+    
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="">
+    <a href="/hugo-stack/p/linux%E8%99%9A%E6%8B%9F%E7%BD%91%E5%8D%A1tun%E5%92%8Ctap/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">Linux虚拟网卡TUN和TAP</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/hugo-stack/p/linux-%E4%BD%9C%E4%B8%9A%E6%8E%A7%E5%88%B6%E8%BF%9B%E7%A8%8B%E7%BB%84%E5%92%8C%E4%BC%9A%E8%AF%9D/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">Linux 作业控制、进程组和会话</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/hugo-stack/p/%E8%BF%9B%E7%A8%8B%E5%8E%9F%E8%AF%ADfork-exceve-waitpid/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">进程原语fork exceve waitpid</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/hugo-stack/p/corecommon-open-research-emulator%E7%BD%91%E7%BB%9C%E4%BB%BF%E7%9C%9F%E5%B7%A5%E5%85%B7/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">CORE(Common Open Research Emulator)网络仿真工具</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+        2025 Charles Lv
+    </section>
+    
+    <section class="powerby">
+        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/hugo-stack/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+<script src=https://charles-7777.github.io/hugo-stack/background/sakura.js></script>
+
+
+
+
+
+
+<style>
+    .highlight {
+         
+        max-height: 400px;
+        overflow: hidden;
+    }
+
+    .code-show {
+        max-height: none !important;
+    }
+
+    .code-more-box {
+        width: 100%;
+        padding-top: 78px;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(rgba(255, 255, 255, 0)), to(#fff));
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1;
+    }
+
+    .code-more-btn {
+        display: block;
+        margin: auto;
+        width: 44px;
+        height: 22px;
+        background: #f0f0f5;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+        padding-top: 6px;
+        cursor: pointer;
+    }
+
+    .code-more-img {
+        cursor: pointer !important;
+        display: block;
+        margin: auto;
+        width: 22px;
+        height: 16px;
+    }
+</style>
+
+<script>
+  function initCodeMoreBox() {
+    let codeBlocks = document.querySelectorAll(".highlight");
+    if (!codeBlocks) {
+      return;
+    }
+    codeBlocks.forEach(codeBlock => {
+      
+      if (codeBlock.scrollHeight <= codeBlock.clientHeight) {
+        return;
+      }
+      
+      
+      let codeMoreBox = document.createElement('div');
+      codeMoreBox.classList.add('code-more-box');
+      
+      let codeMoreBtn = document.createElement('span');
+      codeMoreBtn.classList.add('code-more-btn');
+      codeMoreBtn.addEventListener('click', () => {
+        codeBlock.classList.add('code-show');
+        codeMoreBox.style.display = 'none';
+        
+        window.dispatchEvent(new Event('resize'))
+      })
+      
+      let img = document.createElement('img');
+      img.classList.add('code-more-img');
+      img.src = "https://charles-7777.github.io/hugo-stack/icons/codeMore.png"
+      
+      codeMoreBtn.appendChild(img);
+      codeMoreBox.appendChild(codeMoreBtn);
+      codeBlock.appendChild(codeMoreBox)
+    })
+  }
+  
+  initCodeMoreBox();
+</script>
+
+
+
+<style>
+    #backTopBtn {
+        display: none;
+        position: fixed;
+        bottom: 30px;
+        z-index: 99;
+        cursor: pointer;
+        width: 30px;
+        height: 30px;
+        background-image: url(https://charles-7777.github.io/hugo-stack/icons/backTop.svg);
+    }
+</style>
+
+<script>
+    
+
+    function initScrollTop() {
+        let rightSideBar = document.querySelector(".right-sidebar");
+        if (!rightSideBar) {
+            return;
+        }
+        
+        let btn = document.createElement("div");
+        btn.id = "backTopBtn";
+        btn.onclick = backToTop
+        rightSideBar.appendChild(btn)
+        
+        window.onscroll = function() {
+            
+            if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+                btn.style.display = "block";
+            } else {
+                btn.style.display = "none";
+            }
+        };
+    }
+
+    
+
+    function backToTop(){
+        window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+
+    initScrollTop();
+</script>
+
+
+<style>
+    #TableOfContents > ul, ol {
+        ul, ol {
+            display: none;
+        }
+        .open {
+            display: block;
+        }
+    }
+</style>
+
+<script>
+    function initTocHide() {
+        
+        let toc = document.querySelector(".widget--toc");
+        if (!toc) {
+            return;
+        }
+        
+        window.addEventListener('scroll', function() {
+            
+            let openUl = document.querySelectorAll(".open");
+            if (openUl.length > 0) {
+              openUl.forEach((ul) => {
+                ul.classList.remove("open")
+              })
+            }
+            
+            let currentLi = document.querySelector(".active-class");
+            if (!currentLi) {
+                return
+            }
+            
+            if (currentLi.children.length > 1) {
+                currentLi.children[1].classList.add("open")
+            }
+            
+            let ul = currentLi.parentElement;
+            do {
+                ul.classList.add("open");
+                ul = ul.parentElement.parentElement
+            } while (ul !== undefined && (ul.localName === 'ul' || ul.localName === 'ol'))
+        });
+    }
+    initTocHide()
+</script>
+
+
+
+
+
+
+ <script>
+  const cdnPath = "https://cdn.jsdelivr.net/gh/charles-7777/live2d-widget-v3@main";
+  const config = {
+    
+    path: {
+      homePath: "/",
+      modelPath: cdnPath + "/Resources/",
+      cssPath: cdnPath + "/waifu.css",
+      tipsJsonPath: cdnPath + "/waifu-tips.json",
+      tipsJsPath: cdnPath + "/waifu-tips.js",
+      live2dCorePath: cdnPath + "/Core/live2dcubismcore.js",
+      live2dSdkPath: cdnPath + "/live2d-sdk.js"
+    },
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    tools: ["hitokoto",  "express",  "photo", "info", "quit"],
+    
+    drag: {
+      enable: false,
+      direction: ["x", "y"]
+    },
+    
+    switchType: "order"
+  }
+
+  const local_cssPath = "https://charles-7777.github.io/hugo-stack/waifu/waifu.css";
+  const local_tipsJsonPath = "https://charles-7777.github.io/hugo-stack/waifu/waifu-tips.json";
+  const local_tipsJsPath = "https://charles-7777.github.io/hugo-stack/waifu/waifu-tips.js";
+
+  
+  if (screen.width >= 768) {
+    Promise.all([
+    
+      loadExternalResource(local_cssPath, "css"),
+      loadExternalResource(config.path.live2dCorePath, "js"),
+      loadExternalResource(config.path.live2dSdkPath, "js"),
+    
+      loadExternalResource(local_tipsJsPath, "js")
+    ]).then(() => {
+      initWidget({
+        
+        waifuPath: local_tipsJsonPath,
+        cdnPath: config.path.modelPath,
+        tools: config.tools,
+        dragEnable: config.drag.enable,
+        dragDirection: config.drag.direction,
+        switchType: config.switchType
+      });
+    });
+  }
+
+  
+  function loadExternalResource(url, type) {
+    return new Promise((resolve, reject) => {
+      let tag;
+      if (type === "css") {
+        tag = document.createElement("link");
+        tag.rel = "stylesheet";
+        tag.href = url;
+      }
+      else if (type === "js") {
+        tag = document.createElement("script");
+        tag.src = url;
+      }
+      if (tag) {
+        tag.onload = () => resolve(url);
+        tag.onerror = () => reject(url);
+        document.head.appendChild(tag);
+      }
+    });
+  }
+</script>
+
+    </body>
+</html>
