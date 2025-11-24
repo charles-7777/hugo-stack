@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content=" 智能体（Agent）与 MCP 简介 智能体（AI Agent） 发展脉络：\n2023 年：AutoGPT 等自治代理出现，将 GPT-4 与工具循环结合，标志着“让 LLM 自主执行复杂任务”的探索开始，被视为 智能体元年。 2024 年：LangChain、HuggingGPT、MetaGPT 等框架涌现，支持构建单/多智能体系统；产业界高度关注，IDC 预测 2026 年 50% 的大型企业数据团队将使用 AI Agent，Gartner 将 “Agentic AI” 列为 2025 年首要技术趋势。 核心机制：\n智能体赋予 LLM 自主决策与行动能力，不再只是被动回答。\n采用 “思考–行动–观察”循环机制：\n思考：LLM 接收目标后进行推理； 行动：决定调用工具（如搜索、执行代码）； 观察：获取环境反馈，继续迭代直至任务完成。 在大模型生态中的角色：\n智能体是 连接大模型与实际应用的桥梁。\n封装业务逻辑、工具调用（如 Function Calling、RAG），将企业知识库、数据库、第三方服务融入决策。\n扮演“大脑指挥官”，协调记忆、规划、工具接口等模块，驱动任务流程。\n例如：客服场景中，智能体可自主引导对话、查询数据库、转接人工，提升解决率。\nMCP（Model Context Protocol，模型上下文协议） 起源与概念：\n由 Anthropic 团队于 2024 年 11 月提出，受“语言服务器协议（LSP）”启发。 被誉为 AI 世界的“USB-C 接口”，提供模型与外部工具/数据交互的统一标准。 解决问题：此前各模型厂商的 Function Calling 实现五花八门，开发者需为每种模型+工具编写特定集成代码，繁琐且难扩展。 作用： 通过 标准化协议，让 LLM 能便捷接入数据库、搜索引擎、插件等外部资源。 支持 检索增强（RAG）、实时数据查询、API 调用等，突破训练语料限制。 提升回答的 准确性、实时性与行动能力。 LLM、智能体、MCP 定位与职责 组件 角色 职责 智能体（Agent） MCP 主机 / 用户交互入口 接收用户请求，调用 LLM，整合工具结果，返回最终答案 大模型（LLM） 智能体的“大脑” 理解用户意图，推理决策，判断是否调用工具，生成结构化调用指令或最终回复 MCP 客户端（Client） LLM 与外部资源的“信使” 解析 LLM 的工具调用请求，按 MCP 协议转发给对应服务器 MCP 服务器（Server） 工具/数据提供者 提供 Tools（可执行函数） 和 Resources（数据源），执行操作并返回结果 💡 补充：智能体应用通常内置 MCP 客户端，可同时连接多个 MCP 服务器。开发者只需将工具以 MCP Server 形式暴露，即可被任意兼容 MCP 的 LLM 调用。\n">
+<title>Agent、MCP与LLM</title>
+
+<link rel='canonical' href='https://charles-7777.github.io/hugo-stack/p/agentmcp%E4%B8%8Ellm/'>
+
+<link rel="stylesheet" href="/hugo-stack/scss/style.min.1aedf5438eb6380946ca2f7d86c958e5adeb3c679a95ad190168d7c28b43101d.css"><meta property='og:title' content="Agent、MCP与LLM">
+<meta property='og:description' content=" 智能体（Agent）与 MCP 简介 智能体（AI Agent） 发展脉络：\n2023 年：AutoGPT 等自治代理出现，将 GPT-4 与工具循环结合，标志着“让 LLM 自主执行复杂任务”的探索开始，被视为 智能体元年。 2024 年：LangChain、HuggingGPT、MetaGPT 等框架涌现，支持构建单/多智能体系统；产业界高度关注，IDC 预测 2026 年 50% 的大型企业数据团队将使用 AI Agent，Gartner 将 “Agentic AI” 列为 2025 年首要技术趋势。 核心机制：\n智能体赋予 LLM 自主决策与行动能力，不再只是被动回答。\n采用 “思考–行动–观察”循环机制：\n思考：LLM 接收目标后进行推理； 行动：决定调用工具（如搜索、执行代码）； 观察：获取环境反馈，继续迭代直至任务完成。 在大模型生态中的角色：\n智能体是 连接大模型与实际应用的桥梁。\n封装业务逻辑、工具调用（如 Function Calling、RAG），将企业知识库、数据库、第三方服务融入决策。\n扮演“大脑指挥官”，协调记忆、规划、工具接口等模块，驱动任务流程。\n例如：客服场景中，智能体可自主引导对话、查询数据库、转接人工，提升解决率。\nMCP（Model Context Protocol，模型上下文协议） 起源与概念：\n由 Anthropic 团队于 2024 年 11 月提出，受“语言服务器协议（LSP）”启发。 被誉为 AI 世界的“USB-C 接口”，提供模型与外部工具/数据交互的统一标准。 解决问题：此前各模型厂商的 Function Calling 实现五花八门，开发者需为每种模型+工具编写特定集成代码，繁琐且难扩展。 作用： 通过 标准化协议，让 LLM 能便捷接入数据库、搜索引擎、插件等外部资源。 支持 检索增强（RAG）、实时数据查询、API 调用等，突破训练语料限制。 提升回答的 准确性、实时性与行动能力。 LLM、智能体、MCP 定位与职责 组件 角色 职责 智能体（Agent） MCP 主机 / 用户交互入口 接收用户请求，调用 LLM，整合工具结果，返回最终答案 大模型（LLM） 智能体的“大脑” 理解用户意图，推理决策，判断是否调用工具，生成结构化调用指令或最终回复 MCP 客户端（Client） LLM 与外部资源的“信使” 解析 LLM 的工具调用请求，按 MCP 协议转发给对应服务器 MCP 服务器（Server） 工具/数据提供者 提供 Tools（可执行函数） 和 Resources（数据源），执行操作并返回结果 💡 补充：智能体应用通常内置 MCP 客户端，可同时连接多个 MCP 服务器。开发者只需将工具以 MCP Server 形式暴露，即可被任意兼容 MCP 的 LLM 调用。\n">
+<meta property='og:url' content='https://charles-7777.github.io/hugo-stack/p/agentmcp%E4%B8%8Ellm/'>
+<meta property='og:site_name' content=''>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='AI' /><meta property='article:published_time' content='2025-11-24T14:44:59&#43;08:00'/><meta property='article:modified_time' content='2025-11-24T14:57:10&#43;08:00'/>
+<meta name="twitter:title" content="Agent、MCP与LLM">
+<meta name="twitter:description" content=" 智能体（Agent）与 MCP 简介 智能体（AI Agent） 发展脉络：\n2023 年：AutoGPT 等自治代理出现，将 GPT-4 与工具循环结合，标志着“让 LLM 自主执行复杂任务”的探索开始，被视为 智能体元年。 2024 年：LangChain、HuggingGPT、MetaGPT 等框架涌现，支持构建单/多智能体系统；产业界高度关注，IDC 预测 2026 年 50% 的大型企业数据团队将使用 AI Agent，Gartner 将 “Agentic AI” 列为 2025 年首要技术趋势。 核心机制：\n智能体赋予 LLM 自主决策与行动能力，不再只是被动回答。\n采用 “思考–行动–观察”循环机制：\n思考：LLM 接收目标后进行推理； 行动：决定调用工具（如搜索、执行代码）； 观察：获取环境反馈，继续迭代直至任务完成。 在大模型生态中的角色：\n智能体是 连接大模型与实际应用的桥梁。\n封装业务逻辑、工具调用（如 Function Calling、RAG），将企业知识库、数据库、第三方服务融入决策。\n扮演“大脑指挥官”，协调记忆、规划、工具接口等模块，驱动任务流程。\n例如：客服场景中，智能体可自主引导对话、查询数据库、转接人工，提升解决率。\nMCP（Model Context Protocol，模型上下文协议） 起源与概念：\n由 Anthropic 团队于 2024 年 11 月提出，受“语言服务器协议（LSP）”启发。 被誉为 AI 世界的“USB-C 接口”，提供模型与外部工具/数据交互的统一标准。 解决问题：此前各模型厂商的 Function Calling 实现五花八门，开发者需为每种模型+工具编写特定集成代码，繁琐且难扩展。 作用： 通过 标准化协议，让 LLM 能便捷接入数据库、搜索引擎、插件等外部资源。 支持 检索增强（RAG）、实时数据查询、API 调用等，突破训练语料限制。 提升回答的 准确性、实时性与行动能力。 LLM、智能体、MCP 定位与职责 组件 角色 职责 智能体（Agent） MCP 主机 / 用户交互入口 接收用户请求，调用 LLM，整合工具结果，返回最终答案 大模型（LLM） 智能体的“大脑” 理解用户意图，推理决策，判断是否调用工具，生成结构化调用指令或最终回复 MCP 客户端（Client） LLM 与外部资源的“信使” 解析 LLM 的工具调用请求，按 MCP 协议转发给对应服务器 MCP 服务器（Server） 工具/数据提供者 提供 Tools（可执行函数） 和 Resources（数据源），执行操作并返回结果 💡 补充：智能体应用通常内置 MCP 客户端，可同时连接多个 MCP 服务器。开发者只需将工具以 MCP Server 形式暴露，即可被任意兼容 MCP 的 LLM 调用。\n">
+    <link rel="shortcut icon" href="/hugo-stack/favicon2.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/hugo-stack/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/hugo-stack/img/oi_compressed_hu_9c5e2ca2fe891746.gif" width="300"
+                            height="303" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/hugo-stack"></a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://www.bilibili.com/'
+                        target="_blank"
+                        title="bilibili"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-brand-bilibili"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 10a4 4 0 0 1 4 -4h10a4 4 0 0 1 4 4v6a4 4 0 0 1 -4 4h-10a4 4 0 0 1 -4 -4v-6z" /><path d="M8 3l2 3" /><path d="M16 3l-2 3" /><path d="M9 13v-2" /><path d="M15 11v2" /></svg>
+                        
+                    </a>
+                </li>
+            
+                <li>
+                    <a 
+                        href='https://www.douyin.com/'
+                        target="_blank"
+                        title="douyin"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-brand-tiktok"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M21 7.917v4.034a9.948 9.948 0 0 1 -5 -1.951v4.5a6.5 6.5 0 1 1 -8 -6.326v4.326a2.5 2.5 0 1 0 4 2v-11.5h4.083a6.005 6.005 0 0 0 4.917 4.917z" /></svg>
+                        
+                    </a>
+                </li>
+            
+                <li>
+                    <a 
+                        href='https://github.com/charles-7777/hugo-blog'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/hugo-stack/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                
+                <span>主页</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/archives/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                
+                <span>归档</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/cats-tags/' >
+                
+                
+                
+                    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-tags"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 8v4.172a2 2 0 0 0 .586 1.414l5.71 5.71a2.41 2.41 0 0 0 3.408 0l3.592 -3.592a2.41 2.41 0 0 0 0 -3.408l-5.71 -5.71a2 2 0 0 0 -1.414 -.586h-4.172a2 2 0 0 0 -2 2z" /><path d="M18 19l1.592 -1.592a4.82 4.82 0 0 0 0 -6.816l-4.592 -4.592" /><path d="M7 10h-.01" /></svg>
+                
+                <span>Cats&amp;Tags</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/%E9%93%BE%E6%8E%A5/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                
+                <span>链接</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/search/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+                
+                <span>搜索</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/%E5%85%B3%E4%BA%8E/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                
+                <span>关于</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/updatelog/' >
+                
+                
+                
+                    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-logs"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 12h.01" /><path d="M4 6h.01" /><path d="M4 18h.01" /><path d="M8 18h2" /><path d="M8 12h2" /><path d="M8 6h2" /><path d="M14 6h6" /><path d="M14 12h6" /><path d="M14 18h6" /></svg>
+                
+                <span>更新日志</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>暗色模式</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ol>
+    <li><a href="#智能体agent与-mcp-简介">智能体（Agent）与 MCP 简介</a>
+      <ol>
+        <li><a href="#智能体ai-agent">智能体（AI Agent）</a></li>
+        <li><a href="#mcpmodel-context-protocol模型上下文协议">MCP（Model Context Protocol，模型上下文协议）</a></li>
+      </ol>
+    </li>
+    <li><a href="#llm智能体mcp-定位与职责">LLM、智能体、MCP 定位与职责</a></li>
+    <li><a href="#调用与通信顺序完整交互流程">调用与通信顺序（完整交互流程）</a></li>
+    <li><a href="#总结">总结</a></li>
+  </ol>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/hugo-stack/categories/ai/" >
+                AI
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/hugo-stack/p/agentmcp%E4%B8%8Ellm/">Agent、MCP与LLM</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">2025-11-24 14:44</time>
+            </div>
+        <div>
+            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-edit"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg>
+            <time class="article-lastmod">2025-11-24 14:57</time>
+        </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 2 分钟
+                </time>
+            </div>
+        
+
+        
+            <div>
+                <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-file-word"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 12l1.333 5l1.667 -4l1.667 4l1.333 -5" /></svg>
+                <time class="article-words">
+                    224 字
+                </time>
+            </div>
+        
+
+
+    </footer>
+    
+
+    
+
+
+</div>
+
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <hr>
+<h2 id="智能体agent与-mcp-简介">智能体（Agent）与 MCP 简介
+</h2><h3 id="智能体ai-agent">智能体（AI Agent）
+</h3><p><strong>发展脉络</strong>：</p>
+<ul>
+<li><strong>2023 年</strong>：AutoGPT 等自治代理出现，将 GPT-4 与工具循环结合，标志着“让 LLM 自主执行复杂任务”的探索开始，被视为 <strong>智能体元年</strong>。</li>
+<li><strong>2024 年</strong>：LangChain、HuggingGPT、MetaGPT 等框架涌现，支持构建单/多智能体系统；产业界高度关注，IDC 预测 <strong>2026 年 50% 的大型企业数据团队将使用 AI Agent</strong>，Gartner 将 “Agentic AI” 列为 <strong>2025 年首要技术趋势</strong>。</li>
+</ul>
+<p><strong>核心机制</strong>：</p>
+<ul>
+<li>
+<p>智能体赋予 LLM <strong>自主决策与行动能力</strong>，不再只是被动回答。</p>
+</li>
+<li>
+<p>采用 <strong>“思考–行动–观察”循环机制</strong>：</p>
+<ul>
+<li><strong>思考</strong>：LLM 接收目标后进行推理；</li>
+<li><strong>行动</strong>：决定调用工具（如搜索、执行代码）；</li>
+<li><strong>观察</strong>：获取环境反馈，继续迭代直至任务完成。</li>
+</ul>
+</li>
+</ul>
+<p><strong>在大模型生态中的角色</strong>：</p>
+<ul>
+<li>
+<p>智能体是 <strong>连接大模型与实际应用的桥梁</strong>。</p>
+</li>
+<li>
+<p>封装业务逻辑、工具调用（如 Function Calling、RAG），将企业知识库、数据库、第三方服务融入决策。</p>
+</li>
+<li>
+<p>扮演“<strong>大脑指挥官</strong>”，协调记忆、规划、工具接口等模块，驱动任务流程。</p>
+</li>
+<li>
+<p>例如：客服场景中，智能体可自主引导对话、查询数据库、转接人工，提升解决率。</p>
+</li>
+</ul>
+<hr>
+<h3 id="mcpmodel-context-protocol模型上下文协议">MCP（Model Context Protocol，模型上下文协议）
+</h3><p><strong>起源与概念</strong>：</p>
+<ul>
+<li>由 <strong>Anthropic 团队于 2024 年 11 月</strong>提出，受“语言服务器协议（LSP）”启发。</li>
+<li>被誉为 <strong>AI 世界的“USB-C 接口”</strong>，提供模型与外部工具/数据交互的统一标准。</li>
+<li>解决问题：此前各模型厂商的 Function Calling 实现五花八门，开发者需为每种模型+工具编写特定集成代码，繁琐且难扩展。
+<strong>作用</strong>：</li>
+<li>通过 <strong>标准化协议</strong>，让 LLM 能便捷接入数据库、搜索引擎、插件等外部资源。</li>
+<li>支持 <strong>检索增强（RAG）</strong>、实时数据查询、API 调用等，突破训练语料限制。</li>
+<li>提升回答的 <strong>准确性、实时性与行动能力</strong>。</li>
+</ul>
+<hr>
+<h2 id="llm智能体mcp-定位与职责">LLM、智能体、MCP 定位与职责
+</h2><div class="table-wrapper"><table>
+  <thead>
+      <tr>
+          <th>组件</th>
+          <th>角色</th>
+          <th>职责</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><strong>智能体（Agent）</strong></td>
+          <td>MCP 主机 / 用户交互入口</td>
+          <td>接收用户请求，调用 LLM，整合工具结果，返回最终答案</td>
+      </tr>
+      <tr>
+          <td><strong>大模型（LLM）</strong></td>
+          <td>智能体的“大脑”</td>
+          <td>理解用户意图，推理决策，判断是否调用工具，生成结构化调用指令或最终回复</td>
+      </tr>
+      <tr>
+          <td><strong>MCP 客户端（Client）</strong></td>
+          <td>LLM 与外部资源的“信使”</td>
+          <td>解析 LLM 的工具调用请求，按 MCP 协议转发给对应服务器</td>
+      </tr>
+      <tr>
+          <td><strong>MCP 服务器（Server）</strong></td>
+          <td>工具/数据提供者</td>
+          <td>提供 <strong>Tools（可执行函数）</strong> 和 <strong>Resources（数据源）</strong>，执行操作并返回结果</td>
+      </tr>
+  </tbody>
+</table></div>
+<blockquote>
+<p>💡 补充：智能体应用通常内置 MCP 客户端，可同时连接多个 MCP 服务器。开发者只需将工具以 MCP Server 形式暴露，即可被任意兼容 MCP 的 LLM 调用。</p></blockquote>
+<hr>
+<h2 id="调用与通信顺序完整交互流程">调用与通信顺序（完整交互流程）
+</h2><p>以下以“用户询问：明天想在上海玩一天，看看天气，怎么安排行程？”为例：</p>
+<ol>
+<li>
+<p><strong>用户提问</strong>
+→ 在前端输入问题。</p>
+</li>
+<li>
+<p><strong>智能体转发问题</strong>
+→ 将用户请求 + 上下文 + 可用工具列表发送给 LLM。</p>
+</li>
+<li>
+<p><strong>LLM 理解与决策</strong>
+→ 判断是否需外部信息。若需（如查天气），进入工具调用流程。</p>
+</li>
+<li>
+<p><strong>LLM 发出函数调用请求</strong>
+→ 输出结构化指令，例如：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl"><span class="nt">&#34;tool_calls&#34;</span><span class="p">:</span> <span class="p">[</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl"><span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;get_weather&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl"><span class="nt">&#34;arguments&#34;</span><span class="p">:</span> <span class="p">{</span> <span class="nt">&#34;city&#34;</span><span class="p">:</span> <span class="s2">&#34;上海&#34;</span> <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">]</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div></li>
+<li>
+<p><strong>MCP 客户端解析并调用工具</strong>
+→ 识别调用请求，通过 MCP 协议（如 JSON-RPC 2.0）转发给对应 MCP 服务器。</p>
+</li>
+<li>
+<p><strong>MCP 服务器执行操作</strong>
+→ 调用内部函数（如访问天气 API），获取实时数据。</p>
+</li>
+<li>
+<p><strong>返回执行结果</strong>
+→ 服务器将结果（如 JSON 或文本）返回给客户端，客户端传回 LLM。</p>
+</li>
+<li>
+<p><strong>LLM 生成最终答案</strong>
+→ 结合原始问题 + 外部数据，生成完整回复（如包含天气的游玩攻略）。</p>
+</li>
+<li>
+<p><strong>结果返回用户</strong>
+→ 智能体将最终答案展示给用户，任务完成。</p>
+<blockquote>
+<p>✅ 整个流程形成闭环：<strong>用户 → Agent → LLM → MCP Client → MCP Server → LLM → Agent → 用户</strong></p></blockquote>
+</li>
+</ol>
+<hr>
+<h2 id="总结">总结
+</h2><ul>
+<li>
+<p><strong>LLM</strong> 是推理核心，但缺乏实时性和行动力；</p>
+</li>
+<li>
+<p><strong>Agent</strong> 赋予 LLM 目标导向的自主性，是落地关键；</p>
+</li>
+<li>
+<p><strong>MCP</strong> 提供标准化“插拔式”接口，极大降低工具集成成本；</p>
+</li>
+<li>
+<p>三者协作，使大模型从“聊天机器人”进化为“数字员工”，真正解决复杂业务问题。</p>
+</li>
+</ul>
+<hr>
+<blockquote>
+<p>转载自 <a class="link" href="https://zhuanlan.zhihu.com/p/1910411281988588717"  target="_blank" rel="noopener"
+    >https://zhuanlan.zhihu.com/p/1910411281988588717</a></p></blockquote>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/hugo-stack/tags/ai/">AI</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    
+
+    
+</footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+        2025 Charles Lv
+    </section>
+    
+    <section class="powerby">
+        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/hugo-stack/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+<script src=https://charles-7777.github.io/hugo-stack/background/sakura.js></script>
+
+
+
+
+
+
+<style>
+    .highlight {
+         
+        max-height: 400px;
+        overflow: hidden;
+    }
+
+    .code-show {
+        max-height: none !important;
+    }
+
+    .code-more-box {
+        width: 100%;
+        padding-top: 78px;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(rgba(255, 255, 255, 0)), to(#fff));
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1;
+    }
+
+    .code-more-btn {
+        display: block;
+        margin: auto;
+        width: 44px;
+        height: 22px;
+        background: #f0f0f5;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+        padding-top: 6px;
+        cursor: pointer;
+    }
+
+    .code-more-img {
+        cursor: pointer !important;
+        display: block;
+        margin: auto;
+        width: 22px;
+        height: 16px;
+    }
+</style>
+
+<script>
+  function initCodeMoreBox() {
+    let codeBlocks = document.querySelectorAll(".highlight");
+    if (!codeBlocks) {
+      return;
+    }
+    codeBlocks.forEach(codeBlock => {
+      
+      if (codeBlock.scrollHeight <= codeBlock.clientHeight) {
+        return;
+      }
+      
+      
+      let codeMoreBox = document.createElement('div');
+      codeMoreBox.classList.add('code-more-box');
+      
+      let codeMoreBtn = document.createElement('span');
+      codeMoreBtn.classList.add('code-more-btn');
+      codeMoreBtn.addEventListener('click', () => {
+        codeBlock.classList.add('code-show');
+        codeMoreBox.style.display = 'none';
+        
+        window.dispatchEvent(new Event('resize'))
+      })
+      
+      let img = document.createElement('img');
+      img.classList.add('code-more-img');
+      img.src = "https://charles-7777.github.io/hugo-stack/icons/codeMore.png"
+      
+      codeMoreBtn.appendChild(img);
+      codeMoreBox.appendChild(codeMoreBtn);
+      codeBlock.appendChild(codeMoreBox)
+    })
+  }
+  
+  initCodeMoreBox();
+</script>
+
+
+
+<style>
+    #backTopBtn {
+        display: none;
+        position: fixed;
+        bottom: 30px;
+        z-index: 99;
+        cursor: pointer;
+        width: 30px;
+        height: 30px;
+        background-image: url(https://charles-7777.github.io/hugo-stack/icons/backTop.svg);
+    }
+</style>
+
+<script>
+    
+
+    function initScrollTop() {
+        let rightSideBar = document.querySelector(".right-sidebar");
+        if (!rightSideBar) {
+            return;
+        }
+        
+        let btn = document.createElement("div");
+        btn.id = "backTopBtn";
+        btn.onclick = backToTop
+        rightSideBar.appendChild(btn)
+        
+        window.onscroll = function() {
+            
+            if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+                btn.style.display = "block";
+            } else {
+                btn.style.display = "none";
+            }
+        };
+    }
+
+    
+
+    function backToTop(){
+        window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+
+    initScrollTop();
+</script>
+
+
+<style>
+    #TableOfContents > ul, ol {
+        ul, ol {
+            display: none;
+        }
+        .open {
+            display: block;
+        }
+    }
+</style>
+
+<script>
+    function initTocHide() {
+        
+        let toc = document.querySelector(".widget--toc");
+        if (!toc) {
+            return;
+        }
+        
+        window.addEventListener('scroll', function() {
+            
+            let openUl = document.querySelectorAll(".open");
+            if (openUl.length > 0) {
+              openUl.forEach((ul) => {
+                ul.classList.remove("open")
+              })
+            }
+            
+            let currentLi = document.querySelector(".active-class");
+            if (!currentLi) {
+                return
+            }
+            
+            if (currentLi.children.length > 1) {
+                currentLi.children[1].classList.add("open")
+            }
+            
+            let ul = currentLi.parentElement;
+            do {
+                ul.classList.add("open");
+                ul = ul.parentElement.parentElement
+            } while (ul !== undefined && (ul.localName === 'ul' || ul.localName === 'ol'))
+        });
+    }
+    initTocHide()
+</script>
+
+
+
+
+
+
+ <script>
+  const cdnPath = "https://cdn.jsdelivr.net/gh/charles-7777/live2d-widget-v3@main";
+  const config = {
+    
+    path: {
+      homePath: "/",
+      modelPath: cdnPath + "/Resources/",
+      cssPath: cdnPath + "/waifu.css",
+      tipsJsonPath: cdnPath + "/waifu-tips.json",
+      tipsJsPath: cdnPath + "/waifu-tips.js",
+      live2dCorePath: cdnPath + "/Core/live2dcubismcore.js",
+      live2dSdkPath: cdnPath + "/live2d-sdk.js"
+    },
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    tools: ["hitokoto",  "express",  "photo", "info", "quit"],
+    
+    drag: {
+      enable: false,
+      direction: ["x", "y"]
+    },
+    
+    switchType: "order"
+  }
+
+  const local_cssPath = "https://charles-7777.github.io/hugo-stack/waifu/waifu.css";
+  const local_tipsJsonPath = "https://charles-7777.github.io/hugo-stack/waifu/waifu-tips.json";
+  const local_tipsJsPath = "https://charles-7777.github.io/hugo-stack/waifu/waifu-tips.js";
+
+  
+  if (screen.width >= 768) {
+    Promise.all([
+    
+      loadExternalResource(local_cssPath, "css"),
+      loadExternalResource(config.path.live2dCorePath, "js"),
+      loadExternalResource(config.path.live2dSdkPath, "js"),
+    
+      loadExternalResource(local_tipsJsPath, "js")
+    ]).then(() => {
+      initWidget({
+        
+        waifuPath: local_tipsJsonPath,
+        cdnPath: config.path.modelPath,
+        tools: config.tools,
+        dragEnable: config.drag.enable,
+        dragDirection: config.drag.direction,
+        switchType: config.switchType
+      });
+    });
+  }
+
+  
+  function loadExternalResource(url, type) {
+    return new Promise((resolve, reject) => {
+      let tag;
+      if (type === "css") {
+        tag = document.createElement("link");
+        tag.rel = "stylesheet";
+        tag.href = url;
+      }
+      else if (type === "js") {
+        tag = document.createElement("script");
+        tag.src = url;
+      }
+      if (tag) {
+        tag.onload = () => resolve(url);
+        tag.onerror = () => reject(url);
+        document.head.appendChild(tag);
+      }
+    });
+  }
+</script>
+
+    </body>
+</html>
