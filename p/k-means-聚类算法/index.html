@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content=" 聚类（clustering）是一种寻找数据之间内在结构的技术。聚类把全体数据实例组织成一些相似组，而这些相似组被称作簇。处于相同簇中的数据实例彼此相同，处于不同簇中的实例彼此不同。K-Means、AgglomerativeClustering、DBSCAN、MeanShift、SpectralClustering 等是常用的聚类方法。 K-Means 算法又名 K 均值算法，K-Means 算法中的 K 表示的是聚类为 K 个簇，Means 代表取每一个聚类中数据值的均值作为该簇的中心，或者称为质心，即用每一个类的质心对该簇进行描述。\nK-Means 算法原理 简介 K-Means 是一种广泛使用的无监督学习(没标准答案下去学习)算法，用于将数据点划分为\u00a0k\u00a0个簇（Cluster）。其目标是使同一簇内的数据点尽可能相似，而不同簇之间的数据点尽可能不同。\n算法原理 K-Means 算法是一个迭代过程，主要包含以下步骤：\n初始化 (Initialization): 随机选择\u00a0k\u00a0个数据点作为初始质心（Centroids）。 分配 (Assignment): 计算每个数据点到这\u00a0k\u00a0个质心的距离，并将每个数据点分配给最近的质心所代表的簇。 更新 (Update): 重新计算每个簇的质心。新的质心是该簇内所有数据点的平均值（均值）。 重复 (Repeat): 重复步骤 2 和 3，直到满足停止条件（例如：质心不再发生变化、达到最大迭代次数或误差平方和收敛） 数学公式 目标函数 K-Means 的目标是最小化簇内误差平方和(Within-Cluster Sum of Squares, WCSS)，也称为惯性（Inertia）。\n$$ J =SEE= \\sum_{i=1}^k\\sum_{x\\in C_i}||x-\\mu_i||^2 $$其中：\nJ\u00a0是目标函数值:整个数据集的误差平方和（Sum of Squared Error，SSE）。 k\u00a0是簇的数量。 $C_i$\u200b\u00a0是第\u00a0i\u00a0个簇。 X\u00a0是簇\u00a0$C_i$中的数据点。 $\\mu_i$是簇\u00a0$C_i$的质心。 $||x-\\mu_i||^2$ 是数据点\u00a0x\u00a0到质心\u00a0$\\mu_i$\u200b\u00a0的欧几里得距离的平方 质心更新公式 在第\u00a0t+1\u00a0次迭代中，簇$C_i$\u00a0的新质心$\\mu_i^{(t+1)}$\u00a0计算如下：\n">
+<title>K-Means 聚类算法</title>
+
+<link rel='canonical' href='https://charles-7777.github.io/hugo-stack/p/k-means-%E8%81%9A%E7%B1%BB%E7%AE%97%E6%B3%95/'>
+
+<link rel="stylesheet" href="/hugo-stack/scss/style.min.1aedf5438eb6380946ca2f7d86c958e5adeb3c679a95ad190168d7c28b43101d.css"><meta property='og:title' content="K-Means 聚类算法">
+<meta property='og:description' content=" 聚类（clustering）是一种寻找数据之间内在结构的技术。聚类把全体数据实例组织成一些相似组，而这些相似组被称作簇。处于相同簇中的数据实例彼此相同，处于不同簇中的实例彼此不同。K-Means、AgglomerativeClustering、DBSCAN、MeanShift、SpectralClustering 等是常用的聚类方法。 K-Means 算法又名 K 均值算法，K-Means 算法中的 K 表示的是聚类为 K 个簇，Means 代表取每一个聚类中数据值的均值作为该簇的中心，或者称为质心，即用每一个类的质心对该簇进行描述。\nK-Means 算法原理 简介 K-Means 是一种广泛使用的无监督学习(没标准答案下去学习)算法，用于将数据点划分为\u00a0k\u00a0个簇（Cluster）。其目标是使同一簇内的数据点尽可能相似，而不同簇之间的数据点尽可能不同。\n算法原理 K-Means 算法是一个迭代过程，主要包含以下步骤：\n初始化 (Initialization): 随机选择\u00a0k\u00a0个数据点作为初始质心（Centroids）。 分配 (Assignment): 计算每个数据点到这\u00a0k\u00a0个质心的距离，并将每个数据点分配给最近的质心所代表的簇。 更新 (Update): 重新计算每个簇的质心。新的质心是该簇内所有数据点的平均值（均值）。 重复 (Repeat): 重复步骤 2 和 3，直到满足停止条件（例如：质心不再发生变化、达到最大迭代次数或误差平方和收敛） 数学公式 目标函数 K-Means 的目标是最小化簇内误差平方和(Within-Cluster Sum of Squares, WCSS)，也称为惯性（Inertia）。\n$$ J =SEE= \\sum_{i=1}^k\\sum_{x\\in C_i}||x-\\mu_i||^2 $$其中：\nJ\u00a0是目标函数值:整个数据集的误差平方和（Sum of Squared Error，SSE）。 k\u00a0是簇的数量。 $C_i$\u200b\u00a0是第\u00a0i\u00a0个簇。 X\u00a0是簇\u00a0$C_i$中的数据点。 $\\mu_i$是簇\u00a0$C_i$的质心。 $||x-\\mu_i||^2$ 是数据点\u00a0x\u00a0到质心\u00a0$\\mu_i$\u200b\u00a0的欧几里得距离的平方 质心更新公式 在第\u00a0t+1\u00a0次迭代中，簇$C_i$\u00a0的新质心$\\mu_i^{(t+1)}$\u00a0计算如下：\n">
+<meta property='og:url' content='https://charles-7777.github.io/hugo-stack/p/k-means-%E8%81%9A%E7%B1%BB%E7%AE%97%E6%B3%95/'>
+<meta property='og:site_name' content=''>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='K-Means' /><meta property='article:published_time' content='2025-12-01T17:11:41&#43;08:00'/><meta property='article:modified_time' content='2025-12-01T17:52:55&#43;08:00'/>
+<meta name="twitter:title" content="K-Means 聚类算法">
+<meta name="twitter:description" content=" 聚类（clustering）是一种寻找数据之间内在结构的技术。聚类把全体数据实例组织成一些相似组，而这些相似组被称作簇。处于相同簇中的数据实例彼此相同，处于不同簇中的实例彼此不同。K-Means、AgglomerativeClustering、DBSCAN、MeanShift、SpectralClustering 等是常用的聚类方法。 K-Means 算法又名 K 均值算法，K-Means 算法中的 K 表示的是聚类为 K 个簇，Means 代表取每一个聚类中数据值的均值作为该簇的中心，或者称为质心，即用每一个类的质心对该簇进行描述。\nK-Means 算法原理 简介 K-Means 是一种广泛使用的无监督学习(没标准答案下去学习)算法，用于将数据点划分为\u00a0k\u00a0个簇（Cluster）。其目标是使同一簇内的数据点尽可能相似，而不同簇之间的数据点尽可能不同。\n算法原理 K-Means 算法是一个迭代过程，主要包含以下步骤：\n初始化 (Initialization): 随机选择\u00a0k\u00a0个数据点作为初始质心（Centroids）。 分配 (Assignment): 计算每个数据点到这\u00a0k\u00a0个质心的距离，并将每个数据点分配给最近的质心所代表的簇。 更新 (Update): 重新计算每个簇的质心。新的质心是该簇内所有数据点的平均值（均值）。 重复 (Repeat): 重复步骤 2 和 3，直到满足停止条件（例如：质心不再发生变化、达到最大迭代次数或误差平方和收敛） 数学公式 目标函数 K-Means 的目标是最小化簇内误差平方和(Within-Cluster Sum of Squares, WCSS)，也称为惯性（Inertia）。\n$$ J =SEE= \\sum_{i=1}^k\\sum_{x\\in C_i}||x-\\mu_i||^2 $$其中：\nJ\u00a0是目标函数值:整个数据集的误差平方和（Sum of Squared Error，SSE）。 k\u00a0是簇的数量。 $C_i$\u200b\u00a0是第\u00a0i\u00a0个簇。 X\u00a0是簇\u00a0$C_i$中的数据点。 $\\mu_i$是簇\u00a0$C_i$的质心。 $||x-\\mu_i||^2$ 是数据点\u00a0x\u00a0到质心\u00a0$\\mu_i$\u200b\u00a0的欧几里得距离的平方 质心更新公式 在第\u00a0t+1\u00a0次迭代中，簇$C_i$\u00a0的新质心$\\mu_i^{(t+1)}$\u00a0计算如下：\n">
+    <link rel="shortcut icon" href="/hugo-stack/favicon2.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/hugo-stack/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/hugo-stack/img/oi_compressed_hu_9c5e2ca2fe891746.gif" width="300"
+                            height="303" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/hugo-stack"></a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://www.bilibili.com/'
+                        target="_blank"
+                        title="bilibili"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-brand-bilibili"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 10a4 4 0 0 1 4 -4h10a4 4 0 0 1 4 4v6a4 4 0 0 1 -4 4h-10a4 4 0 0 1 -4 -4v-6z" /><path d="M8 3l2 3" /><path d="M16 3l-2 3" /><path d="M9 13v-2" /><path d="M15 11v2" /></svg>
+                        
+                    </a>
+                </li>
+            
+                <li>
+                    <a 
+                        href='https://www.douyin.com/'
+                        target="_blank"
+                        title="douyin"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-brand-tiktok"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M21 7.917v4.034a9.948 9.948 0 0 1 -5 -1.951v4.5a6.5 6.5 0 1 1 -8 -6.326v4.326a2.5 2.5 0 1 0 4 2v-11.5h4.083a6.005 6.005 0 0 0 4.917 4.917z" /></svg>
+                        
+                    </a>
+                </li>
+            
+                <li>
+                    <a 
+                        href='https://github.com/charles-7777/hugo-blog'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/hugo-stack/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                
+                <span>主页</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/archives/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                
+                <span>归档</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/cats-tags/' >
+                
+                
+                
+                    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-tags"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 8v4.172a2 2 0 0 0 .586 1.414l5.71 5.71a2.41 2.41 0 0 0 3.408 0l3.592 -3.592a2.41 2.41 0 0 0 0 -3.408l-5.71 -5.71a2 2 0 0 0 -1.414 -.586h-4.172a2 2 0 0 0 -2 2z" /><path d="M18 19l1.592 -1.592a4.82 4.82 0 0 0 0 -6.816l-4.592 -4.592" /><path d="M7 10h-.01" /></svg>
+                
+                <span>Cats&amp;Tags</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/%E9%93%BE%E6%8E%A5/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                
+                <span>链接</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/search/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+                
+                <span>搜索</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/%E5%85%B3%E4%BA%8E/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                
+                <span>关于</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/updatelog/' >
+                
+                
+                
+                    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-logs"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 12h.01" /><path d="M4 6h.01" /><path d="M4 18h.01" /><path d="M8 18h2" /><path d="M8 12h2" /><path d="M8 6h2" /><path d="M14 6h6" /><path d="M14 12h6" /><path d="M14 18h6" /></svg>
+                
+                <span>更新日志</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>暗色模式</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ol>
+    <li><a href="#k-means-算法原理">K-Means 算法原理</a>
+      <ol>
+        <li><a href="#简介">简介</a></li>
+        <li><a href="#算法原理">算法原理</a></li>
+        <li><a href="#数学公式">数学公式</a>
+          <ol>
+            <li><a href="#目标函数">目标函数</a></li>
+            <li><a href="#质心更新公式">质心更新公式</a></li>
+          </ol>
+        </li>
+        <li><a href="#简单样例说明">简单样例说明</a></li>
+        <li><a href="#python-代码样例">Python 代码样例</a></li>
+      </ol>
+    </li>
+    <li><a href="#k-means算法的问题">K-Means算法的问题</a>
+      <ol>
+        <li><a href="#k如何确定">K如何确定</a>
+          <ol>
+            <li><a href="#手肘法">手肘法</a></li>
+            <li><a href="#轮廓系数silhouette-coefficient法">轮廓系数（Silhouette Coefficient）法</a></li>
+            <li><a href="#间隔统计法gap-statistic">间隔统计法（gap statistic）</a></li>
+          </ol>
+        </li>
+        <li><a href="#初始的簇质心的选取">初始的簇质心的选取</a></li>
+        <li><a href="#相似性与距离度量问题">相似性与距离度量问题</a></li>
+        <li><a href="#聚类时间问题">聚类时间问题</a></li>
+        <li><a href="#标准化问题">标准化问题</a></li>
+      </ol>
+    </li>
+  </ol>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/hugo-stack/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" >
+                机器学习
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/hugo-stack/p/k-means-%E8%81%9A%E7%B1%BB%E7%AE%97%E6%B3%95/">K-Means 聚类算法</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">2025-12-01 17:11</time>
+            </div>
+        <div>
+            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-edit"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg>
+            <time class="article-lastmod">2025-12-01 17:52</time>
+        </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 5 分钟
+                </time>
+            </div>
+        
+
+        
+            <div>
+                <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-file-word"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 12l1.333 5l1.667 -4l1.667 4l1.333 -5" /></svg>
+                <time class="article-words">
+                    1042 字
+                </time>
+            </div>
+        
+
+
+    </footer>
+    
+
+    
+
+
+</div>
+
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <blockquote>
+<p><strong>聚类</strong>（clustering）是一种寻找数据之间内在结构的技术。聚类把全体数据实例组织成一些相似组，而这些相似组被称作<strong>簇</strong>。处于相同簇中的数据实例彼此相同，处于不同簇中的实例彼此不同。<strong>K-Means</strong>、AgglomerativeClustering、DBSCAN、MeanShift、SpectralClustering 等是常用的聚类方法。  K-Means 算法又名 K 均值算法，K-Means 算法中的 K 表示的是聚类为 K 个簇，Means 代表取每一个聚类中数据值的均值作为该簇的中心，或者称为<strong>质心</strong>，即用每一个类的质心对该簇进行描述。</p></blockquote>
+<h2 id="k-means-算法原理">K-Means 算法原理
+</h2><h3 id="简介">简介
+</h3><p>K-Means 是一种广泛使用的无监督学习(没标准答案下去学习)算法，用于将数据点划分为 k 个簇（Cluster）。其目标是使同一簇内的数据点尽可能相似，而不同簇之间的数据点尽可能不同。</p>
+<h3 id="算法原理">算法原理
+</h3><p>K-Means 算法是一个迭代过程，主要包含以下步骤：</p>
+<ol>
+<li><strong>初始化 (Initialization)</strong>: 随机选择 <strong>k</strong> 个数据点作为初始<strong>质心</strong>（Centroids）。</li>
+<li><strong>分配 (Assignment)</strong>: 计算每个数据点到这 k 个质心的距离，并将每个数据点分配给<strong>最近</strong>的<strong>质心</strong>所<strong>代表</strong>的<strong>簇</strong>。</li>
+<li><strong>更新 (Update)</strong>: 重新计算每个簇的质心。<strong>新的质心</strong>是该簇内所有数据点的平<strong>均值</strong>（均值）。</li>
+<li><strong>重复 (Repeat)</strong>: 重复步骤 2 和 3，直到满足停止条件（例如：质心不再发生变化、达到最大迭代次数或误差平方和收敛）</li>
+</ol>
+<h3 id="数学公式">数学公式
+</h3><h4 id="目标函数">目标函数
+</h4><p>K-Means 的目标是最小化簇内误差平方和(Within-Cluster Sum of Squares, WCSS)，也称为惯性（Inertia）。</p>
+$$
+J =SEE= \sum_{i=1}^k\sum_{x\in C_i}||x-\mu_i||^2
+$$<p>其中：</p>
+<ul>
+<li>J 是目标函数值:整个数据集的误差平方和（Sum of Squared Error，SSE）。</li>
+<li>k 是簇的数量。</li>
+<li>$C_i$​ 是第 i 个簇。</li>
+<li>X 是簇 $C_i$中的数据点。</li>
+<li>$\mu_i$是簇 $C_i$的质心。</li>
+<li>$||x-\mu_i||^2$ 是数据点 x 到质心 $\mu_i$​ 的欧几里得距离的平方</li>
+</ul>
+<h4 id="质心更新公式">质心更新公式
+</h4><p>在第 t+1 次迭代中，簇$C_i$ 的新质心$\mu_i^{(t+1)}$ 计算如下：</p>
+$$
+\mu_i^{(t+1)} = \frac{1}{|C_i^{(t)}|} \sum_{x\in C_i^{(t)}} x
+$$<p>其中 $|C_i^{(t)}|$ 是第 t 次迭代中簇 $C_i$内数据点的数量。</p>
+<h3 id="简单样例说明">简单样例说明
+</h3><p>假设我们有以下一维数据点：<code>[2, 4, 10, 12, 3, 20, 30, 11, 25]</code>，我们想将其分为 k=2 个簇。</p>
+<ol>
+<li><strong>初始化</strong>: 随机选 <code>2</code> 和 <code>30</code> 为质心。
+<ul>
+<li>μ1​=2, μ2​=30</li>
+</ul>
+</li>
+<li><strong>分配</strong>:
+<ul>
+<li>靠近 2 的点: <code>{2, 3, 4, 10, 11, 12}</code> -&gt; 簇 1</li>
+<li>靠近 30 的点: <code>{20, 25, 30}</code> -&gt; 簇 2</li>
+</ul>
+</li>
+<li><strong>更新</strong>:
+<ul>
+<li>新 μ1​=(2+3+4+10+11+12)/6=42/6=7</li>
+<li>新 μ2​=(20+25+30)/3=75/3=25</li>
+</ul>
+</li>
+<li><strong>迭代</strong>: 使用新质心 <code>7</code> 和 <code>25</code> 重新分配，直到质心稳定</li>
+</ol>
+<h3 id="python-代码样例">Python 代码样例
+</h3><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">  1
+</span><span class="lnt">  2
+</span><span class="lnt">  3
+</span><span class="lnt">  4
+</span><span class="lnt">  5
+</span><span class="lnt">  6
+</span><span class="lnt">  7
+</span><span class="lnt">  8
+</span><span class="lnt">  9
+</span><span class="lnt"> 10
+</span><span class="lnt"> 11
+</span><span class="lnt"> 12
+</span><span class="lnt"> 13
+</span><span class="lnt"> 14
+</span><span class="lnt"> 15
+</span><span class="lnt"> 16
+</span><span class="lnt"> 17
+</span><span class="lnt"> 18
+</span><span class="lnt"> 19
+</span><span class="lnt"> 20
+</span><span class="lnt"> 21
+</span><span class="lnt"> 22
+</span><span class="lnt"> 23
+</span><span class="lnt"> 24
+</span><span class="lnt"> 25
+</span><span class="lnt"> 26
+</span><span class="lnt"> 27
+</span><span class="lnt"> 28
+</span><span class="lnt"> 29
+</span><span class="lnt"> 30
+</span><span class="lnt"> 31
+</span><span class="lnt"> 32
+</span><span class="lnt"> 33
+</span><span class="lnt"> 34
+</span><span class="lnt"> 35
+</span><span class="lnt"> 36
+</span><span class="lnt"> 37
+</span><span class="lnt"> 38
+</span><span class="lnt"> 39
+</span><span class="lnt"> 40
+</span><span class="lnt"> 41
+</span><span class="lnt"> 42
+</span><span class="lnt"> 43
+</span><span class="lnt"> 44
+</span><span class="lnt"> 45
+</span><span class="lnt"> 46
+</span><span class="lnt"> 47
+</span><span class="lnt"> 48
+</span><span class="lnt"> 49
+</span><span class="lnt"> 50
+</span><span class="lnt"> 51
+</span><span class="lnt"> 52
+</span><span class="lnt"> 53
+</span><span class="lnt"> 54
+</span><span class="lnt"> 55
+</span><span class="lnt"> 56
+</span><span class="lnt"> 57
+</span><span class="lnt"> 58
+</span><span class="lnt"> 59
+</span><span class="lnt"> 60
+</span><span class="lnt"> 61
+</span><span class="lnt"> 62
+</span><span class="lnt"> 63
+</span><span class="lnt"> 64
+</span><span class="lnt"> 65
+</span><span class="lnt"> 66
+</span><span class="lnt"> 67
+</span><span class="lnt"> 68
+</span><span class="lnt"> 69
+</span><span class="lnt"> 70
+</span><span class="lnt"> 71
+</span><span class="lnt"> 72
+</span><span class="lnt"> 73
+</span><span class="lnt"> 74
+</span><span class="lnt"> 75
+</span><span class="lnt"> 76
+</span><span class="lnt"> 77
+</span><span class="lnt"> 78
+</span><span class="lnt"> 79
+</span><span class="lnt"> 80
+</span><span class="lnt"> 81
+</span><span class="lnt"> 82
+</span><span class="lnt"> 83
+</span><span class="lnt"> 84
+</span><span class="lnt"> 85
+</span><span class="lnt"> 86
+</span><span class="lnt"> 87
+</span><span class="lnt"> 88
+</span><span class="lnt"> 89
+</span><span class="lnt"> 90
+</span><span class="lnt"> 91
+</span><span class="lnt"> 92
+</span><span class="lnt"> 93
+</span><span class="lnt"> 94
+</span><span class="lnt"> 95
+</span><span class="lnt"> 96
+</span><span class="lnt"> 97
+</span><span class="lnt"> 98
+</span><span class="lnt"> 99
+</span><span class="lnt">100
+</span><span class="lnt">101
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+</span></span><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">sklearn.datasets</span> <span class="kn">import</span> <span class="n">make_blobs</span>
+</span></span><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">matplotlib.animation</span> <span class="kn">import</span> <span class="n">FuncAnimation</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># ==========================================</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># 1. 数据准备</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># ==========================================</span>
+</span></span><span class="line"><span class="cl"><span class="nb">print</span><span class="p">(</span><span class="s2">&#34;Generating data...&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">X</span><span class="p">,</span> <span class="n">y_true</span> <span class="o">=</span> <span class="n">make_blobs</span><span class="p">(</span><span class="n">n_samples</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">centers</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">cluster_std</span><span class="o">=</span><span class="mf">0.60</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># ==========================================</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># 2. K-Means 算法手动实现 (为了记录每一步)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># ==========================================</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">KMeansManual</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">X</span> <span class="o">=</span> <span class="n">X</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">k</span> <span class="o">=</span> <span class="n">k</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># 随机选择k个点作为初始质心</span>
+</span></span><span class="line"><span class="cl">        <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">k</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">centroids</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">labels</span> <span class="o">=</span> <span class="kc">None</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># 用于存储每一步的状态: (centroids, labels, title)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_iters</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># 记录初始状态</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">centroids</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&#34;Initialization&#34;</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_iters</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">            <span class="c1"># --- 步骤 1: 分配 (Assignment) ---</span>
+</span></span><span class="line"><span class="cl">            <span class="c1"># 计算距离矩阵: (k, n_samples)</span>
+</span></span><span class="line"><span class="cl">            <span class="c1"># 利用广播机制计算每个点到每个质心的欧氏距离</span>
+</span></span><span class="line"><span class="cl">            <span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">centroids</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">            <span class="c1"># 获取最近质心的索引</span>
+</span></span><span class="line"><span class="cl">            <span class="bp">self</span><span class="o">.</span><span class="n">labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">            <span class="c1"># 记录分配后的状态</span>
+</span></span><span class="line"><span class="cl">            <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">centroids</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="sa">f</span><span class="s2">&#34;Iteration </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">: Assignment&#34;</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">            <span class="c1"># --- 步骤 2: 更新 (Update) ---</span>
+</span></span><span class="line"><span class="cl">            <span class="n">new_centroids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+</span></span><span class="line"><span class="cl">                <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">labels</span> <span class="o">==</span> <span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">labels</span> <span class="o">==</span> <span class="n">j</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">centroids</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">k</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="p">])</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">            <span class="c1"># 记录更新质心后的状态</span>
+</span></span><span class="line"><span class="cl">            <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">new_centroids</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="sa">f</span><span class="s2">&#34;Iteration </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">: Update Centroids&#34;</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">            <span class="c1"># --- 检查收敛 ---</span>
+</span></span><span class="line"><span class="cl">            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">centroids</span><span class="p">,</span> <span class="n">new_centroids</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;Converged at iteration </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">                <span class="k">break</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">            <span class="bp">self</span><span class="o">.</span><span class="n">centroids</span> <span class="o">=</span> <span class="n">new_centroids</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 运行算法</span>
+</span></span><span class="line"><span class="cl"><span class="n">k</span> <span class="o">=</span> <span class="mi">4</span>
+</span></span><span class="line"><span class="cl"><span class="n">kmeans</span> <span class="o">=</span> <span class="n">KMeansManual</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">kmeans</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># ==========================================</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># 3. 动画可视化</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># ==========================================</span>
+</span></span><span class="line"><span class="cl"><span class="nb">print</span><span class="p">(</span><span class="s2">&#34;Starting animation...&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">7</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="n">frame_idx</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="n">ax</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">    <span class="n">centroids</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">title</span> <span class="o">=</span> <span class="n">kmeans</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="n">frame_idx</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1"># 绘制数据点</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="n">labels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># 初始状态，未分类，显示为灰色</span>
+</span></span><span class="line"><span class="cl">        <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">X</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">else</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># 已分类，按类别着色</span>
+</span></span><span class="line"><span class="cl">        <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">X</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.6</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1"># 绘制质心 (红色大叉)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">centroids</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">centroids</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="n">edgecolors</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span> <span class="n">linewidths</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Centroids&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1"># 绘制质心移动轨迹 (可选，如果不是第一帧)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="n">frame_idx</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="n">prev_centroids</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">kmeans</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="n">frame_idx</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># 简单的绘制从上一个位置到当前位置的线</span>
+</span></span><span class="line"><span class="cl">        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">            <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="n">prev_centroids</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">centroids</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">]],</span> 
+</span></span><span class="line"><span class="cl">                    <span class="p">[</span><span class="n">prev_centroids</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">centroids</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">]],</span> <span class="s1">&#39;k--&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&#34;Feature 1&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&#34;Feature 2&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">    <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 创建动画</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># interval=1000 表示每帧停留 1000ms (1秒)</span>
+</span></span><span class="line"><span class="cl"><span class="n">ani</span> <span class="o">=</span> <span class="n">FuncAnimation</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">update</span><span class="p">,</span> <span class="n">frames</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">kmeans</span><span class="o">.</span><span class="n">history</span><span class="p">),</span> <span class="n">interval</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="k-means算法的问题">K-Means算法的问题
+</h2><h3 id="k如何确定">K如何确定
+</h3><h4 id="手肘法">手肘法
+</h4><p>算法所需要预设的参数至少有2个：簇个数<strong>K</strong>和<strong>初始</strong>簇<strong>质心</strong></p>
+<p>聚类的目标是使得每个样本点到距离其最近的聚类中心的<strong>总误差平方和(SSE)尽可能小</strong>。</p>
+<p>理论上<strong>随着K的增加，SSE会单调递减</strong>，因为类数的增加意味着总有一部分样本点会因为归属到新的类簇而节约下一段距离，<strong>直到K=N时，情况将演变为每个样本自成一类，此时SSE值就会降为0</strong>,这也就没意义了。</p>
+<p>根据学者们的长期实践经验，<strong>K值最大不应超过样本量的开平方根，即</strong>$K_{max}&lt;= \sqrt N$ 。而确定了范围后，最优K值又应该怎么判断？一种简单的思路是：试图找到某一个K值，要求当K大于该值时，SSE的下降变化幅度（或速度）<strong>明显变小</strong>。换句话说，<strong>当K超过某一个数后，每个类簇的聚合程度不再获得显著提升</strong>，此时我们就可以认为已找到最佳K的取值。这也是<strong>手肘法</strong>通过画出不同K值与SSE值的折线图，若SSE值下降过程中存在“肘点”（下降速度骤减的拐点处），该点所对应的K值即合适的聚类数。不过遗憾的是，若SSE的下降是均匀的，传统的肘部图法也就失灵了。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+</span></span><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">sklearn.cluster</span> <span class="kn">import</span> <span class="n">KMeans</span>
+</span></span><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">sklearn.datasets</span> <span class="kn">import</span> <span class="n">make_blobs</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># ==========================================</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># 1. 数据准备</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># ==========================================</span>
+</span></span><span class="line"><span class="cl"><span class="nb">print</span><span class="p">(</span><span class="s2">&#34;Generating data...&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># 生成稍微复杂一点的数据，以便观察肘部</span>
+</span></span><span class="line"><span class="cl"><span class="n">X</span><span class="p">,</span> <span class="n">y_true</span> <span class="o">=</span> <span class="n">make_blobs</span><span class="p">(</span><span class="n">n_samples</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">centers</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">cluster_std</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># ==========================================</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># 2. 计算不同 K 值的 WCSS (Inertia)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># ==========================================</span>
+</span></span><span class="line"><span class="cl"><span class="n">wcss</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># Within-Cluster Sum of Squares (簇内误差平方和)</span>
+</span></span><span class="line"><span class="cl"><span class="n">k_range</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">11</span><span class="p">)</span> <span class="c1"># 测试 k 从 1 到 10</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nb">print</span><span class="p">(</span><span class="s2">&#34;Calculating WCSS for different k values...&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">k_range</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="n">kmeans</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">kmeans</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">wcss</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">kmeans</span><span class="o">.</span><span class="n">inertia_</span><span class="p">)</span> <span class="c1"># inertia_ 属性就是 WCSS</span>
+</span></span><span class="line"><span class="cl">    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&#34;k=</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">, WCSS=</span><span class="si">{</span><span class="n">kmeans</span><span class="o">.</span><span class="n">inertia_</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># ==========================================</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># 3. 绘制肘部图 (Elbow Plot)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># ==========================================</span>
+</span></span><span class="line"><span class="cl"><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl"><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">k_range</span><span class="p">,</span> <span class="n">wcss</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;b&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 标注轴和标题</span>
+</span></span><span class="line"><span class="cl"><span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Elbow Method For Optimal k (肘部法则)&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Number of clusters (k)&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;WCSS (Inertia)&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">plt</span><span class="o">.</span><span class="n">xticks</span><span class="p">(</span><span class="n">k_range</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 标记可能的肘部点 (在这个例子中，我们知道真实中心是5，所以肘部应该在5附近)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># 这里为了演示，我们简单标注一下 k=5 的位置</span>
+</span></span><span class="line"><span class="cl"><span class="n">optimal_k</span> <span class="o">=</span> <span class="mi">5</span>
+</span></span><span class="line"><span class="cl"><span class="n">plt</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Possible Elbow Point (k=</span><span class="si">{</span><span class="n">optimal_k</span><span class="si">}</span><span class="s1">)&#39;</span><span class="p">,</span> 
+</span></span><span class="line"><span class="cl">             <span class="n">xy</span><span class="o">=</span><span class="p">(</span><span class="n">optimal_k</span><span class="p">,</span> <span class="n">wcss</span><span class="p">[</span><span class="n">optimal_k</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> 
+</span></span><span class="line"><span class="cl">             <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="n">optimal_k</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">wcss</span><span class="p">[</span><span class="n">optimal_k</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="mi">1000</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">             <span class="n">arrowprops</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">0.05</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">             <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h4 id="轮廓系数silhouette-coefficient法">轮廓系数（Silhouette Coefficient）法
+</h4><p>是一种用于评估聚类效果并帮助确定最优聚类数 K 的方法。它结合了<strong>凝聚度</strong>（cohesion）和<strong>分离度</strong>（separation）两个指标</p>
+<ul>
+<li>轮廓系数的定义</li>
+</ul>
+<p>对于数据集中的每一个样本点 $x_i$​，其轮廓系数 $s(i)$ 定义为：</p>
+$$
+s(i) = \frac{b(i) - a(i)}{\max\{a(i), b(i)\}}
+$$<p>其中：
+a(i)：样本 xi​ 到<strong>同簇内其他点</strong>的平均距离（衡量凝聚度）。
+b(i)：样本 xi​ 到<strong>最近的其他簇中所有点</strong>的平均距离（衡量分离度）。</p>
+<p>轮廓系数的取值范围为 [−1,1]：
+- <strong>接近 1</strong>：表示样本聚类合理，簇内紧密、簇间分离良好。
+- <strong>接近 0</strong>：表示样本在两个簇边界上。
+- <strong>接近 -1</strong>：表示样本可能被分配到了错误的簇。</p>
+<ul>
+<li>使用轮廓系数确定 K 值的步骤</li>
+</ul>
+<ol>
+<li>对不同的 K 值（如 K=2,3,&hellip;,Kmax​）运行 K-means 聚类。</li>
+<li>对每次聚类结果，计算每个样本的轮廓系数，再求所有样本的平均轮廓系数。</li>
+<li>选择使平均轮廓系数最大的 K 值作为最优聚类数.</li>
+</ol>
+<blockquote>
+<p>注意：轮廓系数法假设簇是凸形且大小相近的，对于非球形或密度差异大的簇可能不适用。</p></blockquote>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">import numpy as np
+</span></span><span class="line"><span class="cl">import matplotlib.pyplot as plt
+</span></span><span class="line"><span class="cl">from sklearn.cluster import KMeans
+</span></span><span class="line"><span class="cl">from sklearn.datasets import make_blobs
+</span></span><span class="line"><span class="cl">from sklearn.metrics import silhouette_score
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"># ==========================================
+</span></span><span class="line"><span class="cl"># 1. 数据准备
+</span></span><span class="line"><span class="cl"># ==========================================
+</span></span><span class="line"><span class="cl">print(&#34;Generating data...&#34;)
+</span></span><span class="line"><span class="cl"># 生成与之前类似的模拟数据，预设中心为 5
+</span></span><span class="line"><span class="cl">X, y_true = make_blobs(n_samples=500, centers=5, cluster_std=0.8, random_state=42)
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"># ==========================================
+</span></span><span class="line"><span class="cl"># 2. 计算不同 K 值的轮廓系数 (Silhouette Score)
+</span></span><span class="line"><span class="cl"># ==========================================
+</span></span><span class="line"><span class="cl">silhouette_scores = []
+</span></span><span class="line"><span class="cl"># 注意：轮廓系数至少需要 2 个簇才能计算，所以从 k=2 开始
+</span></span><span class="line"><span class="cl">k_range = range(2, 11) 
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">print(&#34;Calculating Silhouette Scores for different k values...&#34;)
+</span></span><span class="line"><span class="cl">for k in k_range:
+</span></span><span class="line"><span class="cl">    kmeans = KMeans(n_clusters=k, random_state=42)
+</span></span><span class="line"><span class="cl">    labels = kmeans.fit_predict(X)
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    # 计算所有样本的平均轮廓系数
+</span></span><span class="line"><span class="cl">    # 轮廓系数范围是 [-1, 1]，越接近 1 表示聚类效果越好
+</span></span><span class="line"><span class="cl">    score = silhouette_score(X, labels)
+</span></span><span class="line"><span class="cl">    silhouette_scores.append(score)
+</span></span><span class="line"><span class="cl">    print(f&#34;k={k}, Silhouette Score={score:.4f}&#34;)
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"># ==========================================
+</span></span><span class="line"><span class="cl"># 3. 绘制轮廓系数图
+</span></span><span class="line"><span class="cl"># ==========================================
+</span></span><span class="line"><span class="cl">plt.figure(figsize=(10, 6))
+</span></span><span class="line"><span class="cl">plt.plot(k_range, silhouette_scores, marker=&#39;o&#39;, linestyle=&#39;-&#39;, color=&#39;g&#39;, linewidth=2)
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"># 标注轴和标题
+</span></span><span class="line"><span class="cl">plt.title(&#39;Silhouette Method For Optimal k&#39;, fontsize=16)
+</span></span><span class="line"><span class="cl">plt.xlabel(&#39;Number of clusters (k)&#39;, fontsize=12)
+</span></span><span class="line"><span class="cl">plt.ylabel(&#39;Silhouette Score (Avg)&#39;, fontsize=12)
+</span></span><span class="line"><span class="cl">plt.xticks(k_range)
+</span></span><span class="line"><span class="cl">plt.grid(True, alpha=0.3)
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"># 标记最高分 (最佳 K 值)
+</span></span><span class="line"><span class="cl">best_k_idx = np.argmax(silhouette_scores)
+</span></span><span class="line"><span class="cl">best_k = k_range[best_k_idx]
+</span></span><span class="line"><span class="cl">best_score = silhouette_scores[best_k_idx]
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">plt.annotate(f&#39;Best k={best_k}\nScore={best_score:.3f}&#39;, 
+</span></span><span class="line"><span class="cl">             xy=(best_k, best_score), 
+</span></span><span class="line"><span class="cl">             xytext=(best_k, best_score - 0.1), # 文本位置稍微往下一点
+</span></span><span class="line"><span class="cl">             arrowprops=dict(facecolor=&#39;red&#39;, shrink=0.05),
+</span></span><span class="line"><span class="cl">             fontsize=12, color=&#39;red&#39;, ha=&#39;center&#39;)
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">print(f&#34;The optimal k according to Silhouette Score is {best_k}&#34;)
+</span></span><span class="line"><span class="cl">plt.show()
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h4 id="间隔统计法gap-statistic">间隔统计法（gap statistic）
+</h4><p>Gap统计量基于以下假设：如果聚类是有意义的，那么数据集中的样本点应该比随机数据更紧密地聚集在一起。因此，Gap统计量计算了实际数据集的WCSS与随机数据集WCSS的期望值之间的差异。</p>
+<ul>
+<li>对于每一个K值，首先运行K-means算法，得到一个群内平方和。</li>
+<li>然后，生成一组随机数据，并用相同的K值运行K-means算法。</li>
+<li>比较真实数据的群内平方和和随机数据的结果，并计算他们之间的差距（称之为间隔值）。</li>
+<li>对于多个K值，重复以上步骤，并选择拥有最大间隔值的K</li>
+</ul>
+<h3 id="初始的簇质心的选取">初始的簇质心的选取
+</h3><p>常用分析软件中的功能模块或函数包，基本上都已经代替使用者们自动预设了随机初始点，只需填入目标K值，就可以跑动算法。但实际上，<strong>K-Means对初始聚类中心的位置十分敏感，每次迭代，初始点的不同往往会导致不同的聚类结果</strong>。此外过于临近的初始中心点，有时还会导致模型的收敛时间变长（即Step4中迭代时间变长）。一种简单粗暴的解决方式是，<strong>选择不同的初始聚类中心，多次运行算法</strong>，挑出聚类效果更佳（SSE更小）、解释性更强的一组结果。</p>
+<p>当然了，我们或许更想知道算法上的改进手段。一种常见的优化方法是采用<strong>最大距离法</strong>，如：首先选取数据集中距离最大的<strong>两个点</strong>作为初始聚类中心，将剩余数据对象依据到聚类中心点距离的远近分配到相应的簇中，并更新聚类中心，然后<strong>继续寻找与聚类中心距离最远的点作为下一个中心点</strong>……</p>
+<p>与此类似地还有<strong>K-Means++</strong> 算法，它是传统K-Means的改良版，同样是基于最大距离，这里结合加权概率的思想优化了对K个初始中心的选取，使得<strong>在选取第n+1(n+1&lt;k)个聚类中心时，距离当前n个聚类中心越远的点会有更高的概率被选为第n+1个聚类中心</strong>。还有学者从<strong>点集密度</strong>的角度改进，又或者<strong>将优化搜索算法（如模拟退火、生物遗传算法等）运用到了聚类中心的选取</strong>中&hellip;&hellip;</p>
+<h3 id="相似性与距离度量问题">相似性与距离度量问题
+</h3><p>特征量化后，<strong>不同个体的相似性反映在了向量之间的空间距离大小</strong>，常见的度量方法包括<strong>欧几里得距离</strong>、曼哈顿距离等等，有时我们还会用到余弦相似度等（如计算文档相似性）。而通常情况下，欧氏距离计算就可以满足我们对实现K-Means的需要。根据距离的度量方式容易发现，K-Means所划分出的类别是<strong>类球形</strong>的，换句话说，只有类球型分布的连续型样本数据，才能得到较好的聚类效果，而如果非数值型、样本类别极不平衡、非球形的分类，则聚类效果会受限。对于非理想情形的数据，有时我们就需要做一些灵活变通了。如，若数据为离散型，均值没有定义，我们可以采用K-众数(每个簇的质心不是均值，而是每个维度上出现频率最高的类别)的方法。如果样本类别极不平衡或者是非球型，则可能考虑更换聚类方法，如使用<strong>基于密度的聚类</strong>（经典的DBSCAN算法）、<strong>层次聚类</strong>法等等。</p>
+<h3 id="聚类时间问题">聚类时间问题
+</h3><p>上面的流程中提到，当聚类中心不再改变时（数学上即要求SSE函数<strong>收敛</strong>），我们认为聚类过程结束，但是这并不是唯一的结束信号。为了节省计算时间，有时我们也会通过设置<strong>迭代次数、设置簇内平方和或SSE下降阈值</strong>，又或者替换为“直到仅有1%的点改变簇”这样的<strong>弱条件</strong>，来控制算法的进程。出于对问题复杂度和计算量的合理预判，若聚类中心的更新超过了迭代<strong>次数上限</strong>，或者代价函数SSE已经小于所设定的阈值，我们都有理由提前终止。</p>
+<p>此外，为了提高收敛速度，还可以考虑采用<strong>二分K-Means法</strong>，将所有点作为一个簇，将该簇一分为二，然后选择能最大程度降低聚类代价函数的簇划分为两个簇，以此进行下去，直到簇的数目等于给定的个数K为止。值得一提的是，该法更突出的优点在于能够很好地解决K-Means收敛到局部最优的问题，帮助我们找到全局最优解</p>
+<h3 id="标准化问题">标准化问题
+</h3><p>考虑到我们所研究的对象通常包含多列数据，这些数据代表不同方面的属性值，在单位和数量级上可能存在较大的差别，因此为了避免这些差异可能引发的计算精度下降等问题，对于连续属性，可以先对数据进行规范化处理（如零均值规范化、最大最小值规范化等），再进行距离的计算</p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/hugo-stack/tags/k-means/">K-Means</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    
+
+    
+</footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI&#43;WdtXRGWt2kTvGFasHpSy3SV"crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG&#43;vnGctmUb0ZY0l8"crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"integrity="sha384-&#43;VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4&#43;/RRE05"crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+	const mainArticleElement = document.querySelector(".main-article");
+        renderMathInElement(mainArticleElement, {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ],
+            ignoredClasses: ["gist"]
+        });})
+</script>
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+        2025 Charles Lv
+    </section>
+    
+    <section class="powerby">
+        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/hugo-stack/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+<script src=https://charles-7777.github.io/hugo-stack/background/sakura.js></script>
+
+
+
+
+
+
+<style>
+    .highlight {
+         
+        max-height: 400px;
+        overflow: hidden;
+    }
+
+    .code-show {
+        max-height: none !important;
+    }
+
+    .code-more-box {
+        width: 100%;
+        padding-top: 78px;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(rgba(255, 255, 255, 0)), to(#fff));
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1;
+    }
+
+    .code-more-btn {
+        display: block;
+        margin: auto;
+        width: 44px;
+        height: 22px;
+        background: #f0f0f5;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+        padding-top: 6px;
+        cursor: pointer;
+    }
+
+    .code-more-img {
+        cursor: pointer !important;
+        display: block;
+        margin: auto;
+        width: 22px;
+        height: 16px;
+    }
+</style>
+
+<script>
+  function initCodeMoreBox() {
+    let codeBlocks = document.querySelectorAll(".highlight");
+    if (!codeBlocks) {
+      return;
+    }
+    codeBlocks.forEach(codeBlock => {
+      
+      if (codeBlock.scrollHeight <= codeBlock.clientHeight) {
+        return;
+      }
+      
+      
+      let codeMoreBox = document.createElement('div');
+      codeMoreBox.classList.add('code-more-box');
+      
+      let codeMoreBtn = document.createElement('span');
+      codeMoreBtn.classList.add('code-more-btn');
+      codeMoreBtn.addEventListener('click', () => {
+        codeBlock.classList.add('code-show');
+        codeMoreBox.style.display = 'none';
+        
+        window.dispatchEvent(new Event('resize'))
+      })
+      
+      let img = document.createElement('img');
+      img.classList.add('code-more-img');
+      img.src = "https://charles-7777.github.io/hugo-stack/icons/codeMore.png"
+      
+      codeMoreBtn.appendChild(img);
+      codeMoreBox.appendChild(codeMoreBtn);
+      codeBlock.appendChild(codeMoreBox)
+    })
+  }
+  
+  initCodeMoreBox();
+</script>
+
+
+
+<style>
+    #backTopBtn {
+        display: none;
+        position: fixed;
+        bottom: 30px;
+        z-index: 99;
+        cursor: pointer;
+        width: 30px;
+        height: 30px;
+        background-image: url(https://charles-7777.github.io/hugo-stack/icons/backTop.svg);
+    }
+</style>
+
+<script>
+    
+
+    function initScrollTop() {
+        let rightSideBar = document.querySelector(".right-sidebar");
+        if (!rightSideBar) {
+            return;
+        }
+        
+        let btn = document.createElement("div");
+        btn.id = "backTopBtn";
+        btn.onclick = backToTop
+        rightSideBar.appendChild(btn)
+        
+        window.onscroll = function() {
+            
+            if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+                btn.style.display = "block";
+            } else {
+                btn.style.display = "none";
+            }
+        };
+    }
+
+    
+
+    function backToTop(){
+        window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+
+    initScrollTop();
+</script>
+
+
+<style>
+    #TableOfContents > ul, ol {
+        ul, ol {
+            display: none;
+        }
+        .open {
+            display: block;
+        }
+    }
+</style>
+
+<script>
+    function initTocHide() {
+        
+        let toc = document.querySelector(".widget--toc");
+        if (!toc) {
+            return;
+        }
+        
+        window.addEventListener('scroll', function() {
+            
+            let openUl = document.querySelectorAll(".open");
+            if (openUl.length > 0) {
+              openUl.forEach((ul) => {
+                ul.classList.remove("open")
+              })
+            }
+            
+            let currentLi = document.querySelector(".active-class");
+            if (!currentLi) {
+                return
+            }
+            
+            if (currentLi.children.length > 1) {
+                currentLi.children[1].classList.add("open")
+            }
+            
+            let ul = currentLi.parentElement;
+            do {
+                ul.classList.add("open");
+                ul = ul.parentElement.parentElement
+            } while (ul !== undefined && (ul.localName === 'ul' || ul.localName === 'ol'))
+        });
+    }
+    initTocHide()
+</script>
+
+
+
+
+
+
+ <script>
+  const cdnPath = "https://cdn.jsdelivr.net/gh/charles-7777/live2d-widget-v3@main";
+  const config = {
+    
+    path: {
+      homePath: "/",
+      modelPath: cdnPath + "/Resources/",
+      cssPath: cdnPath + "/waifu.css",
+      tipsJsonPath: cdnPath + "/waifu-tips.json",
+      tipsJsPath: cdnPath + "/waifu-tips.js",
+      live2dCorePath: cdnPath + "/Core/live2dcubismcore.js",
+      live2dSdkPath: cdnPath + "/live2d-sdk.js"
+    },
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    tools: ["hitokoto",  "express",  "photo", "info", "quit"],
+    
+    drag: {
+      enable: false,
+      direction: ["x", "y"]
+    },
+    
+    switchType: "order"
+  }
+
+  const local_cssPath = "https://charles-7777.github.io/hugo-stack/waifu/waifu.css";
+  const local_tipsJsonPath = "https://charles-7777.github.io/hugo-stack/waifu/waifu-tips.json";
+  const local_tipsJsPath = "https://charles-7777.github.io/hugo-stack/waifu/waifu-tips.js";
+
+  
+  if (screen.width >= 768) {
+    Promise.all([
+    
+      loadExternalResource(local_cssPath, "css"),
+      loadExternalResource(config.path.live2dCorePath, "js"),
+      loadExternalResource(config.path.live2dSdkPath, "js"),
+    
+      loadExternalResource(local_tipsJsPath, "js")
+    ]).then(() => {
+      initWidget({
+        
+        waifuPath: local_tipsJsonPath,
+        cdnPath: config.path.modelPath,
+        tools: config.tools,
+        dragEnable: config.drag.enable,
+        dragDirection: config.drag.direction,
+        switchType: config.switchType
+      });
+    });
+  }
+
+  
+  function loadExternalResource(url, type) {
+    return new Promise((resolve, reject) => {
+      let tag;
+      if (type === "css") {
+        tag = document.createElement("link");
+        tag.rel = "stylesheet";
+        tag.href = url;
+      }
+      else if (type === "js") {
+        tag = document.createElement("script");
+        tag.src = url;
+      }
+      if (tag) {
+        tag.onload = () => resolve(url);
+        tag.onerror = () => reject(url);
+        document.head.appendChild(tag);
+      }
+    });
+  }
+</script>
+
+    </body>
+</html>
