@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="本文介绍 Wi-Fi 物理层协商速率（PHY Rate）的计算方法，并提供 802.11ac (Wi-Fi 5) 和 802.11ax (Wi-Fi 6) 的 MCS (Modulation and Coding Scheme) 表。\n计算公式 Wi-Fi 的理论物理层速率可以通过以下公式计算：\n$$ \\text{Data Rate} = N_{ss} \\times \\frac{N_{sd} \\times N_{bps} \\times R}{T_{sym}} $$例如 ac 40Mhz 4x4 的最大速率 $ \\text{Rate} = 4 \\times \\frac{108 \\times 8 \\times (5/6)}{3.6 \\mu s} = 800 Mbps$\n其中各参数含义如下：\n参数 含义 说明 $N_{ss}$ Spatial Streams 空间流数量 (MIMO)，例如 1x1, 2x2, 3x3, 4x4。$Nss,max=min(N_{Tx},N_{Rx})$ $N_{sd}$ Data Subcarriers 数据子载波数量。取决于信道带宽 (20/40/80/160 MHz) 和协议标准 (11n/ac/ax)。 $N_{bps}$ Bits per Symbol 每个符号携带的比特数。由调制方式决定 (e.g., 64-QAM = 6 bits, 256-QAM = 8 bits, 1024-QAM = 10 bits)。 $R$ Coding Rate 编码率。有效数据位与总传输位（含纠错码）的比率 (e.g., 3/4, 5/6)。 $T_{sym}$ Symbol Duration 符号持续时间。$T_{sym} = T_{base} + T_{GI}$ (Guard Interval)。 简化理解 速率主要由以下几个维度决定：\n">
+<title>Wi-Fi 速率计算</title>
+
+<link rel='canonical' href='https://charles-7777.github.io/hugo-stack/p/wi-fi-%E9%80%9F%E7%8E%87%E8%AE%A1%E7%AE%97/'>
+
+<link rel="stylesheet" href="/hugo-stack/scss/style.min.1aedf5438eb6380946ca2f7d86c958e5adeb3c679a95ad190168d7c28b43101d.css"><meta property='og:title' content="Wi-Fi 速率计算">
+<meta property='og:description' content="本文介绍 Wi-Fi 物理层协商速率（PHY Rate）的计算方法，并提供 802.11ac (Wi-Fi 5) 和 802.11ax (Wi-Fi 6) 的 MCS (Modulation and Coding Scheme) 表。\n计算公式 Wi-Fi 的理论物理层速率可以通过以下公式计算：\n$$ \\text{Data Rate} = N_{ss} \\times \\frac{N_{sd} \\times N_{bps} \\times R}{T_{sym}} $$例如 ac 40Mhz 4x4 的最大速率 $ \\text{Rate} = 4 \\times \\frac{108 \\times 8 \\times (5/6)}{3.6 \\mu s} = 800 Mbps$\n其中各参数含义如下：\n参数 含义 说明 $N_{ss}$ Spatial Streams 空间流数量 (MIMO)，例如 1x1, 2x2, 3x3, 4x4。$Nss,max=min(N_{Tx},N_{Rx})$ $N_{sd}$ Data Subcarriers 数据子载波数量。取决于信道带宽 (20/40/80/160 MHz) 和协议标准 (11n/ac/ax)。 $N_{bps}$ Bits per Symbol 每个符号携带的比特数。由调制方式决定 (e.g., 64-QAM = 6 bits, 256-QAM = 8 bits, 1024-QAM = 10 bits)。 $R$ Coding Rate 编码率。有效数据位与总传输位（含纠错码）的比率 (e.g., 3/4, 5/6)。 $T_{sym}$ Symbol Duration 符号持续时间。$T_{sym} = T_{base} + T_{GI}$ (Guard Interval)。 简化理解 速率主要由以下几个维度决定：\n">
+<meta property='og:url' content='https://charles-7777.github.io/hugo-stack/p/wi-fi-%E9%80%9F%E7%8E%87%E8%AE%A1%E7%AE%97/'>
+<meta property='og:site_name' content=''>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='wifi' /><meta property='article:published_time' content='2025-12-12T15:25:55&#43;08:00'/><meta property='article:modified_time' content='2025-12-12T15:42:27&#43;08:00'/>
+<meta name="twitter:title" content="Wi-Fi 速率计算">
+<meta name="twitter:description" content="本文介绍 Wi-Fi 物理层协商速率（PHY Rate）的计算方法，并提供 802.11ac (Wi-Fi 5) 和 802.11ax (Wi-Fi 6) 的 MCS (Modulation and Coding Scheme) 表。\n计算公式 Wi-Fi 的理论物理层速率可以通过以下公式计算：\n$$ \\text{Data Rate} = N_{ss} \\times \\frac{N_{sd} \\times N_{bps} \\times R}{T_{sym}} $$例如 ac 40Mhz 4x4 的最大速率 $ \\text{Rate} = 4 \\times \\frac{108 \\times 8 \\times (5/6)}{3.6 \\mu s} = 800 Mbps$\n其中各参数含义如下：\n参数 含义 说明 $N_{ss}$ Spatial Streams 空间流数量 (MIMO)，例如 1x1, 2x2, 3x3, 4x4。$Nss,max=min(N_{Tx},N_{Rx})$ $N_{sd}$ Data Subcarriers 数据子载波数量。取决于信道带宽 (20/40/80/160 MHz) 和协议标准 (11n/ac/ax)。 $N_{bps}$ Bits per Symbol 每个符号携带的比特数。由调制方式决定 (e.g., 64-QAM = 6 bits, 256-QAM = 8 bits, 1024-QAM = 10 bits)。 $R$ Coding Rate 编码率。有效数据位与总传输位（含纠错码）的比率 (e.g., 3/4, 5/6)。 $T_{sym}$ Symbol Duration 符号持续时间。$T_{sym} = T_{base} + T_{GI}$ (Guard Interval)。 简化理解 速率主要由以下几个维度决定：\n">
+    <link rel="shortcut icon" href="/hugo-stack/favicon2.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/hugo-stack/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/hugo-stack/img/oi_compressed_hu_9c5e2ca2fe891746.gif" width="300"
+                            height="303" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/hugo-stack"></a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://www.bilibili.com/'
+                        target="_blank"
+                        title="bilibili"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-brand-bilibili"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 10a4 4 0 0 1 4 -4h10a4 4 0 0 1 4 4v6a4 4 0 0 1 -4 4h-10a4 4 0 0 1 -4 -4v-6z" /><path d="M8 3l2 3" /><path d="M16 3l-2 3" /><path d="M9 13v-2" /><path d="M15 11v2" /></svg>
+                        
+                    </a>
+                </li>
+            
+                <li>
+                    <a 
+                        href='https://www.douyin.com/'
+                        target="_blank"
+                        title="douyin"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-brand-tiktok"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M21 7.917v4.034a9.948 9.948 0 0 1 -5 -1.951v4.5a6.5 6.5 0 1 1 -8 -6.326v4.326a2.5 2.5 0 1 0 4 2v-11.5h4.083a6.005 6.005 0 0 0 4.917 4.917z" /></svg>
+                        
+                    </a>
+                </li>
+            
+                <li>
+                    <a 
+                        href='https://github.com/charles-7777/hugo-blog'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/hugo-stack/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                
+                <span>主页</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/archives/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                
+                <span>归档</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/cats-tags/' >
+                
+                
+                
+                    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-tags"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 8v4.172a2 2 0 0 0 .586 1.414l5.71 5.71a2.41 2.41 0 0 0 3.408 0l3.592 -3.592a2.41 2.41 0 0 0 0 -3.408l-5.71 -5.71a2 2 0 0 0 -1.414 -.586h-4.172a2 2 0 0 0 -2 2z" /><path d="M18 19l1.592 -1.592a4.82 4.82 0 0 0 0 -6.816l-4.592 -4.592" /><path d="M7 10h-.01" /></svg>
+                
+                <span>Cats&amp;Tags</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/%E9%93%BE%E6%8E%A5/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                
+                <span>链接</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/search/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+                
+                <span>搜索</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/%E5%85%B3%E4%BA%8E/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                
+                <span>关于</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/updatelog/' >
+                
+                
+                
+                    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-logs"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 12h.01" /><path d="M4 6h.01" /><path d="M4 18h.01" /><path d="M8 18h2" /><path d="M8 12h2" /><path d="M8 6h2" /><path d="M14 6h6" /><path d="M14 12h6" /><path d="M14 18h6" /></svg>
+                
+                <span>更新日志</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>暗色模式</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ol>
+    <li><a href="#计算公式">计算公式</a>
+      <ol>
+        <li><a href="#简化理解">简化理解</a></li>
+        <li><a href="#符号持续时间">符号持续时间</a></li>
+        <li><a href="#数据子载波数量">数据子载波数量</a></li>
+      </ol>
+    </li>
+    <li><a href="#80211ac-wi-fi-5-mcs-表">802.11ac (Wi-Fi 5) MCS 表</a></li>
+    <li><a href="#80211ax-wi-fi-6-mcs-表">802.11ax (Wi-Fi 6) MCS 表</a></li>
+  </ol>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/hugo-stack/categories/wifi/" >
+                Wifi
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/hugo-stack/p/wi-fi-%E9%80%9F%E7%8E%87%E8%AE%A1%E7%AE%97/">Wi-Fi 速率计算</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">2025-12-12 15:25</time>
+            </div>
+        <div>
+            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-edit"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg>
+            <time class="article-lastmod">2025-12-12 15:42</time>
+        </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 3 分钟
+                </time>
+            </div>
+        
+
+        
+            <div>
+                <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-file-word"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 12l1.333 5l1.667 -4l1.667 4l1.333 -5" /></svg>
+                <time class="article-words">
+                    517 字
+                </time>
+            </div>
+        
+
+
+    </footer>
+    
+
+    
+
+
+</div>
+
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <p>本文介绍 Wi-Fi 物理层协商速率（PHY Rate）的计算方法，并提供 802.11ac (Wi-Fi 5) 和 802.11ax (Wi-Fi 6) 的 MCS (Modulation and Coding Scheme) 表。</p>
+<h2 id="计算公式">计算公式
+</h2><p>Wi-Fi 的理论物理层速率可以通过以下公式计算：</p>
+$$
+\text{Data Rate} = N_{ss} \times \frac{N_{sd} \times N_{bps} \times R}{T_{sym}}
+$$<p>例如 ac 40Mhz 4x4 的最大速率 $ \text{Rate} = 4 \times \frac{108 \times 8 \times (5/6)}{3.6 \mu s} = 800 Mbps$</p>
+<p>其中各参数含义如下：</p>
+<div class="table-wrapper"><table>
+  <thead>
+      <tr>
+          <th style="text-align: left">参数</th>
+          <th style="text-align: left">含义</th>
+          <th style="text-align: left">说明</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: left">$N_{ss}$</td>
+          <td style="text-align: left"><strong>Spatial Streams</strong></td>
+          <td style="text-align: left">空间流数量 (MIMO)，例如 1x1, 2x2, 3x3, 4x4。$Nss,max=min(N_{Tx},N_{Rx})$</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">$N_{sd}$</td>
+          <td style="text-align: left"><strong>Data Subcarriers</strong></td>
+          <td style="text-align: left">数据子载波数量。取决于信道带宽 (20/40/80/160 MHz) 和协议标准 (11n/ac/ax)。</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">$N_{bps}$</td>
+          <td style="text-align: left"><strong>Bits per Symbol</strong></td>
+          <td style="text-align: left">每个符号携带的比特数。由调制方式决定 (e.g., 64-QAM = 6 bits, 256-QAM = 8 bits, 1024-QAM = 10 bits)。</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">$R$</td>
+          <td style="text-align: left"><strong>Coding Rate</strong></td>
+          <td style="text-align: left">编码率。有效数据位与总传输位（含纠错码）的比率 (e.g., 3/4, 5/6)。</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">$T_{sym}$</td>
+          <td style="text-align: left"><strong>Symbol Duration</strong></td>
+          <td style="text-align: left">符号持续时间。$T_{sym} = T_{base} + T_{GI}$ (Guard Interval)。</td>
+      </tr>
+  </tbody>
+</table></div>
+<h3 id="简化理解">简化理解
+</h3><p>速率主要由以下几个维度决定：</p>
+<ol>
+<li>
+<p> <strong>频宽 (Bandwidth)</strong>: 车道越宽，通过的车越多 (20MHz vs 160MHz)。</p>
+</li>
+<li>
+<p> <strong>调制方式 (Modulation)</strong>: 车装的货越多 (QAM 阶数越高)。</p>
+</li>
+<li>
+<p> <strong>MIMO (Spatial Streams)</strong>: 高架桥层数越多 (天线数)。</p>
+</li>
+<li>
+<p> <strong>保护间隔 (Guard Interval)</strong>: 车距越小，发车越快。
+ </p>
+</li>
+</ol>
+<h3 id="符号持续时间">符号持续时间
+</h3><div class="table-wrapper"><table>
+  <thead>
+      <tr>
+          <th style="text-align: left">标准</th>
+          <th style="text-align: left">子载波间隔</th>
+          <th style="text-align: left">基础符号时间 ($T_{base}$)</th>
+          <th style="text-align: left">保护间隔 ($T_{GI}$)</th>
+          <th style="text-align: left"><strong>总符号时间 ($T_{sym}$)</strong></th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: left"><strong>802.11n/ac</strong></td>
+          <td style="text-align: left">312.5 kHz</td>
+          <td style="text-align: left"><strong>3.2 µs</strong></td>
+          <td style="text-align: left"><strong>0.4 µs</strong> (Short GI)</td>
+          <td style="text-align: left"><strong>3.6 µs</strong></td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><strong>802.11n/ac</strong></td>
+          <td style="text-align: left">312.5 kHz</td>
+          <td style="text-align: left"><strong>3.2 µs</strong></td>
+          <td style="text-align: left">0.8 µs   (Long GI)</td>
+          <td style="text-align: left"><strong>4.0 µs</strong></td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><strong>802.11ax</strong></td>
+          <td style="text-align: left">78.125 kHz</td>
+          <td style="text-align: left"><strong>12.8 µs</strong></td>
+          <td style="text-align: left"><strong>0.8 µs</strong></td>
+          <td style="text-align: left"><strong>13.6 µs</strong></td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><strong>802.11ax</strong></td>
+          <td style="text-align: left">78.125 kHz</td>
+          <td style="text-align: left"><strong>12.8 µs</strong></td>
+          <td style="text-align: left">1.6 µs</td>
+          <td style="text-align: left"><strong>14.4 µs</strong></td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><strong>802.11ax</strong></td>
+          <td style="text-align: left">78.125 kHz</td>
+          <td style="text-align: left"><strong>12.8 µs</strong></td>
+          <td style="text-align: left">3.2 µs</td>
+          <td style="text-align: left"><strong>16.0 µs</strong></td>
+      </tr>
+  </tbody>
+</table></div>
+<h3 id="数据子载波数量">数据子载波数量
+</h3><div class="table-wrapper"><table>
+  <thead>
+      <tr>
+          <th>频宽 (Bandwidth)</th>
+          <th>802.11ac (Wi-Fi 5)</th>
+          <th>802.11ax (Wi-Fi 6)</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><strong>20 MHz</strong></td>
+          <td><strong>52</strong></td>
+          <td><strong>234</strong></td>
+      </tr>
+      <tr>
+          <td><strong>40 MHz</strong></td>
+          <td><strong>108</strong></td>
+          <td><strong>468</strong></td>
+      </tr>
+      <tr>
+          <td><strong>80 MHz</strong></td>
+          <td><strong>234</strong></td>
+          <td><strong>980</strong></td>
+      </tr>
+      <tr>
+          <td><strong>160 MHz</strong></td>
+          <td><strong>468</strong></td>
+          <td><strong>1960</strong></td>
+      </tr>
+  </tbody>
+</table></div>
+<blockquote>
+<p>802.11ac: 使用 312.5 kHz 的子载波间隔, 802.11ax: 使用更密集的 78.125 kHz 子载波间隔（是 ac 的 1/4）
+20MHz/312.5kHz=64,这个 64 正是 Wi-Fi (802.11ac) 在 20MHz 频宽下的 FFT 大小 (总子载波数量)。但在实际传输中，并不是这 64 个子载波都能用来传数据。为了避免干扰和同步信号.它们被分配如下52(<strong>数据子载波</strong>)+4(<strong>导频子载波</strong>)+1(<strong>直流子载波</strong>)+7(<strong>保护子载波</strong>)=64;802.11ax的 234+8+3+11=256</p></blockquote>
+<h2 id="80211ac-wi-fi-5-mcs-表">802.11ac (Wi-Fi 5) MCS 表
+</h2><p><strong>标准特性</strong>:</p>
+<ul>
+<li>
+<p>  最高支持 256-QAM (MCS 8, 9)。</p>
+</li>
+<li>
+<p>  支持 20/40/80/160 MHz 频宽。</p>
+</li>
+<li>
+<p>  Guard Interval (GI): Long (800ns), Short (400ns)。</p>
+</li>
+</ul>
+<p>以下表格展示 <strong>单流 (1 Spatial Stream)</strong> 在 <strong>Short GI (400ns)</strong> 下的速率 (Mbps)。</p>
+<p><em>如果是多流 (如 2x2)，将下表速率乘以 2 即可。</em></p>
+<div class="table-wrapper"><table>
+  <thead>
+      <tr>
+          <th style="text-align: center">MCS Index</th>
+          <th style="text-align: center">Modulation</th>
+          <th style="text-align: center">Coding Rate</th>
+          <th style="text-align: center">20 MHz</th>
+          <th style="text-align: center">40 MHz</th>
+          <th style="text-align: center">80 MHz</th>
+          <th style="text-align: center">160 MHz</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: center">0</td>
+          <td style="text-align: center">BPSK</td>
+          <td style="text-align: center">1/2</td>
+          <td style="text-align: center">7.2</td>
+          <td style="text-align: center">15.0</td>
+          <td style="text-align: center">32.5</td>
+          <td style="text-align: center">65.0</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">1</td>
+          <td style="text-align: center">QPSK</td>
+          <td style="text-align: center">1/2</td>
+          <td style="text-align: center">14.4</td>
+          <td style="text-align: center">30.0</td>
+          <td style="text-align: center">65.0</td>
+          <td style="text-align: center">130.0</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">2</td>
+          <td style="text-align: center">QPSK</td>
+          <td style="text-align: center">3/4</td>
+          <td style="text-align: center">21.7</td>
+          <td style="text-align: center">45.0</td>
+          <td style="text-align: center">97.5</td>
+          <td style="text-align: center">195.0</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">3</td>
+          <td style="text-align: center">16-QAM</td>
+          <td style="text-align: center">1/2</td>
+          <td style="text-align: center">28.9</td>
+          <td style="text-align: center">60.0</td>
+          <td style="text-align: center">130.0</td>
+          <td style="text-align: center">260.0</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">4</td>
+          <td style="text-align: center">16-QAM</td>
+          <td style="text-align: center">3/4</td>
+          <td style="text-align: center">43.3</td>
+          <td style="text-align: center">90.0</td>
+          <td style="text-align: center">195.0</td>
+          <td style="text-align: center">390.0</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">5</td>
+          <td style="text-align: center">64-QAM</td>
+          <td style="text-align: center">2/3</td>
+          <td style="text-align: center">57.8</td>
+          <td style="text-align: center">120.0</td>
+          <td style="text-align: center">260.0</td>
+          <td style="text-align: center">520.0</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">6</td>
+          <td style="text-align: center">64-QAM</td>
+          <td style="text-align: center">3/4</td>
+          <td style="text-align: center">65.0</td>
+          <td style="text-align: center">135.0</td>
+          <td style="text-align: center">292.5</td>
+          <td style="text-align: center">585.0</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">7</td>
+          <td style="text-align: center">64-QAM</td>
+          <td style="text-align: center">5/6</td>
+          <td style="text-align: center">72.2</td>
+          <td style="text-align: center">150.0</td>
+          <td style="text-align: center">325.0</td>
+          <td style="text-align: center">650.0</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">8</td>
+          <td style="text-align: center">256-QAM</td>
+          <td style="text-align: center">3/4</td>
+          <td style="text-align: center">86.7</td>
+          <td style="text-align: center">180.0</td>
+          <td style="text-align: center">390.0</td>
+          <td style="text-align: center">780.0</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">9</td>
+          <td style="text-align: center">256-QAM</td>
+          <td style="text-align: center">5/6</td>
+          <td style="text-align: center">N/A</td>
+          <td style="text-align: center">200.0</td>
+          <td style="text-align: center">433.3</td>
+          <td style="text-align: center">866.7</td>
+      </tr>
+  </tbody>
+</table></div>
+<blockquote>
+<p><strong>注</strong>: 常见的 &ldquo;433 Mbps&rdquo; 就是 11ac 1x1 80MHz MCS9 的速率；&ldquo;866 Mbps&rdquo; 是 2x2 的速率。</p></blockquote>
+<hr>
+<h2 id="80211ax-wi-fi-6-mcs-表">802.11ax (Wi-Fi 6) MCS 表
+</h2><p><strong>标准特性</strong>:</p>
+<ul>
+<li>
+<p>  引入 1024-QAM (MCS 10, 11)。</p>
+</li>
+<li>
+<p>  更高效的子载波利用率 (更多的数据子载波)。</p>
+</li>
+<li>
+<p>  Guard Interval (GI): 0.8us, 1.6us, 3.2us。通常使用 0.8us 获得最高速率。</p>
+</li>
+</ul>
+<p>以下表格展示 <strong>单流 (1 Spatial Stream)</strong> 在 <strong>0.8us GI</strong> 下的速率 (Mbps)。</p>
+<div class="table-wrapper"><table>
+  <thead>
+      <tr>
+          <th style="text-align: center">MCS Index</th>
+          <th style="text-align: center">Modulation</th>
+          <th style="text-align: center">Coding Rate</th>
+          <th style="text-align: center">20 MHz</th>
+          <th style="text-align: center">40 MHz</th>
+          <th style="text-align: center">80 MHz</th>
+          <th style="text-align: center">160 MHz</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: center">0</td>
+          <td style="text-align: center">BPSK</td>
+          <td style="text-align: center">1/2</td>
+          <td style="text-align: center">8.6</td>
+          <td style="text-align: center">17.2</td>
+          <td style="text-align: center">36.0</td>
+          <td style="text-align: center">72.1</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">1</td>
+          <td style="text-align: center">QPSK</td>
+          <td style="text-align: center">1/2</td>
+          <td style="text-align: center">17.2</td>
+          <td style="text-align: center">34.4</td>
+          <td style="text-align: center">72.1</td>
+          <td style="text-align: center">144.1</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">2</td>
+          <td style="text-align: center">QPSK</td>
+          <td style="text-align: center">3/4</td>
+          <td style="text-align: center">25.8</td>
+          <td style="text-align: center">51.6</td>
+          <td style="text-align: center">108.1</td>
+          <td style="text-align: center">216.2</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">3</td>
+          <td style="text-align: center">16-QAM</td>
+          <td style="text-align: center">1/2</td>
+          <td style="text-align: center">34.4</td>
+          <td style="text-align: center">68.8</td>
+          <td style="text-align: center">144.1</td>
+          <td style="text-align: center">288.2</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">4</td>
+          <td style="text-align: center">16-QAM</td>
+          <td style="text-align: center">3/4</td>
+          <td style="text-align: center">51.6</td>
+          <td style="text-align: center">103.2</td>
+          <td style="text-align: center">216.2</td>
+          <td style="text-align: center">432.4</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">5</td>
+          <td style="text-align: center">64-QAM</td>
+          <td style="text-align: center">2/3</td>
+          <td style="text-align: center">68.8</td>
+          <td style="text-align: center">137.6</td>
+          <td style="text-align: center">288.2</td>
+          <td style="text-align: center">576.5</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">6</td>
+          <td style="text-align: center">64-QAM</td>
+          <td style="text-align: center">3/4</td>
+          <td style="text-align: center">77.4</td>
+          <td style="text-align: center">154.9</td>
+          <td style="text-align: center">324.3</td>
+          <td style="text-align: center">648.5</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">7</td>
+          <td style="text-align: center">64-QAM</td>
+          <td style="text-align: center">5/6</td>
+          <td style="text-align: center">86.0</td>
+          <td style="text-align: center">172.1</td>
+          <td style="text-align: center">360.3</td>
+          <td style="text-align: center">720.6</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">8</td>
+          <td style="text-align: center">256-QAM</td>
+          <td style="text-align: center">3/4</td>
+          <td style="text-align: center">103.2</td>
+          <td style="text-align: center">206.5</td>
+          <td style="text-align: center">432.4</td>
+          <td style="text-align: center">864.7</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">9</td>
+          <td style="text-align: center">256-QAM</td>
+          <td style="text-align: center">5/6</td>
+          <td style="text-align: center">114.7</td>
+          <td style="text-align: center">229.4</td>
+          <td style="text-align: center">480.4</td>
+          <td style="text-align: center">960.8</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">10</td>
+          <td style="text-align: center">1024-QAM</td>
+          <td style="text-align: center">3/4</td>
+          <td style="text-align: center">129.0</td>
+          <td style="text-align: center">258.1</td>
+          <td style="text-align: center">540.4</td>
+          <td style="text-align: center">1080.9</td>
+      </tr>
+      <tr>
+          <td style="text-align: center">11</td>
+          <td style="text-align: center">1024-QAM</td>
+          <td style="text-align: center">5/6</td>
+          <td style="text-align: center">143.4</td>
+          <td style="text-align: center">286.8</td>
+          <td style="text-align: center">600.5</td>
+          <td style="text-align: center">1201.0</td>
+      </tr>
+  </tbody>
+</table></div>
+<blockquote>
+<p><strong>注</strong>: Wi-Fi 6 的 &ldquo;1201 Mbps&rdquo; 是 2x2 80MHz MCS11 的速率 (600.5 * 2)。</p></blockquote>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/hugo-stack/tags/wifi/">Wifi</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    
+
+    
+</footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI&#43;WdtXRGWt2kTvGFasHpSy3SV"crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG&#43;vnGctmUb0ZY0l8"crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"integrity="sha384-&#43;VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4&#43;/RRE05"crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+	const mainArticleElement = document.querySelector(".main-article");
+        renderMathInElement(mainArticleElement, {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ],
+            ignoredClasses: ["gist"]
+        });})
+</script>
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+        2025 Charles Lv
+    </section>
+    
+    <section class="powerby">
+        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/hugo-stack/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+<script src=https://charles-7777.github.io/hugo-stack/background/sakura.js></script>
+
+
+
+
+
+
+<style>
+    .highlight {
+         
+        max-height: 400px;
+        overflow: hidden;
+    }
+
+    .code-show {
+        max-height: none !important;
+    }
+
+    .code-more-box {
+        width: 100%;
+        padding-top: 78px;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(rgba(255, 255, 255, 0)), to(#fff));
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1;
+    }
+
+    .code-more-btn {
+        display: block;
+        margin: auto;
+        width: 44px;
+        height: 22px;
+        background: #f0f0f5;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+        padding-top: 6px;
+        cursor: pointer;
+    }
+
+    .code-more-img {
+        cursor: pointer !important;
+        display: block;
+        margin: auto;
+        width: 22px;
+        height: 16px;
+    }
+</style>
+
+<script>
+  function initCodeMoreBox() {
+    let codeBlocks = document.querySelectorAll(".highlight");
+    if (!codeBlocks) {
+      return;
+    }
+    codeBlocks.forEach(codeBlock => {
+      
+      if (codeBlock.scrollHeight <= codeBlock.clientHeight) {
+        return;
+      }
+      
+      
+      let codeMoreBox = document.createElement('div');
+      codeMoreBox.classList.add('code-more-box');
+      
+      let codeMoreBtn = document.createElement('span');
+      codeMoreBtn.classList.add('code-more-btn');
+      codeMoreBtn.addEventListener('click', () => {
+        codeBlock.classList.add('code-show');
+        codeMoreBox.style.display = 'none';
+        
+        window.dispatchEvent(new Event('resize'))
+      })
+      
+      let img = document.createElement('img');
+      img.classList.add('code-more-img');
+      img.src = "https://charles-7777.github.io/hugo-stack/icons/codeMore.png"
+      
+      codeMoreBtn.appendChild(img);
+      codeMoreBox.appendChild(codeMoreBtn);
+      codeBlock.appendChild(codeMoreBox)
+    })
+  }
+  
+  initCodeMoreBox();
+</script>
+
+
+
+<style>
+    #backTopBtn {
+        display: none;
+        position: fixed;
+        bottom: 30px;
+        z-index: 99;
+        cursor: pointer;
+        width: 30px;
+        height: 30px;
+        background-image: url(https://charles-7777.github.io/hugo-stack/icons/backTop.svg);
+    }
+</style>
+
+<script>
+    
+
+    function initScrollTop() {
+        let rightSideBar = document.querySelector(".right-sidebar");
+        if (!rightSideBar) {
+            return;
+        }
+        
+        let btn = document.createElement("div");
+        btn.id = "backTopBtn";
+        btn.onclick = backToTop
+        rightSideBar.appendChild(btn)
+        
+        window.onscroll = function() {
+            
+            if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+                btn.style.display = "block";
+            } else {
+                btn.style.display = "none";
+            }
+        };
+    }
+
+    
+
+    function backToTop(){
+        window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+
+    initScrollTop();
+</script>
+
+
+<style>
+    #TableOfContents > ul, ol {
+        ul, ol {
+            display: none;
+        }
+        .open {
+            display: block;
+        }
+    }
+</style>
+
+<script>
+    function initTocHide() {
+        
+        let toc = document.querySelector(".widget--toc");
+        if (!toc) {
+            return;
+        }
+        
+        window.addEventListener('scroll', function() {
+            
+            let openUl = document.querySelectorAll(".open");
+            if (openUl.length > 0) {
+              openUl.forEach((ul) => {
+                ul.classList.remove("open")
+              })
+            }
+            
+            let currentLi = document.querySelector(".active-class");
+            if (!currentLi) {
+                return
+            }
+            
+            if (currentLi.children.length > 1) {
+                currentLi.children[1].classList.add("open")
+            }
+            
+            let ul = currentLi.parentElement;
+            do {
+                ul.classList.add("open");
+                ul = ul.parentElement.parentElement
+            } while (ul !== undefined && (ul.localName === 'ul' || ul.localName === 'ol'))
+        });
+    }
+    initTocHide()
+</script>
+
+
+
+
+
+
+ <script>
+  const cdnPath = "https://cdn.jsdelivr.net/gh/charles-7777/live2d-widget-v3@main";
+  const config = {
+    
+    path: {
+      homePath: "/",
+      modelPath: cdnPath + "/Resources/",
+      cssPath: cdnPath + "/waifu.css",
+      tipsJsonPath: cdnPath + "/waifu-tips.json",
+      tipsJsPath: cdnPath + "/waifu-tips.js",
+      live2dCorePath: cdnPath + "/Core/live2dcubismcore.js",
+      live2dSdkPath: cdnPath + "/live2d-sdk.js"
+    },
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    tools: ["hitokoto",  "express",  "photo", "info", "quit"],
+    
+    drag: {
+      enable: false,
+      direction: ["x", "y"]
+    },
+    
+    switchType: "order"
+  }
+
+  const local_cssPath = "https://charles-7777.github.io/hugo-stack/waifu/waifu.css";
+  const local_tipsJsonPath = "https://charles-7777.github.io/hugo-stack/waifu/waifu-tips.json";
+  const local_tipsJsPath = "https://charles-7777.github.io/hugo-stack/waifu/waifu-tips.js";
+
+  
+  if (screen.width >= 768) {
+    Promise.all([
+    
+      loadExternalResource(local_cssPath, "css"),
+      loadExternalResource(config.path.live2dCorePath, "js"),
+      loadExternalResource(config.path.live2dSdkPath, "js"),
+    
+      loadExternalResource(local_tipsJsPath, "js")
+    ]).then(() => {
+      initWidget({
+        
+        waifuPath: local_tipsJsonPath,
+        cdnPath: config.path.modelPath,
+        tools: config.tools,
+        dragEnable: config.drag.enable,
+        dragDirection: config.drag.direction,
+        switchType: config.switchType
+      });
+    });
+  }
+
+  
+  function loadExternalResource(url, type) {
+    return new Promise((resolve, reject) => {
+      let tag;
+      if (type === "css") {
+        tag = document.createElement("link");
+        tag.rel = "stylesheet";
+        tag.href = url;
+      }
+      else if (type === "js") {
+        tag = document.createElement("script");
+        tag.src = url;
+      }
+      if (tag) {
+        tag.onload = () => resolve(url);
+        tag.onerror = () => reject(url);
+        document.head.appendChild(tag);
+      }
+    });
+  }
+</script>
+
+    </body>
+</html>

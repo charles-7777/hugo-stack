@@ -7,7 +7,15 @@
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
         <copyright>Charles Lv</copyright>
-        <lastBuildDate>Mon, 01 Dec 2025 17:52:55 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/categories/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Fri, 12 Dec 2025 15:42:27 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/categories/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Wifi</title>
+        <link>https://charles-7777.github.io/hugo-stack/categories/wifi/</link>
+        <pubDate>Fri, 12 Dec 2025 15:25:55 +0800</pubDate>
+        
+        <guid>https://charles-7777.github.io/hugo-stack/categories/wifi/</guid>
+        <description></description>
+        </item>
+        <item>
         <title>机器学习</title>
         <link>https://charles-7777.github.io/hugo-stack/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/</link>
         <pubDate>Mon, 01 Dec 2025 17:11:41 +0800</pubDate>
