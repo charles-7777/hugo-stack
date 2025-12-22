@@ -7,7 +7,7 @@
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
         <copyright>Charles Lv</copyright>
-        <lastBuildDate>Fri, 12 Dec 2025 15:42:27 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/categories/wifi/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Mon, 22 Dec 2025 10:55:14 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/categories/wifi/index.xml" rel="self" type="application/rss+xml" /><item>
         <title>Wi-Fi 速率计算</title>
         <link>https://charles-7777.github.io/hugo-stack/p/wi-fi-%E9%80%9F%E7%8E%87%E8%AE%A1%E7%AE%97/</link>
         <pubDate>Fri, 12 Dec 2025 15:25:55 +0800</pubDate>
@@ -419,6 +419,10 @@ $$&lt;p&gt;例如 ac 40Mhz 4x4 的最大速率 $ \text{Rate} = 4 \times \frac{10
 &lt;/table&gt;
 &lt;blockquote&gt;
 &lt;p&gt;&lt;strong&gt;注&lt;/strong&gt;: Wi-Fi 6 的 &amp;ldquo;1201 Mbps&amp;rdquo; 是 2x2 80MHz MCS11 的速率 (600.5 * 2)。&lt;/p&gt;&lt;/blockquote&gt;
+&lt;blockquote&gt;
+&lt;p&gt;参考链接
+&lt;a class=&#34;link&#34; href=&#34;https://zhuanlan.zhihu.com/p/1944204299568677330&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;https://zhuanlan.zhihu.com/p/1944204299568677330&lt;/a&gt;&lt;/p&gt;&lt;/blockquote&gt;
 </description>
         </item>
         
