@@ -7,7 +7,120 @@
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
         <copyright>Charles Lv</copyright>
-        <lastBuildDate>Fri, 15 Aug 2025 20:10:35 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/tags/ipv6/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Fri, 26 Dec 2025 14:58:24 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/tags/ipv6/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>DHCPv6 Address Lifecycle</title>
+        <link>https://charles-7777.github.io/hugo-stack/p/dhcpv6-address-lifecycle/</link>
+        <pubDate>Wed, 24 Dec 2025 11:39:28 +0800</pubDate>
+        
+        <guid>https://charles-7777.github.io/hugo-stack/p/dhcpv6-address-lifecycle/</guid>
+        <description>&lt;p&gt;DHCPv6 (Dynamic Host Configuration Protocol for IPv6) 为 IPv6 主机提供了一种有状态的地址配置机制。与 IPv4 DHCP 类似，DHCPv6 分配的地址也是有租期的，但其生命周期管理引入了更细致的状态和计时器机制。&lt;/p&gt;
+&lt;h2 id=&#34;核心概念&#34;&gt;核心概念
+&lt;/h2&gt;&lt;p&gt;在理解生命周期之前，需要了解以下几个关键参数，这些参数通常由 DHCPv6 服务器在 &lt;code&gt;IA Address Option&lt;/code&gt; (IAADDR) 中下发：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Preferred Lifetime (首选生命周期)&lt;/strong&gt;:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;地址处于“首选 (Preferred)”状态的时间长度。&lt;/li&gt;
+&lt;li&gt;在此期间，地址可以无限制地用于新的和现有的通信。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Valid Lifetime (有效生命周期)&lt;/strong&gt;:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;地址处于“有效 (Valid)”状态的总时间长度。&lt;/li&gt;
+&lt;li&gt;它总是大于或等于首选生命周期。&lt;/li&gt;
+&lt;li&gt;一旦超过这个时间，地址即变为“无效 (Invalid)”，不能再使用。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;T1 (Renew Timer - 更新计时器)&lt;/strong&gt;:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;客户端向分配该地址的&lt;strong&gt;特定服务器&lt;/strong&gt;发起续租请求的时间点。&lt;/li&gt;
+&lt;li&gt;通常建议设置为首选生命周期的 0.5 倍。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;T2 (Rebind Timer - 重绑定计时器)&lt;/strong&gt;:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;如果 T1 时刻续租失败，客户端向&lt;strong&gt;任意可用的服务器&lt;/strong&gt;发起续租请求的时间点。&lt;/li&gt;
+&lt;li&gt;通常建议设置为首选生命周期的 0.8 倍。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;地址状态流转&#34;&gt;地址状态流转
+&lt;/h2&gt;&lt;p&gt;IPv6 地址在生命周期中会经历以下几种状态：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Tentative (试探态)&lt;/strong&gt;:
+&lt;ul&gt;
+&lt;li&gt;客户端刚收到地址，正在进行重复地址检测 (DAD - Duplicate Address Detection)。&lt;/li&gt;
+&lt;li&gt;此时地址还不能用于通信。&lt;/li&gt;
+&lt;li&gt;如果 DAD 成功（无冲突），进入 Preferred 状态；如果失败，地址不可用。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Preferred (首选态)&lt;/strong&gt;:
+&lt;ul&gt;
+&lt;li&gt;DAD 通过后，且当前时间 &amp;lt; Preferred Lifetime。&lt;/li&gt;
+&lt;li&gt;地址可以用于建立新的连接，也可以用于现有的连接。&lt;/li&gt;
+&lt;li&gt;这是地址正常工作的状态。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Deprecated (弃用态)&lt;/strong&gt;:
+&lt;ul&gt;
+&lt;li&gt;Preferred Lifetime &amp;lt; 当前时间 &amp;lt; Valid Lifetime。&lt;/li&gt;
+&lt;li&gt;地址依然“有效”，现有的连接可以继续使用该地址（为了不中断正在进行的会话）。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;但是&lt;/strong&gt;，上层应用不应使用该地址建立&lt;strong&gt;新&lt;/strong&gt;的连接（源地址选择算法会避免选它）。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Invalid (无效态)&lt;/strong&gt;:
+&lt;ul&gt;
+&lt;li&gt;当前时间 &amp;gt; Valid Lifetime。&lt;/li&gt;
+&lt;li&gt;地址从接口上删除，彻底不可用。Microsoft 365&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;生命周期流程详解&#34;&gt;生命周期流程详解
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;分配 (Allocation)&lt;/strong&gt;: 客户端通过 Solicit/Advertise/Request/Reply 四步交互（或两步 Rapid Commit）获取地址及 T1, T2, Lifetimes 参数。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;DAD 检测&lt;/strong&gt;: 客户端对新地址进行 DAD 检测。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;使用 (Usage)&lt;/strong&gt;: 进入 Preferred 状态，T1, T2, Lifetime 倒计时开始。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;更新 (Renew - T1)&lt;/strong&gt;:
+&lt;ul&gt;
+&lt;li&gt;当达到 T1 时间，客户端发送 &lt;code&gt;Renew&lt;/code&gt; 报文给原服务器。&lt;/li&gt;
+&lt;li&gt;如果服务器回复 &lt;code&gt;Reply&lt;/code&gt; 并刷新了时间，生命周期重置，回到初始 Preferred 状态。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;重绑定 (Rebind - T2)&lt;/strong&gt;:
+&lt;ul&gt;
+&lt;li&gt;如果 T1 期间没收到回复，客户端继续使用地址。&lt;/li&gt;
+&lt;li&gt;当达到 T2 时间，客户端发送 &lt;code&gt;Rebind&lt;/code&gt; 报文广播给所有服务器。&lt;/li&gt;
+&lt;li&gt;如果有服务器回复，生命周期重置。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;弃用 (Deprecation)&lt;/strong&gt;:
+&lt;ul&gt;
+&lt;li&gt;如果 T2 也没成功，且时间超过了 Preferred Lifetime，地址进入 Deprecated 状态。&lt;/li&gt;
+&lt;li&gt;停止建立新连接。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;过期 (Expiration)&lt;/strong&gt;:
+&lt;ul&gt;
+&lt;li&gt;时间超过 Valid Lifetime，地址被回收。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;pre class=&#34;mermaid&#34;&gt;
+  stateDiagram-v2
+    [*] --&amp;gt; Tentative
+    Tentative --&amp;gt; Preferred : DAD 成功
+    Tentative --&amp;gt; [*] : DAD 失败
+    Preferred --&amp;gt; Deprecated : t &amp;gt; Preferred Lifetime
+    Deprecated --&amp;gt; Invalid : t &amp;gt; Valid Lifetime
+    Preferred --&amp;gt; Invalid : t &amp;gt; Valid Lifetime
+    Preferred --&amp;gt; Preferred : Renew/Rebind 成功
+&lt;/pre&gt;
+</description>
+        </item>
+        <item>
         <title>IPv6 地址分配详解</title>
         <link>https://charles-7777.github.io/hugo-stack/p/ipv6-%E5%9C%B0%E5%9D%80%E5%88%86%E9%85%8D%E8%AF%A6%E8%A7%A3/</link>
         <pubDate>Fri, 15 Aug 2025 19:58:16 +0800</pubDate>

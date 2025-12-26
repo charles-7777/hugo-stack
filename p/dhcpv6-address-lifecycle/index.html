@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html lang="zh-cn" dir="ltr">
     <head><meta charset='utf-8'>
-<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="IPv6 地址结构 一个 IPv6 地址由 128 个比特（bits）组成，通常分为 8 个 16 比特的块，每个块用冒号（:）分隔，并以十六进制表示。\n例如：2001:0db8:85a3:0000:0000:8a2e:0370:7334\n地址压缩规则 为了简化书写，IPv6 地址可以被压缩：\n省略前导零 每个块中开头的\n1 0 可以省略。\n0db8 -&gt; db8 0000 -&gt; 0 0370 -&gt; 370 压缩连续的零: 可以使用双冒号 :: 来替代地址中任意一段连续的、全为 0 的块。注意：在一个地址中 :: 只能使用一次。\n应用上述规则后，上面的地址可以被简化为：\n1 2001:db8:85a3::8a2e:370:7334 IPv6 地址类型 IPv6 地址主要分为三种类型：单播（Unicast）、多播（Multicast）和任播（Anycast）。\n单播地址 (Unicast) 单播地址标识一个唯一的网络接口，发往单播地址的数据包将被送到该地址所标识的唯一接口。\n全球单播地址 (Global Unicast Address - GUA)\n范围: 全球唯一，可在公网路由。\n前缀: 通常以 2000::/3 开头。\n结构:\n全局路由前缀 (Global Routing Prefix): 通常为 48 位，由 ISP 分配给组织。 子网 ID (Subnet ID): 通常为 16 位，由组织内部规划子网。 接口 ID (Interface ID): 64 位，用于标识子网中的具体设备接口。 链路本地地址 (Link-Local Address)\n">
-<title>IPv6 地址分配详解</title>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="DHCPv6 (Dynamic Host Configuration Protocol for IPv6) 为 IPv6 主机提供了一种有状态的地址配置机制。与 IPv4 DHCP 类似，DHCPv6 分配的地址也是有租期的，但其生命周期管理引入了更细致的状态和计时器机制。\n核心概念 在理解生命周期之前，需要了解以下几个关键参数，这些参数通常由 DHCPv6 服务器在 IA Address Option (IAADDR) 中下发：\nPreferred Lifetime (首选生命周期):\n地址处于“首选 (Preferred)”状态的时间长度。 在此期间，地址可以无限制地用于新的和现有的通信。 Valid Lifetime (有效生命周期):\n地址处于“有效 (Valid)”状态的总时间长度。 它总是大于或等于首选生命周期。 一旦超过这个时间，地址即变为“无效 (Invalid)”，不能再使用。 T1 (Renew Timer - 更新计时器):\n客户端向分配该地址的特定服务器发起续租请求的时间点。 通常建议设置为首选生命周期的 0.5 倍。 T2 (Rebind Timer - 重绑定计时器):\n如果 T1 时刻续租失败，客户端向任意可用的服务器发起续租请求的时间点。 通常建议设置为首选生命周期的 0.8 倍。 地址状态流转 IPv6 地址在生命周期中会经历以下几种状态：\nTentative (试探态): 客户端刚收到地址，正在进行重复地址检测 (DAD - Duplicate Address Detection)。 此时地址还不能用于通信。 如果 DAD 成功（无冲突），进入 Preferred 状态；如果失败，地址不可用。 Preferred (首选态): DAD 通过后，且当前时间 &lt; Preferred Lifetime。 地址可以用于建立新的连接，也可以用于现有的连接。 这是地址正常工作的状态。 Deprecated (弃用态): Preferred Lifetime &lt; 当前时间 &lt; Valid Lifetime。 地址依然“有效”，现有的连接可以继续使用该地址（为了不中断正在进行的会话）。 但是，上层应用不应使用该地址建立新的连接（源地址选择算法会避免选它）。 Invalid (无效态): 当前时间 &gt; Valid Lifetime。 地址从接口上删除，彻底不可用。Microsoft 365 生命周期流程详解 分配 (Allocation): 客户端通过 Solicit/Advertise/Request/Reply 四步交互（或两步 Rapid Commit）获取地址及 T1, T2, Lifetimes 参数。 DAD 检测: 客户端对新地址进行 DAD 检测。 使用 (Usage): 进入 Preferred 状态，T1, T2, Lifetime 倒计时开始。 更新 (Renew - T1): 当达到 T1 时间，客户端发送 Renew 报文给原服务器。 如果服务器回复 Reply 并刷新了时间，生命周期重置，回到初始 Preferred 状态。 重绑定 (Rebind - T2): 如果 T1 期间没收到回复，客户端继续使用地址。 当达到 T2 时间，客户端发送 Rebind 报文广播给所有服务器。 如果有服务器回复，生命周期重置。 弃用 (Deprecation): 如果 T2 也没成功，且时间超过了 Preferred Lifetime，地址进入 Deprecated 状态。 停止建立新连接。 过期 (Expiration): 时间超过 Valid Lifetime，地址被回收。 stateDiagram-v2 [*] --&gt; Tentative Tentative --&gt; Preferred : DAD 成功 Tentative --&gt; [*] : DAD 失败 Preferred --&gt; Deprecated : t &gt; Preferred Lifetime Deprecated --&gt; Invalid : t &gt; Valid Lifetime Preferred --&gt; Invalid : t &gt; Valid Lifetime Preferred --&gt; Preferred : Renew/Rebind 成功 ">
+<title>DHCPv6 Address Lifecycle</title>
 
-<link rel='canonical' href='https://charles-7777.github.io/hugo-stack/p/ipv6-%E5%9C%B0%E5%9D%80%E5%88%86%E9%85%8D%E8%AF%A6%E8%A7%A3/'>
+<link rel='canonical' href='https://charles-7777.github.io/hugo-stack/p/dhcpv6-address-lifecycle/'>
 
-<link rel="stylesheet" href="/hugo-stack/scss/style.min.1aedf5438eb6380946ca2f7d86c958e5adeb3c679a95ad190168d7c28b43101d.css"><meta property='og:title' content="IPv6 地址分配详解">
-<meta property='og:description' content="IPv6 地址结构 一个 IPv6 地址由 128 个比特（bits）组成，通常分为 8 个 16 比特的块，每个块用冒号（:）分隔，并以十六进制表示。\n例如：2001:0db8:85a3:0000:0000:8a2e:0370:7334\n地址压缩规则 为了简化书写，IPv6 地址可以被压缩：\n省略前导零 每个块中开头的\n1 0 可以省略。\n0db8 -&gt; db8 0000 -&gt; 0 0370 -&gt; 370 压缩连续的零: 可以使用双冒号 :: 来替代地址中任意一段连续的、全为 0 的块。注意：在一个地址中 :: 只能使用一次。\n应用上述规则后，上面的地址可以被简化为：\n1 2001:db8:85a3::8a2e:370:7334 IPv6 地址类型 IPv6 地址主要分为三种类型：单播（Unicast）、多播（Multicast）和任播（Anycast）。\n单播地址 (Unicast) 单播地址标识一个唯一的网络接口，发往单播地址的数据包将被送到该地址所标识的唯一接口。\n全球单播地址 (Global Unicast Address - GUA)\n范围: 全球唯一，可在公网路由。\n前缀: 通常以 2000::/3 开头。\n结构:\n全局路由前缀 (Global Routing Prefix): 通常为 48 位，由 ISP 分配给组织。 子网 ID (Subnet ID): 通常为 16 位，由组织内部规划子网。 接口 ID (Interface ID): 64 位，用于标识子网中的具体设备接口。 链路本地地址 (Link-Local Address)\n">
-<meta property='og:url' content='https://charles-7777.github.io/hugo-stack/p/ipv6-%E5%9C%B0%E5%9D%80%E5%88%86%E9%85%8D%E8%AF%A6%E8%A7%A3/'>
+<link rel="stylesheet" href="/hugo-stack/scss/style.min.1aedf5438eb6380946ca2f7d86c958e5adeb3c679a95ad190168d7c28b43101d.css"><meta property='og:title' content="DHCPv6 Address Lifecycle">
+<meta property='og:description' content="DHCPv6 (Dynamic Host Configuration Protocol for IPv6) 为 IPv6 主机提供了一种有状态的地址配置机制。与 IPv4 DHCP 类似，DHCPv6 分配的地址也是有租期的，但其生命周期管理引入了更细致的状态和计时器机制。\n核心概念 在理解生命周期之前，需要了解以下几个关键参数，这些参数通常由 DHCPv6 服务器在 IA Address Option (IAADDR) 中下发：\nPreferred Lifetime (首选生命周期):\n地址处于“首选 (Preferred)”状态的时间长度。 在此期间，地址可以无限制地用于新的和现有的通信。 Valid Lifetime (有效生命周期):\n地址处于“有效 (Valid)”状态的总时间长度。 它总是大于或等于首选生命周期。 一旦超过这个时间，地址即变为“无效 (Invalid)”，不能再使用。 T1 (Renew Timer - 更新计时器):\n客户端向分配该地址的特定服务器发起续租请求的时间点。 通常建议设置为首选生命周期的 0.5 倍。 T2 (Rebind Timer - 重绑定计时器):\n如果 T1 时刻续租失败，客户端向任意可用的服务器发起续租请求的时间点。 通常建议设置为首选生命周期的 0.8 倍。 地址状态流转 IPv6 地址在生命周期中会经历以下几种状态：\nTentative (试探态): 客户端刚收到地址，正在进行重复地址检测 (DAD - Duplicate Address Detection)。 此时地址还不能用于通信。 如果 DAD 成功（无冲突），进入 Preferred 状态；如果失败，地址不可用。 Preferred (首选态): DAD 通过后，且当前时间 &lt; Preferred Lifetime。 地址可以用于建立新的连接，也可以用于现有的连接。 这是地址正常工作的状态。 Deprecated (弃用态): Preferred Lifetime &lt; 当前时间 &lt; Valid Lifetime。 地址依然“有效”，现有的连接可以继续使用该地址（为了不中断正在进行的会话）。 但是，上层应用不应使用该地址建立新的连接（源地址选择算法会避免选它）。 Invalid (无效态): 当前时间 &gt; Valid Lifetime。 地址从接口上删除，彻底不可用。Microsoft 365 生命周期流程详解 分配 (Allocation): 客户端通过 Solicit/Advertise/Request/Reply 四步交互（或两步 Rapid Commit）获取地址及 T1, T2, Lifetimes 参数。 DAD 检测: 客户端对新地址进行 DAD 检测。 使用 (Usage): 进入 Preferred 状态，T1, T2, Lifetime 倒计时开始。 更新 (Renew - T1): 当达到 T1 时间，客户端发送 Renew 报文给原服务器。 如果服务器回复 Reply 并刷新了时间，生命周期重置，回到初始 Preferred 状态。 重绑定 (Rebind - T2): 如果 T1 期间没收到回复，客户端继续使用地址。 当达到 T2 时间，客户端发送 Rebind 报文广播给所有服务器。 如果有服务器回复，生命周期重置。 弃用 (Deprecation): 如果 T2 也没成功，且时间超过了 Preferred Lifetime，地址进入 Deprecated 状态。 停止建立新连接。 过期 (Expiration): 时间超过 Valid Lifetime，地址被回收。 stateDiagram-v2 [*] --&gt; Tentative Tentative --&gt; Preferred : DAD 成功 Tentative --&gt; [*] : DAD 失败 Preferred --&gt; Deprecated : t &gt; Preferred Lifetime Deprecated --&gt; Invalid : t &gt; Valid Lifetime Preferred --&gt; Invalid : t &gt; Valid Lifetime Preferred --&gt; Preferred : Renew/Rebind 成功 ">
+<meta property='og:url' content='https://charles-7777.github.io/hugo-stack/p/dhcpv6-address-lifecycle/'>
 <meta property='og:site_name' content=''>
-<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='IPv6' /><meta property='article:published_time' content='2025-08-15T19:58:16&#43;08:00'/><meta property='article:modified_time' content='2025-08-15T20:10:35&#43;08:00'/>
-<meta name="twitter:title" content="IPv6 地址分配详解">
-<meta name="twitter:description" content="IPv6 地址结构 一个 IPv6 地址由 128 个比特（bits）组成，通常分为 8 个 16 比特的块，每个块用冒号（:）分隔，并以十六进制表示。\n例如：2001:0db8:85a3:0000:0000:8a2e:0370:7334\n地址压缩规则 为了简化书写，IPv6 地址可以被压缩：\n省略前导零 每个块中开头的\n1 0 可以省略。\n0db8 -&gt; db8 0000 -&gt; 0 0370 -&gt; 370 压缩连续的零: 可以使用双冒号 :: 来替代地址中任意一段连续的、全为 0 的块。注意：在一个地址中 :: 只能使用一次。\n应用上述规则后，上面的地址可以被简化为：\n1 2001:db8:85a3::8a2e:370:7334 IPv6 地址类型 IPv6 地址主要分为三种类型：单播（Unicast）、多播（Multicast）和任播（Anycast）。\n单播地址 (Unicast) 单播地址标识一个唯一的网络接口，发往单播地址的数据包将被送到该地址所标识的唯一接口。\n全球单播地址 (Global Unicast Address - GUA)\n范围: 全球唯一，可在公网路由。\n前缀: 通常以 2000::/3 开头。\n结构:\n全局路由前缀 (Global Routing Prefix): 通常为 48 位，由 ISP 分配给组织。 子网 ID (Subnet ID): 通常为 16 位，由组织内部规划子网。 接口 ID (Interface ID): 64 位，用于标识子网中的具体设备接口。 链路本地地址 (Link-Local Address)\n">
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='ipv6' /><meta property='article:published_time' content='2025-12-24T11:39:28&#43;08:00'/><meta property='article:modified_time' content='2025-12-26T14:58:24&#43;08:00'/>
+<meta name="twitter:title" content="DHCPv6 Address Lifecycle">
+<meta name="twitter:description" content="DHCPv6 (Dynamic Host Configuration Protocol for IPv6) 为 IPv6 主机提供了一种有状态的地址配置机制。与 IPv4 DHCP 类似，DHCPv6 分配的地址也是有租期的，但其生命周期管理引入了更细致的状态和计时器机制。\n核心概念 在理解生命周期之前，需要了解以下几个关键参数，这些参数通常由 DHCPv6 服务器在 IA Address Option (IAADDR) 中下发：\nPreferred Lifetime (首选生命周期):\n地址处于“首选 (Preferred)”状态的时间长度。 在此期间，地址可以无限制地用于新的和现有的通信。 Valid Lifetime (有效生命周期):\n地址处于“有效 (Valid)”状态的总时间长度。 它总是大于或等于首选生命周期。 一旦超过这个时间，地址即变为“无效 (Invalid)”，不能再使用。 T1 (Renew Timer - 更新计时器):\n客户端向分配该地址的特定服务器发起续租请求的时间点。 通常建议设置为首选生命周期的 0.5 倍。 T2 (Rebind Timer - 重绑定计时器):\n如果 T1 时刻续租失败，客户端向任意可用的服务器发起续租请求的时间点。 通常建议设置为首选生命周期的 0.8 倍。 地址状态流转 IPv6 地址在生命周期中会经历以下几种状态：\nTentative (试探态): 客户端刚收到地址，正在进行重复地址检测 (DAD - Duplicate Address Detection)。 此时地址还不能用于通信。 如果 DAD 成功（无冲突），进入 Preferred 状态；如果失败，地址不可用。 Preferred (首选态): DAD 通过后，且当前时间 &lt; Preferred Lifetime。 地址可以用于建立新的连接，也可以用于现有的连接。 这是地址正常工作的状态。 Deprecated (弃用态): Preferred Lifetime &lt; 当前时间 &lt; Valid Lifetime。 地址依然“有效”，现有的连接可以继续使用该地址（为了不中断正在进行的会话）。 但是，上层应用不应使用该地址建立新的连接（源地址选择算法会避免选它）。 Invalid (无效态): 当前时间 &gt; Valid Lifetime。 地址从接口上删除，彻底不可用。Microsoft 365 生命周期流程详解 分配 (Allocation): 客户端通过 Solicit/Advertise/Request/Reply 四步交互（或两步 Rapid Commit）获取地址及 T1, T2, Lifetimes 参数。 DAD 检测: 客户端对新地址进行 DAD 检测。 使用 (Usage): 进入 Preferred 状态，T1, T2, Lifetime 倒计时开始。 更新 (Renew - T1): 当达到 T1 时间，客户端发送 Renew 报文给原服务器。 如果服务器回复 Reply 并刷新了时间，生命周期重置，回到初始 Preferred 状态。 重绑定 (Rebind - T2): 如果 T1 期间没收到回复，客户端继续使用地址。 当达到 T2 时间，客户端发送 Rebind 报文广播给所有服务器。 如果有服务器回复，生命周期重置。 弃用 (Deprecation): 如果 T2 也没成功，且时间超过了 Preferred Lifetime，地址进入 Deprecated 状态。 停止建立新连接。 过期 (Expiration): 时间超过 Valid Lifetime，地址被回收。 stateDiagram-v2 [*] --&gt; Tentative Tentative --&gt; Preferred : DAD 成功 Tentative --&gt; [*] : DAD 失败 Preferred --&gt; Deprecated : t &gt; Preferred Lifetime Deprecated --&gt; Invalid : t &gt; Valid Lifetime Preferred --&gt; Invalid : t &gt; Valid Lifetime Preferred --&gt; Preferred : Renew/Rebind 成功 ">
     <link rel="shortcut icon" href="/hugo-stack/favicon2.ico" />
 
     </head>
@@ -297,39 +297,9 @@
         <div class="widget--toc">
             <nav id="TableOfContents">
   <ol>
-    <li><a href="#ipv6-地址结构">IPv6 地址结构</a>
-      <ol>
-        <li><a href="#地址压缩规则">地址压缩规则</a></li>
-      </ol>
-    </li>
-    <li><a href="#ipv6-地址类型">IPv6 地址类型</a>
-      <ol>
-        <li><a href="#单播地址-unicast">单播地址 (Unicast)</a></li>
-        <li><a href="#多播地址-multicast">多播地址 (Multicast)</a></li>
-        <li><a href="#任播地址-anycast">任播地址 (Anycast)</a></li>
-      </ol>
-    </li>
-    <li><a href="#ipv6-地址分配方法">IPv6 地址分配方法</a>
-      <ol>
-        <li><a href="#无状态地址自动配置-slaac">无状态地址自动配置 (SLAAC)</a></li>
-        <li><a href="#有状态-dhcpv6-stateful">有状态 DHCPv6 (Stateful)</a></li>
-        <li><a href="#无状态-dhcpv6-stateless">无状态 DHCPv6 (Stateless)</a></li>
-        <li><a href="#静态配置-manual">静态配置 (Manual)</a></li>
-        <li><a href="#dhcpv6-交互过程">DHCPv6 交互过程</a></li>
-      </ol>
-    </li>
-    <li><a href="#关键协议与技术">关键协议与技术</a></li>
-    <li><a href="#icmpv6">ICMPv6</a>
-      <ol>
-        <li><a href="#icmpv6-1">ICMPv6</a></li>
-        <li><a href="#ndp-邻居发现协议">NDP (邻居发现协议)</a></li>
-        <li><a href="#rsra">RS/RA</a></li>
-        <li><a href="#dhcpv6-pd">DHCPv6-PD</a></li>
-        <li><a href="#link-local">link-local</a></li>
-        <li><a href="#dad">DAD</a></li>
-        <li><a href="#邻居表">邻居表</a></li>
-      </ol>
-    </li>
+    <li><a href="#核心概念">核心概念</a></li>
+    <li><a href="#地址状态流转">地址状态流转</a></li>
+    <li><a href="#生命周期流程详解">生命周期流程详解</a></li>
   </ol>
 </nav>
         </div>
@@ -357,7 +327,7 @@
 
     <div class="article-title-wrapper">
         <h2 class="article-title">
-            <a href="/hugo-stack/p/ipv6-%E5%9C%B0%E5%9D%80%E5%88%86%E9%85%8D%E8%AF%A6%E8%A7%A3/">IPv6 地址分配详解</a>
+            <a href="/hugo-stack/p/dhcpv6-address-lifecycle/">DHCPv6 Address Lifecycle</a>
         </h2>
     
         
@@ -379,11 +349,11 @@
   <path d="M3 11h16" />
   <path d="M18 16.496v1.504l1 1" />
 </svg>
-                <time class="article-time--published">2025-08-15 19:58</time>
+                <time class="article-time--published">2025-12-24 11:39</time>
             </div>
         <div>
             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-edit"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg>
-            <time class="article-lastmod">2025-08-15 20:10</time>
+            <time class="article-lastmod">2025-12-26 14:58</time>
         </div>
         
 
@@ -398,7 +368,7 @@
 
 
                 <time class="article-time--reading">
-                    阅读时长: 3 分钟
+                    阅读时长: 2 分钟
                 </time>
             </div>
         
@@ -407,7 +377,7 @@
             <div>
                 <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-file-word"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 12l1.333 5l1.667 -4l1.667 4l1.333 -5" /></svg>
                 <time class="article-words">
-                    637 字
+                    215 字
                 </time>
             </div>
         
@@ -427,309 +397,112 @@
     <section class="article-content">
     
     
-    <h2 id="ipv6-地址结构">IPv6 地址结构
-</h2><p>一个 IPv6 地址由 128 个比特（bits）组成，通常分为 8 个 16 比特的块，每个块用冒号（<code>:</code>）分隔，并以十六进制表示。</p>
-<p>例如：<code>2001:0db8:85a3:0000:0000:8a2e:0370:7334</code></p>
-<h3 id="地址压缩规则">地址压缩规则
-</h3><p>为了简化书写，IPv6 地址可以被压缩：</p>
-<ol>
-<li>
-<dl>
-<dt>省略前导零</dt>
-<dd>
-<p>每个块中开头的</p>
-</dd>
-</dl>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">1
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">0
-</span></span></code></pre></td></tr></table>
-</div>
-</div><p>可以省略。</p>
+    <p>DHCPv6 (Dynamic Host Configuration Protocol for IPv6) 为 IPv6 主机提供了一种有状态的地址配置机制。与 IPv4 DHCP 类似，DHCPv6 分配的地址也是有租期的，但其生命周期管理引入了更细致的状态和计时器机制。</p>
+<h2 id="核心概念">核心概念
+</h2><p>在理解生命周期之前，需要了解以下几个关键参数，这些参数通常由 DHCPv6 服务器在 <code>IA Address Option</code> (IAADDR) 中下发：</p>
 <ul>
-<li><code>0db8</code> -&gt; <code>db8</code></li>
-<li><code>0000</code> -&gt; <code>0</code></li>
-<li><code>0370</code> -&gt; <code>370</code></li>
+<li>
+<p><strong>Preferred Lifetime (首选生命周期)</strong>:</p>
+<ul>
+<li>地址处于“首选 (Preferred)”状态的时间长度。</li>
+<li>在此期间，地址可以无限制地用于新的和现有的通信。</li>
 </ul>
 </li>
 <li>
-<p><strong>压缩连续的零</strong>: 可以使用双冒号 <code>::</code> 来替代地址中任意一段连续的、全为 <code>0</code> 的块。<strong>注意：在一个地址中 <code>::</code> 只能使用一次</strong>。</p>
-</li>
-</ol>
-<p>应用上述规则后，上面的地址可以被简化为：</p>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">1
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">2001:db8:85a3::8a2e:370:7334
-</span></span></code></pre></td></tr></table>
-</div>
-</div><h2 id="ipv6-地址类型">IPv6 地址类型
-</h2><p>IPv6 地址主要分为三种类型：单播（Unicast）、多播（Multicast）和任播（Anycast）。</p>
-<h3 id="单播地址-unicast">单播地址 (Unicast)
-</h3><p>单播地址标识一个唯一的网络接口，发往单播地址的数据包将被送到该地址所标识的唯一接口。</p>
+<p><strong>Valid Lifetime (有效生命周期)</strong>:</p>
 <ul>
-<li>
-<p><strong>全球单播地址 (Global Unicast Address - GUA)</strong></p>
-</li>
-<li>
-<p><strong>范围</strong>: 全球唯一，可在公网路由。</p>
-</li>
-<li>
-<p><strong>前缀</strong>: 通常以 <code>2000::/3</code> 开头。</p>
-</li>
-<li>
-<p><strong>结构</strong>:</p>
-<ul>
-<li><strong>全局路由前缀 (Global Routing Prefix)</strong>: 通常为 48 位，由 ISP 分配给组织。</li>
-<li><strong>子网 ID (Subnet ID)</strong>: 通常为 16 位，由组织内部规划子网。</li>
-<li><strong>接口 ID (Interface ID)</strong>: 64 位，用于标识子网中的具体设备接口。</li>
+<li>地址处于“有效 (Valid)”状态的总时间长度。</li>
+<li>它总是大于或等于首选生命周期。</li>
+<li>一旦超过这个时间，地址即变为“无效 (Invalid)”，不能再使用。</li>
 </ul>
 </li>
 <li>
-<p><strong>链路本地地址 (Link-Local Address)</strong></p>
+<p><strong>T1 (Renew Timer - 更新计时器)</strong>:</p>
+<ul>
+<li>客户端向分配该地址的<strong>特定服务器</strong>发起续租请求的时间点。</li>
+<li>通常建议设置为首选生命周期的 0.5 倍。</li>
+</ul>
 </li>
 <li>
-<p><strong>范围</strong>: 仅在同一物理或逻辑链路上有效，不能跨路由器路由。</p>
-</li>
-<li>
-<p><strong>前缀</strong>: <code>fe80::/10</code>。</p>
-</li>
-<li>
-<p><strong>用途</strong>: 用于邻居发现、自动地址配置等链路内部通信。设备启动后会自动生成。</p>
-</li>
-<li>
-<p><strong>唯一本地地址 (Unique Local Address - ULA)</strong></p>
-</li>
-<li>
-<p><strong>范围</strong>: 仅在有限范围内（如一个组织或站点内部）使用，功能类似 IPv4 的私有地址。它不会在公网路由。</p>
-</li>
-<li>
-<p><strong>前缀</strong>: <code>fc00::/7</code>。</p>
-</li>
-<li>
-<p><strong>特殊地址</strong></p>
-</li>
-<li>
-<p><strong>环回地址</strong>: <code>::1/128</code>，相当于 IPv4 的 <code>127.0.0.1</code>。</p>
-</li>
-</ul>
-<h3 id="多播地址-multicast">多播地址 (Multicast)
-</h3><p>多播地址标识一组网络接口，发往多播地址的数据包将被送到该组中的所有接口。</p>
+<p><strong>T2 (Rebind Timer - 重绑定计时器)</strong>:</p>
 <ul>
-<li>
-<p><strong>前缀</strong>: <code>ff00::/8</code>。</p>
-</li>
-<li>
-<p><strong>常见示例</strong>:</p>
-<ul>
-<li><code>ff02::1</code>: 链路本地范围内的所有<strong>节点</strong>。</li>
-<li><code>ff02::2</code>: 链路本地范围内的所有<strong>路由器</strong>。</li>
+<li>如果 T1 时刻续租失败，客户端向<strong>任意可用的服务器</strong>发起续租请求的时间点。</li>
+<li>通常建议设置为首选生命周期的 0.8 倍。</li>
 </ul>
 </li>
 </ul>
-<h3 id="任播地址-anycast">任播地址 (Anycast)
-</h3><p>任播地址也标识一组网络接口，但发往任播地址的数据包只会被送到这组接口中<strong>距离最近</strong>（根据路由协议的度量）的一个。任播地址的格式与单播地址相同，但通过路由配置实现。</p>
-<h2 id="ipv6-地址分配方法">IPv6 地址分配方法
-</h2><p>设备获取 IPv6 地址主要有以下几种方式：</p>
-<h3 id="无状态地址自动配置-slaac">无状态地址自动配置 (SLAAC)
-</h3><p>SLAAC 是 IPv6 的核心特性之一，允许设备在没有 DHCP 服务器的情况下自动配置地址。</p>
-<p><strong>过程</strong>:</p>
-<ol>
-<li>设备启动后，首先为自己生成一个链路本地地址。</li>
-<li>设备向本地链路发送一个<strong>路由器请求 (Router Solicitation - RS)</strong> 多播消息。</li>
-<li>链路上的路由器收到 RS 后，会回复一个<strong>路由器通告 (Router Advertisement - RA)</strong> 消息。RA 消息中包含了网络前缀（如 GUA 前缀）和其他网络信息。</li>
-<li>设备使用 RA 中通告的前缀，并结合自己的接口 ID（通常通过 <strong>EUI-64</strong> 算法或随机生成）来构成一个完整的全球单播地址。</li>
-</ol>
-<h3 id="有状态-dhcpv6-stateful">有状态 DHCPv6 (Stateful)
-</h3><p>工作方式类似于 IPv4 的 DHCP，由 DHCPv6 服务器集中管理和分配 IPv6 地址。</p>
+<h2 id="地址状态流转">地址状态流转
+</h2><p>IPv6 地址在生命周期中会经历以下几种状态：</p>
 <ul>
-<li><strong>优点</strong>: 便于集中管理和审计，可以精确控制地址分配。</li>
-<li><strong>适用场景</strong>: 需要严格管理地址分配的企业网络。</li>
-</ul>
-<h3 id="无状态-dhcpv6-stateless">无状态 DHCPv6 (Stateless)
-</h3><p>这是一种混合模式。</p>
+<li><strong>Tentative (试探态)</strong>:
 <ul>
-<li>设备通过 <strong>SLAAC</strong> 获取 IPv6 地址。</li>
-<li>同时，设备通过 <strong>DHCPv6</strong> 获取其他网络配置信息，例如 DNS 服务器地址、域名等。</li>
-<li>这种方式既利用了 SLAAC 的便捷性，又弥补了其无法提供 DNS 等附加信息的不足。</li>
-</ul>
-<h3 id="静态配置-manual">静态配置 (Manual)
-</h3><p>管理员手动为设备配置静态的 IPv6 地址、网关和 DNS 等信息。适用于服务器、路由器等需要固定地址的设备。</p>
-<h3 id="dhcpv6-交互过程">DHCPv6 交互过程
-</h3><p>DHCPv6 客户端和服务器之间的通信过程，用于获取 IPv6 地址和/或其他网络配置参数。标准的交互过程涉及四次消息交换，这确保了客户端可以选择最合适的服务器。</p>
-<p><strong>四步交换 (Four-Way Exchange):</strong></p>
-<ol>
-<li><strong>Solicit (请求)</strong>:
-<ul>
-<li>客户端在本地链路上发送一个 <code>Solicit</code> 多播消息，以发现可用的 DHCPv6 服务器。</li>
-<li>消息发送到所有 DHCP 中继代理和服务器的多播地址 <code>ff02::1:2</code>。</li>
+<li>客户端刚收到地址，正在进行重复地址检测 (DAD - Duplicate Address Detection)。</li>
+<li>此时地址还不能用于通信。</li>
+<li>如果 DAD 成功（无冲突），进入 Preferred 状态；如果失败，地址不可用。</li>
 </ul>
 </li>
-<li><strong>Advertise (通告)</strong>:
+<li><strong>Preferred (首选态)</strong>:
 <ul>
-<li>收到 <code>Solicit</code> 消息的 DHCPv6 服务器会回复一个 <code>Advertise</code> 单播消息。</li>
-<li>此消息中包含了服务器可以为客户端提供的地址和/或配置信息。一个客户端可能会收到多个 <code>Advertise</code> 消息。</li>
+<li>DAD 通过后，且当前时间 &lt; Preferred Lifetime。</li>
+<li>地址可以用于建立新的连接，也可以用于现有的连接。</li>
+<li>这是地址正常工作的状态。</li>
 </ul>
 </li>
-<li><strong>Request (请求)</strong>:
+<li><strong>Deprecated (弃用态)</strong>:
 <ul>
-<li>客户端从收到的一个或多个 <code>Advertise</code> 消息中选择一个服务器，并向其发送一个 <code>Request</code> 单播消息，正式请求分配地址和/或配置参数。</li>
-<li>消息中会包含它所选择的服务器的标识符。</li>
+<li>Preferred Lifetime &lt; 当前时间 &lt; Valid Lifetime。</li>
+<li>地址依然“有效”，现有的连接可以继续使用该地址（为了不中断正在进行的会话）。</li>
+<li><strong>但是</strong>，上层应用不应使用该地址建立<strong>新</strong>的连接（源地址选择算法会避免选它）。</li>
 </ul>
 </li>
-<li><strong>Reply (回复)</strong>:
+<li><strong>Invalid (无效态)</strong>:
 <ul>
-<li>被选中的服务器收到 <code>Request</code> 消息后，会发送一个 <code>Reply</code> 单播消息，确认地址分配和配置信息。</li>
-<li>此时，客户端完成配置，可以开始使用获取到的地址。
-<strong>两步交换 (Two-Way Exchange) - 快速提交 (Rapid Commit):</strong>
-为了加速地址分配过程，DHCPv6 引入了快速提交选项。</li>
+<li>当前时间 &gt; Valid Lifetime。</li>
+<li>地址从接口上删除，彻底不可用。Microsoft 365</li>
 </ul>
 </li>
-<li><strong>Solicit (请求)</strong>:
+</ul>
+<h2 id="生命周期流程详解">生命周期流程详解
+</h2><ul>
+<li><strong>分配 (Allocation)</strong>: 客户端通过 Solicit/Advertise/Request/Reply 四步交互（或两步 Rapid Commit）获取地址及 T1, T2, Lifetimes 参数。</li>
+<li><strong>DAD 检测</strong>: 客户端对新地址进行 DAD 检测。</li>
+<li><strong>使用 (Usage)</strong>: 进入 Preferred 状态，T1, T2, Lifetime 倒计时开始。</li>
+<li><strong>更新 (Renew - T1)</strong>:
 <ul>
-<li>客户端在 <code>Solicit</code> 消息中加入 &ldquo;Rapid Commit&rdquo; 选项，表示希望立即完成地址分配。</li>
+<li>当达到 T1 时间，客户端发送 <code>Renew</code> 报文给原服务器。</li>
+<li>如果服务器回复 <code>Reply</code> 并刷新了时间，生命周期重置，回到初始 Preferred 状态。</li>
 </ul>
 </li>
-<li><strong>Reply (回复)</strong>:
+<li><strong>重绑定 (Rebind - T2)</strong>:
 <ul>
-<li>支持快速提交的服务器如果愿意立即分配地址，会直接回复一个 <code>Reply</code> 消息，跳过 <code>Advertise</code> 和 <code>Request</code> 步骤。
-这种两步交换减少了延迟，在许多场景下（如网络中只有一个 DHCPv6 服务器）非常高效</li>
+<li>如果 T1 期间没收到回复，客户端继续使用地址。</li>
+<li>当达到 T2 时间，客户端发送 <code>Rebind</code> 报文广播给所有服务器。</li>
+<li>如果有服务器回复，生命周期重置。</li>
 </ul>
 </li>
-</ol>
-<h2 id="关键协议与技术">关键协议与技术
-</h2><p>在一个部署 IPv6 的广播域中，相比 IPv4 一个最明显的区别就是 IPv6 路由通告；在 IPv4 时代，一个广播域中的 ipv4 网段并没有显式说明，或者说并没有一个 ipv4 网段宣称占据了这个广播域，仅使用这个广播域的广播/组播能力，多个ipv4网段共用一个广播域的情况也不鲜见；而在ipv6中，运行ipv6协议的路由器会主动发送名为<strong>路由通告 Router Advertisement</strong>的 ICMPv6 报文，在广播域中宣告/广播*此 ipv6 网段占据了该广播域；</p>
-<p>*（准确的讲应该是组播，IPv6 已经没有广播概念了，这里使用广播这个说法为了说明是公开发送的，在一个广播域中，广播和组播达成的功能类似，且在低端交换机中，广播和组播的转发方式是一致的）</p>
-<p>RA（路由通告 Router Advertisement）使用 ICMPv6 报文（type 134），属于 NDP 协议的一部分</p>
-<p>IPv6 的功能实现严重依赖于一些关键的底层协议，特别是 ICMPv6 和在其基础上构建的邻居发现协议 (NDP)，以及用于动态分配网络前缀的 DHCPv6-PD。</p>
-<h2 id="icmpv6">ICMPv6
-</h2><p>IPv6 时代的ip层控制协议（类比ipv4中的arp、icmp等）均使用icmpv6报文，<strong>取消了IP层的广播</strong>，转而广泛使用<strong>组播</strong>。ICMPv6 中的 type 133 ~ 137 报文由<strong>NDP</strong>协议使用，用于发现网关、邻居、地址配置等等。</p>
-<h3 id="icmpv6-1">ICMPv6
-</h3><p>ICMPv6 是 IPv6 的一个核心组成部分，其功能远超 IPv4 中的 ICMP。它不仅用于传输网络错误和诊断信息，还承载了许多关键的网络控制功能。如果防火墙错误地完全阻止 ICMPv6，将导致 IPv6 网络中断。</p>
-<p><strong>主要功能</strong>:</p>
+<li><strong>弃用 (Deprecation)</strong>:
 <ul>
-<li><strong>错误报告</strong>: 如 &ldquo;目标不可达&rdquo;、&ldquo;数据包过大&rdquo;、&ldquo;超时&rdquo; 等。</li>
-<li><strong>诊断查询</strong>: 如 <code>ping</code> 命令所使用的 &ldquo;Echo Request&rdquo; 和 &ldquo;Echo Reply&rdquo;。</li>
-<li><strong>网络控制</strong>: 为 NDP、MLD (多播侦听发现) 等协议提供消息支持。</li>
-</ul>
-<h3 id="ndp-邻居发现协议">NDP (邻居发现协议)
-</h3><p>NDP 是 IPv6 中一个至关重要的协议，它取代了 IPv4 中的 ARP、ICMP 路由器发现和 ICMP 重定向等多个协议的功能。NDP 基于 ICMPv6 实现，是实现即插即用和 SLAAC 的基础。</p>
-<p><strong>NDP 的核心功能</strong>:</p>
-<ul>
-<li><strong>地址解析</strong>: 将 IPv6 地址解析为链路层地址（如 MAC 地址），取代了 ARP。</li>
-<li><strong>路由器发现</strong>: 主机可以发现本地链路上的路由器。</li>
-<li><strong>前缀发现</strong>: 主机可以发现用于自动配置的地址前缀。</li>
-<li><strong>重复地址检测 (DAD)</strong>: 节点可以确认其想要使用的地址在链路上是唯一的。</li>
-<li><strong>可达性跟踪</strong>: 判断邻居节点是否仍然可达。</li>
-</ul>
-<p><strong>NDP 使用的五种 ICMPv6 消息类型</strong>:</p>
-<ol>
-<li><strong>路由器请求 (Router Solicitation - RS)</strong>: 通常由终端主动发送，用于在未收到周期性 RA 的情况下，请求 RA</li>
-<li><strong>路由器通告 (Router Advertisement - RA)</strong>:由路由器周期性发送，也可以响应 RS 发送，用于宣告本广播域中 IPv6 相关信息。比如前缀、网关、DNS等</li>
-<li><strong>邻居请求 (Neighbor Solicitation - NS)</strong>: 用于解析邻居的链路层地址或执行 DAD,和 IPv4 的 ARP request 功能一致。</li>
-<li><strong>邻居通告 (Neighbor Advertisement - NA)</strong>: 对 NS 消息的响应，或在链路层地址变化时主动发送和 ,IPv4 的 ARP reply功能一致。</li>
-<li><strong>重定向 (Redirect)</strong>: 路由器告知主机有更优的下一跳路径,类似于 IPv4 的icmp redirect功能。</li>
-</ol>
-<h3 id="rsra">RS/RA
-</h3><p>RS/RA 是IPv6 环境下独有的控制信令，此信令明确了一个广播域中各节点所代表的角色。</p>
-<ul>
-<li>
-<p>广播域中发送RA的为路由器</p>
-</li>
-<li>
-<p>广播域中可以存在多个路由器</p>
-</li>
-<li>
-<p>RA 组播周期性发送</p>
-</li>
-<li>
-<p>RS 用于在未收到 RA 情况下请求 RA</p>
-</li>
-<li>
-<p>RA 中的<code>Flags</code>表明当前广播域中 IPv6 地址的配置方式</p>
-</li>
-<li>
-<p>这些 Flags 分布在两个位置&mdash;-ICMPv6 报头和 prefix option，后者称为 PIO(Prefix Information Option) flag。</p>
-<ul>
-<li><strong>M</strong>(Managed address configuration):位于报头，M=1 表明终端应该使用 DHCPv6 协议配置地址和其他网络参数；如果M=1，则忽略 O Flag；此flag用于<strong>DHCPv6 有状态模式</strong>。</li>
-<li><strong>O</strong>(Other configuration):位于报头，O=1且M=0 表明终端应该使用 DHCPv6 设置除了 IPv6 地址之外的其他（dns/ntp等），此 flag 用于 <strong>DHCPv6 无状态模式</strong>。</li>
-<li><strong>A</strong>(Autononous address-configuration flag):位于<strong>PIO</strong>中，A=1 表明终端应该<strong>使用 SLAAC</strong> 配置 IPv6 地址；PIO可以包含多个 Prefix，这也就意味着一个广播域中可以存在多个 IPv6 网段。</li>
-</ul>
-<p>这几种flag是可以复合使用的，以满足不同场景需求,除了手动静态配置ipv6地址，动态/自动配置或者半自动配置ipv6地址的方式都需要从ndp协议的 RA 开始，就好像 RA 引导了IPv6自动配置的开始；RA中的不同flag叠加影响地址自动配置；</p>
-</li>
-</ul>
-<h3 id="dhcpv6-pd">DHCPv6-PD
-</h3><p>DHCPv6前缀代理DHCPv6-PD(PrefixDelegation)是一种前缀分配机制，通过DHCPv6前缀代理机制，下游
-网络设备不需要再手工指定用户侧链路的IPv6地址前缀，它只需要向上游网络设备提出前缀分配申请，上游网
-络设备便可以分配合适的地址前缀给下游设备，下游设备把获得的前缀再通过路由通告(<strong>RA</strong>)至与IPv6主机直连
-的用户链路上，实现IPv6主机的地址自动配置，完成整个系统层次的地址布局。</p>
-<p>DHCP-PD 技术最早在RFC3633中提出，经过几次更新目前最新的是<strong>RFC8415</strong>，其主要思想是把DHCPv6的地址分配方式划分为多层，dhcp client不再是仅仅获取地址用于终端通信，而是可以作为次级路由器身份把地址<strong>层层分配</strong>下去；这样的好处是便于快速和统一部署大量地址，尤其是在大规模动态地址的情况下，此种地址分配方式在家庭宽带中已经大量部署；光猫从其上级获取一段地址用于本地网络终端的地址分配，甚至从光猫拿到的地址还能再往下一层分配.</p>
-<p><strong>工作原理</strong>:</p>
-<ol>
-<li><strong>请求</strong>: 家庭路由器（客户端）向其上游 ISP 的路由器（服务器）发送 DHCPv6 请求，希望获得一个 IPv6 地址<strong>前缀</strong>（例如一个 <code>/56</code> 或 <code>/48</code> 的地址块），而不仅仅是一个地址。</li>
-<li><strong>代理</strong>: ISP 路由器从其地址池中分配一个前缀块，并通过 DHCPv6 回复将其“代理”或“授权”给家庭路由器。</li>
-<li><strong>分配</strong>: 家庭路由器获得该前缀后，就拥有了管理这个地址块的权限。它可以将这个前缀进一步划分为更小的子网（例如多个 <code>/64</code> 子网），并为连接到其 LAN 口的各个内部网络（如家庭网络、访客网络）分配这些子网前缀。</li>
-<li><strong>通告</strong>: 家庭路由器在其内部网络上发送 <strong>RA</strong> 消息，通告这些 <code>/64</code> 的子网前缀，使得内部网络中的设备可以通过 <strong>SLAAC</strong> 自动配置 IPv6 地址。</li>
-</ol>
-<p><strong>优势</strong>:</p>
-<ul>
-<li><strong>自动化</strong>: 无需手动配置下游路由器的子网，实现了网络部署的自动化。</li>
-<li><strong>结构化</strong>: 使得家庭或小型办公室可以轻松地拥有多个独立的 IPv6 子网，便于网络隔离和管理。</li>
-<li><strong>高效性</strong>: 相比于 NAT，每个设备都能获得全球唯一的公网地址，实现了真正的端到端连接。</li>
-</ul>
-<h3 id="link-local">link-local
-</h3><p>对比IPv4环境，IPv6 地址有所谓的 link-local 地址而且充当比较重要作用；由于一个接口可以配置很多IPv6地址，当这些地址作为下一跳使用的时候会出现混乱，这样不利于管理也不利于设备性能开销,使用Link Local地址唯一标识链路上的一个节点就避免了这个问题。而且在网络重新编址过程中，Link Local并不会发生变化，更利于快速更改编址</p>
-<h3 id="dad">DAD
-</h3><p>DAD 基于 <strong>ICMPv6 Neighbor Solicitation（NS，邻居请求）</strong> 和 <strong>Neighbor Advertisement（NA，邻居通告）</strong> 消息实现，步骤如下：</p>
-<ol>
-<li><strong>节点分配一个 IPv6 地址</strong>（如通过 SLAAC 或手动配置），但该地址尚未正式启用（处于 &ldquo;tentative&rdquo; 状态）。</li>
-<li><strong>发送 Neighbor Solicitation（NS）</strong>：
-<ul>
-<li>目标地址（Target Address）设为待检测的 IPv6 地址。</li>
-<li>源地址设为 <strong>未指定地址（::）</strong>（因为该地址尚未正式使用）。</li>
-<li>发送到 <strong>&ldquo;请求节点组播地址&rdquo;（Solicited-Node Multicast Address，FF02::1:FFXX:XXXX）</strong>。</li>
+<li>如果 T2 也没成功，且时间超过了 Preferred Lifetime，地址进入 Deprecated 状态。</li>
+<li>停止建立新连接。</li>
 </ul>
 </li>
-<li><strong>等待响应</strong>：
+<li><strong>过期 (Expiration)</strong>:
 <ul>
-<li>如果<strong>没有收到 Neighbor Advertisement（NA）</strong>，说明地址未被占用，可以正常使用。</li>
-<li>如果<strong>收到 NA</strong>，说明地址已被占用，节点必须放弃该地址并重新配置（如 SLAAC 会生成新地址）。</li>
+<li>时间超过 Valid Lifetime，地址被回收。</li>
 </ul>
 </li>
-<li><strong>DAD 完成</strong>：
-<ul>
-<li>成功通过检测后，地址变为 &ldquo;Preferred&rdquo; 或 &ldquo;Valid&rdquo; 状态，可以正常通信</li>
 </ul>
-</li>
-</ol>
-<h3 id="邻居表">邻居表
-</h3><p>邻居表，在IPv4环境下就是ARP表，系统维护Arp表内容由系统自己决定，比如端口、更新时间等；</p>
-<p>到了IPv6环境，ND表代替了arp表，而且协议规定了5种邻居状态，IPv6 邻居状态，分别是：
-Incomplete、Reachable、Stale、Delay、Probe，其中只有 Stale 状态是稳定状态。</p>
-<ol>
-<li>Incomplete （未完成状态）：表⽰正在解 析地址，但邻居链路层地址尚未确定。</li>
-<li>Reachable （可达状态）：表⽰地址解析 成功，该邻居可达。</li>
-<li>Stale（失效状态）：表⽰可达时间耗尽，未确定邻居是否可达。</li>
-<li>Delay（延迟状态）：表⽰未确定邻居是否可达。Delay 状态不是⼀个稳定的状态，⽽是⼀个延时等待状态。</li>
-<li>Probe （探测状态）：节点会向处于 Probe 状态的邻居持续发送 NS 报⽂。
-不同状态之间迁移如下图</li>
-</ol>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">1
-</span><span class="lnt">2
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">ip neigh
-</span></span><span class="line"><span class="cl">ip -6 neigh
-</span></span></code></pre></td></tr></table>
-</div>
-</div>
+<pre class="mermaid">
+  stateDiagram-v2
+    [*] --&gt; Tentative
+    Tentative --&gt; Preferred : DAD 成功
+    Tentative --&gt; [*] : DAD 失败
+    Preferred --&gt; Deprecated : t &gt; Preferred Lifetime
+    Deprecated --&gt; Invalid : t &gt; Valid Lifetime
+    Preferred --&gt; Invalid : t &gt; Valid Lifetime
+    Preferred --&gt; Preferred : Renew/Rebind 成功
+</pre>
+
 </section>
 
 
@@ -800,12 +573,12 @@ Incomplete、Reachable、Stale、Delay、Probe，其中只有 Stale 状态是稳
             
                 
 <article class="">
-    <a href="/hugo-stack/p/dhcpv6-address-lifecycle/">
+    <a href="/hugo-stack/p/upnp%E9%80%9A%E7%94%A8%E5%8D%B3%E6%8F%92%E5%8D%B3%E7%94%A8%E5%8D%8F%E8%AE%AE%E4%BB%8B%E7%BB%8D/">
         
         
 
         <div class="article-details">
-            <h2 class="article-title">DHCPv6 Address Lifecycle</h2>
+            <h2 class="article-title">upnp(通用即插即用)协议介绍</h2>
         </div>
     </a>
 </article>
@@ -813,12 +586,12 @@ Incomplete、Reachable、Stale、Delay、Probe，其中只有 Stale 状态是稳
             
                 
 <article class="">
-    <a href="/hugo-stack/p/upnp%E9%80%9A%E7%94%A8%E5%8D%B3%E6%8F%92%E5%8D%B3%E7%94%A8%E5%8D%8F%E8%AE%AE%E4%BB%8B%E7%BB%8D/">
+    <a href="/hugo-stack/p/ipv6-%E5%9C%B0%E5%9D%80%E5%88%86%E9%85%8D%E8%AF%A6%E8%A7%A3/">
         
         
 
         <div class="article-details">
-            <h2 class="article-title">upnp(通用即插即用)协议介绍</h2>
+            <h2 class="article-title">IPv6 地址分配详解</h2>
         </div>
     </a>
 </article>
@@ -1216,3 +989,8 @@ Incomplete、Reachable、Stale、Delay、Probe，其中只有 Stale 状态是稳
 
     </body>
 </html>
+
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true ,look: 'handDrawn'});
+    </script>
