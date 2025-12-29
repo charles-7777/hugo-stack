@@ -10,7 +10,7 @@
 <meta property='og:description' content="本文介绍 Wi-Fi 物理层协商速率（PHY Rate）的计算方法，并提供 802.11ac (Wi-Fi 5) 和 802.11ax (Wi-Fi 6) 的 MCS (Modulation and Coding Scheme) 表。\n计算公式 Wi-Fi 的理论物理层速率可以通过以下公式计算：\n$$ \\text{Data Rate} = N_{ss} \\times \\frac{N_{sd} \\times N_{bps} \\times R}{T_{sym}} $$例如 ac 40Mhz 4x4 的最大速率 $ \\text{Rate} = 4 \\times \\frac{108 \\times 8 \\times (5/6)}{3.6 \\mu s} = 800 Mbps$\n其中各参数含义如下：\n参数 含义 说明 $N_{ss}$ Spatial Streams 空间流数量 (MIMO)，例如 1x1, 2x2, 3x3, 4x4。$Nss,max=min(N_{Tx},N_{Rx})$ $N_{sd}$ Data Subcarriers 数据子载波数量。取决于信道带宽 (20/40/80/160 MHz) 和协议标准 (11n/ac/ax)。 $N_{bps}$ Bits per Symbol 每个符号携带的比特数。由调制方式决定 (e.g., 64-QAM = 6 bits, 256-QAM = 8 bits, 1024-QAM = 10 bits)。 $R$ Coding Rate 编码率。有效数据位与总传输位（含纠错码）的比率 (e.g., 3/4, 5/6)。 $T_{sym}$ Symbol Duration 符号持续时间。$T_{sym} = T_{base} + T_{GI}$ (Guard Interval)。 简化理解 速率主要由以下几个维度决定：\n">
 <meta property='og:url' content='https://charles-7777.github.io/hugo-stack/p/wi-fi-%E9%80%9F%E7%8E%87%E8%AE%A1%E7%AE%97/'>
 <meta property='og:site_name' content=''>
-<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='wifi' /><meta property='article:published_time' content='2025-12-12T15:25:55&#43;08:00'/><meta property='article:modified_time' content='2025-12-22T15:10:45&#43;08:00'/>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='wifi' /><meta property='article:published_time' content='2025-12-12T15:25:55&#43;08:00'/><meta property='article:modified_time' content='2025-12-29T17:32:15&#43;08:00'/>
 <meta name="twitter:title" content="Wi-Fi 速率计算">
 <meta name="twitter:description" content="本文介绍 Wi-Fi 物理层协商速率（PHY Rate）的计算方法，并提供 802.11ac (Wi-Fi 5) 和 802.11ax (Wi-Fi 6) 的 MCS (Modulation and Coding Scheme) 表。\n计算公式 Wi-Fi 的理论物理层速率可以通过以下公式计算：\n$$ \\text{Data Rate} = N_{ss} \\times \\frac{N_{sd} \\times N_{bps} \\times R}{T_{sym}} $$例如 ac 40Mhz 4x4 的最大速率 $ \\text{Rate} = 4 \\times \\frac{108 \\times 8 \\times (5/6)}{3.6 \\mu s} = 800 Mbps$\n其中各参数含义如下：\n参数 含义 说明 $N_{ss}$ Spatial Streams 空间流数量 (MIMO)，例如 1x1, 2x2, 3x3, 4x4。$Nss,max=min(N_{Tx},N_{Rx})$ $N_{sd}$ Data Subcarriers 数据子载波数量。取决于信道带宽 (20/40/80/160 MHz) 和协议标准 (11n/ac/ax)。 $N_{bps}$ Bits per Symbol 每个符号携带的比特数。由调制方式决定 (e.g., 64-QAM = 6 bits, 256-QAM = 8 bits, 1024-QAM = 10 bits)。 $R$ Coding Rate 编码率。有效数据位与总传输位（含纠错码）的比率 (e.g., 3/4, 5/6)。 $T_{sym}$ Symbol Duration 符号持续时间。$T_{sym} = T_{base} + T_{GI}$ (Guard Interval)。 简化理解 速率主要由以下几个维度决定：\n">
     <link rel="shortcut icon" href="/hugo-stack/favicon2.ico" />
@@ -359,7 +359,7 @@
             </div>
         <div>
             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-edit"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg>
-            <time class="article-lastmod">2025-12-22 15:10</time>
+            <time class="article-lastmod">2025-12-29 17:32</time>
         </div>
         
 
