@@ -7,6 +7,81 @@
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
         <copyright>Charles Lv</copyright><atom:link href="https://charles-7777.github.io/hugo-stack/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>IPv6 ND proxy</title>
+        <link>https://charles-7777.github.io/hugo-stack/p/ipv6-nd-proxy/</link>
+        <pubDate>Mon, 29 Dec 2025 16:28:14 +0800</pubDate>
+        
+        <guid>https://charles-7777.github.io/hugo-stack/p/ipv6-nd-proxy/</guid>
+        <description>&lt;h2 id=&#34;ipv6同一前缀地址通信&#34;&gt;IPv6同一前缀地址通信
+&lt;/h2&gt;&lt;p&gt;具有相同前缀的主机间互访的时候，不会查找路由表，只会发&lt;strong&gt;NS&lt;/strong&gt;（Neighbor Solicitation）请求，获取目的地址对应的链路层地址，然后使用该链路层地址封装要发送的数据报文&lt;/p&gt;
+&lt;pre class=&#34;mermaid&#34;&gt;
+  sequenceDiagram
+    participant PC1
+    participant Switch as 交换机（透明）
+    participant PC2
+
+    note over PC1,PC2: 统一前缀：2001:db8:1::/64
+
+    PC1-&amp;gt;&amp;gt;PC2: NS (请求 2001:db8:1::20 的 MAC)
+    PC2-&amp;gt;&amp;gt;PC1: NA (回应自己的 MAC)
+
+    PC1-&amp;gt;&amp;gt;Switch: 数据帧 {dst MAC = PC2 的 MAC}&amp;lt;br/&amp;gt;IP: src=2001:db8:1::10, dst=2001:db8:1::20
+    Switch-&amp;gt;&amp;gt;PC2: 转发数据帧
+&lt;/pre&gt;
+&lt;h2 id=&#34;ipv6不同前缀地址通信&#34;&gt;IPv6不同前缀地址通信
+&lt;/h2&gt;&lt;p&gt;PC先查看目标地址，发现不在本地前缀中；查路由表 → 下一跳 = 默认网关。如果已有 默认网关的 MAC 地址， 直接封装帧发送；如果没有 ，先发 NS（Neighbor Solicitation）请求 默认网关的 MAC，要到网关的mac再封装帧发送&lt;/p&gt;
+&lt;pre class=&#34;mermaid&#34;&gt;
+  sequenceDiagram
+    participant PC1
+    participant RouterA as Router (接口A)
+    participant RouterB as Router (接口B)
+    participant PC2
+
+    note right of RouterA: 2001:db8:1::1/64
+    note right of RouterB: 2001:db8:2::1/64
+
+    PC1-&amp;gt;&amp;gt;RouterA: NS (请求网关 2001:db8:1::1 的 MAC)
+    RouterA-&amp;gt;&amp;gt;PC1: NA (回应自己的 MAC)
+
+    PC1-&amp;gt;&amp;gt;RouterA: IP 数据包 {src=2001:db8:1::10, dst=2001:db8:2::20}
+
+    RouterA-&amp;gt;&amp;gt;RouterB: 路由查找，准备从接口B转发
+
+    RouterB-&amp;gt;&amp;gt;PC2: NS (请求 2001:db8:2::20 的 MAC)
+    PC2-&amp;gt;&amp;gt;RouterB: NA
+
+    RouterB-&amp;gt;&amp;gt;PC2: IP 数据包 {src=2001:db8:1::10, dst=2001:db8:2::20}
+&lt;/pre&gt;
+&lt;h2 id=&#34;ipv6-nd-proxy&#34;&gt;IPv6 ND proxy
+&lt;/h2&gt;&lt;p&gt;具有相同前缀的主机间互访的时候，不会查找路由表，只会发&lt;strong&gt;NS&lt;/strong&gt;（Neighbor Solicitation）请求，获取目的地址对应的链路层地址，然后使用该链路层地址封装要发送的数据报文。&lt;/p&gt;
+&lt;p&gt;在实际组网中，具有相同前缀的主机可能不在一个网络广播域当中，这种情况下NS（Neighbor Solicitation）报文不能发送到目的主机，导致主机间不能互访。&lt;/p&gt;
+&lt;p&gt;为了避免此问题，可以开启路由器的ND Proxy功能，用于替代目的主机回应NA（Neighbor Advertise）报文，报文中会携带路由器的链路层地址。采用这种方式，两个主机可以通过路由器设备完成互访&lt;/p&gt;
+&lt;pre class=&#34;mermaid&#34;&gt;
+  sequenceDiagram
+    participant PC1
+    participant 路由器 as A-路由器-B
+    participant PC2
+
+    Note over PC1, PC2: PC1 需要向 PC2 发送数据报文
+
+    PC1-&amp;gt;&amp;gt;路由器: NS(请求 1234::2/64 的 MAC 地址)&amp;lt;br&amp;gt;通过接口A
+    路由器--&amp;gt;&amp;gt;PC1: NA(回应 1234::2/64 的 MAC 地址是接口A的MAC地址)
+    PC1-&amp;gt;&amp;gt;路由器: 目的是 1234::2/64 的数据报文&amp;lt;br&amp;gt;通过接口A
+
+
+    路由器-&amp;gt;&amp;gt;PC2: 目的是 1234::2/64 的数据报文&amp;lt;br&amp;gt;通过接口B
+
+    Note over PC2, PC1: PC2 需要向 PC1 发送数据报文
+
+    PC2-&amp;gt;&amp;gt;路由器: NS(请求 1234::1/64 的 MAC 地址)&amp;lt;br&amp;gt;通过接口B
+    路由器--&amp;gt;&amp;gt;PC2: NA(回应 1234::1/64 的 MAC 地址是接口B的MAC地址)
+    PC2-&amp;gt;&amp;gt;路由器: 目的是 1234::1/64 的数据报文&amp;lt;br&amp;gt;通过接口B
+
+    路由器-&amp;gt;&amp;gt;PC1: 目的是 1234::1/64 的数据报文&amp;lt;br&amp;gt;通过接口A
+&lt;/pre&gt;
+</description>
+        </item>
+        <item>
         <title>DHCPv6 Address Lifecycle</title>
         <link>https://charles-7777.github.io/hugo-stack/p/dhcpv6-address-lifecycle/</link>
         <pubDate>Wed, 24 Dec 2025 11:39:28 +0800</pubDate>

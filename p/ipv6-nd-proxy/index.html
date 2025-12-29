@@ -1,22 +1,24 @@
 <!DOCTYPE html>
 <html lang="zh-cn" dir="ltr">
     <head><meta charset='utf-8'>
-<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="">
-<title>Category: Hugo - </title>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="IPv6同一前缀地址通信 具有相同前缀的主机间互访的时候，不会查找路由表，只会发NS（Neighbor Solicitation）请求，获取目的地址对应的链路层地址，然后使用该链路层地址封装要发送的数据报文\nsequenceDiagram participant PC1 participant Switch as 交换机（透明） participant PC2 note over PC1,PC2: 统一前缀：2001:db8:1::/64 PC1-&gt;&gt;PC2: NS (请求 2001:db8:1::20 的 MAC) PC2-&gt;&gt;PC1: NA (回应自己的 MAC) PC1-&gt;&gt;Switch: 数据帧 {dst MAC = PC2 的 MAC}&lt;br/&gt;IP: src=2001:db8:1::10, dst=2001:db8:1::20 Switch-&gt;&gt;PC2: 转发数据帧 IPv6不同前缀地址通信 PC先查看目标地址，发现不在本地前缀中；查路由表 → 下一跳 = 默认网关。如果已有 默认网关的 MAC 地址， 直接封装帧发送；如果没有 ，先发 NS（Neighbor Solicitation）请求 默认网关的 MAC，要到网关的mac再封装帧发送\nsequenceDiagram participant PC1 participant RouterA as Router (接口A) participant RouterB as Router (接口B) participant PC2 note right of RouterA: 2001:db8:1::1/64 note right of RouterB: 2001:db8:2::1/64 PC1-&gt;&gt;RouterA: NS (请求网关 2001:db8:1::1 的 MAC) RouterA-&gt;&gt;PC1: NA (回应自己的 MAC) PC1-&gt;&gt;RouterA: IP 数据包 {src=2001:db8:1::10, dst=2001:db8:2::20} RouterA-&gt;&gt;RouterB: 路由查找，准备从接口B转发 RouterB-&gt;&gt;PC2: NS (请求 2001:db8:2::20 的 MAC) PC2-&gt;&gt;RouterB: NA RouterB-&gt;&gt;PC2: IP 数据包 {src=2001:db8:1::10, dst=2001:db8:2::20} IPv6 ND proxy 具有相同前缀的主机间互访的时候，不会查找路由表，只会发NS（Neighbor Solicitation）请求，获取目的地址对应的链路层地址，然后使用该链路层地址封装要发送的数据报文。\n">
+<title>IPv6 ND proxy</title>
 
-<link rel='canonical' href='https://charles-7777.github.io/hugo-stack/categories/hugo/'>
+<link rel='canonical' href='https://charles-7777.github.io/hugo-stack/p/ipv6-nd-proxy/'>
 
-<link rel="stylesheet" href="/hugo-stack/scss/style.min.1aedf5438eb6380946ca2f7d86c958e5adeb3c679a95ad190168d7c28b43101d.css"><meta property='og:title' content="Category: Hugo - ">
-<meta property='og:description' content="">
-<meta property='og:url' content='https://charles-7777.github.io/hugo-stack/categories/hugo/'>
+<link rel="stylesheet" href="/hugo-stack/scss/style.min.1aedf5438eb6380946ca2f7d86c958e5adeb3c679a95ad190168d7c28b43101d.css"><meta property='og:title' content="IPv6 ND proxy">
+<meta property='og:description' content="IPv6同一前缀地址通信 具有相同前缀的主机间互访的时候，不会查找路由表，只会发NS（Neighbor Solicitation）请求，获取目的地址对应的链路层地址，然后使用该链路层地址封装要发送的数据报文\nsequenceDiagram participant PC1 participant Switch as 交换机（透明） participant PC2 note over PC1,PC2: 统一前缀：2001:db8:1::/64 PC1-&gt;&gt;PC2: NS (请求 2001:db8:1::20 的 MAC) PC2-&gt;&gt;PC1: NA (回应自己的 MAC) PC1-&gt;&gt;Switch: 数据帧 {dst MAC = PC2 的 MAC}&lt;br/&gt;IP: src=2001:db8:1::10, dst=2001:db8:1::20 Switch-&gt;&gt;PC2: 转发数据帧 IPv6不同前缀地址通信 PC先查看目标地址，发现不在本地前缀中；查路由表 → 下一跳 = 默认网关。如果已有 默认网关的 MAC 地址， 直接封装帧发送；如果没有 ，先发 NS（Neighbor Solicitation）请求 默认网关的 MAC，要到网关的mac再封装帧发送\nsequenceDiagram participant PC1 participant RouterA as Router (接口A) participant RouterB as Router (接口B) participant PC2 note right of RouterA: 2001:db8:1::1/64 note right of RouterB: 2001:db8:2::1/64 PC1-&gt;&gt;RouterA: NS (请求网关 2001:db8:1::1 的 MAC) RouterA-&gt;&gt;PC1: NA (回应自己的 MAC) PC1-&gt;&gt;RouterA: IP 数据包 {src=2001:db8:1::10, dst=2001:db8:2::20} RouterA-&gt;&gt;RouterB: 路由查找，准备从接口B转发 RouterB-&gt;&gt;PC2: NS (请求 2001:db8:2::20 的 MAC) PC2-&gt;&gt;RouterB: NA RouterB-&gt;&gt;PC2: IP 数据包 {src=2001:db8:1::10, dst=2001:db8:2::20} IPv6 ND proxy 具有相同前缀的主机间互访的时候，不会查找路由表，只会发NS（Neighbor Solicitation）请求，获取目的地址对应的链路层地址，然后使用该链路层地址封装要发送的数据报文。\n">
+<meta property='og:url' content='https://charles-7777.github.io/hugo-stack/p/ipv6-nd-proxy/'>
 <meta property='og:site_name' content=''>
-<meta property='og:type' content='website'><meta property='og:updated_time' content=' 2025-12-29T16:42:55&#43;08:00 '/>
-<meta name="twitter:title" content="Category: Hugo - ">
-<meta name="twitter:description" content=""><link rel="alternate" type="application/rss&#43;xml" href="https://charles-7777.github.io/hugo-stack/categories/hugo/index.xml">
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='ipv6' /><meta property='article:published_time' content='2025-12-29T16:28:14&#43;08:00'/><meta property='article:modified_time' content='2025-12-29T16:42:55&#43;08:00'/>
+<meta name="twitter:title" content="IPv6 ND proxy">
+<meta name="twitter:description" content="IPv6同一前缀地址通信 具有相同前缀的主机间互访的时候，不会查找路由表，只会发NS（Neighbor Solicitation）请求，获取目的地址对应的链路层地址，然后使用该链路层地址封装要发送的数据报文\nsequenceDiagram participant PC1 participant Switch as 交换机（透明） participant PC2 note over PC1,PC2: 统一前缀：2001:db8:1::/64 PC1-&gt;&gt;PC2: NS (请求 2001:db8:1::20 的 MAC) PC2-&gt;&gt;PC1: NA (回应自己的 MAC) PC1-&gt;&gt;Switch: 数据帧 {dst MAC = PC2 的 MAC}&lt;br/&gt;IP: src=2001:db8:1::10, dst=2001:db8:1::20 Switch-&gt;&gt;PC2: 转发数据帧 IPv6不同前缀地址通信 PC先查看目标地址，发现不在本地前缀中；查路由表 → 下一跳 = 默认网关。如果已有 默认网关的 MAC 地址， 直接封装帧发送；如果没有 ，先发 NS（Neighbor Solicitation）请求 默认网关的 MAC，要到网关的mac再封装帧发送\nsequenceDiagram participant PC1 participant RouterA as Router (接口A) participant RouterB as Router (接口B) participant PC2 note right of RouterA: 2001:db8:1::1/64 note right of RouterB: 2001:db8:2::1/64 PC1-&gt;&gt;RouterA: NS (请求网关 2001:db8:1::1 的 MAC) RouterA-&gt;&gt;PC1: NA (回应自己的 MAC) PC1-&gt;&gt;RouterA: IP 数据包 {src=2001:db8:1::10, dst=2001:db8:2::20} RouterA-&gt;&gt;RouterB: 路由查找，准备从接口B转发 RouterB-&gt;&gt;PC2: NS (请求 2001:db8:2::20 的 MAC) PC2-&gt;&gt;RouterB: NA RouterB-&gt;&gt;PC2: IP 数据包 {src=2001:db8:1::10, dst=2001:db8:2::20} IPv6 ND proxy 具有相同前缀的主机间互访的时候，不会查找路由表，只会发NS（Neighbor Solicitation）请求，获取目的地址对应的链路层地址，然后使用该链路层地址封装要发送的数据报文。\n">
     <link rel="shortcut icon" href="/hugo-stack/favicon2.ico" />
 
     </head>
-    <body class="">
+    <body class="
+    article-page
+    ">
     <script>
         (function() {
             const colorSchemeKey = 'StackColorScheme';
@@ -276,61 +278,10 @@
     <aside class="sidebar right-sidebar sticky">
         
             
-                <form action="/hugo-stack/search/" class="search-form widget" >
-        <p>
-            <label>搜索</label>
-            <input name="keyword" required placeholder="输入关键词..." />
-        
-            <button title="搜索">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-  <path stroke="none" d="M0 0h24v24H0z"/>
-  <circle cx="10" cy="10" r="7" />
-  <line x1="21" y1="21" x2="15" y2="15" />
-</svg>
-
-
-
-            </button>
-        </p>
-    </form>
-            
-        
-            
-                <section class="widget archives">
+                
+    <section class="widget archives">
         <div class="widget-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-infinity" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-  <path stroke="none" d="M0 0h24v24H0z"/>
-  <path d="M9.828 9.172a4 4 0 1 0 0 5.656 a10 10 0 0 0 2.172 -2.828a10 10 0 0 1 2.172 -2.828 a4 4 0 1 1 0 5.656a10 10 0 0 1 -2.172 -2.828a10 10 0 0 0 -2.172 -2.828" />
-</svg>
-
-
-
-        </div>
-        <h2 class="widget-title section-title">归档</h2>
-
-        
-        
-        
-        
-        
-        <div class="widget-archive--list">
-            <div class="archives-year">
-                    <a href="/hugo-stack/archives/#2025">
-                        
-                            <span class="year">2025</span>
-                            <span class="count">23</span>
-                        
-                    </a> 
-                </div>
-            
-        </div>
-    </section>
-            
-        
-            
-                <section class="widget tagCloud">
-    <div class="widget-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
   <path stroke="none" d="M0 0h24v24H0z"/>
   <line x1="5" y1="9" x2="19" y2="9" />
   <line x1="5" y1="15" x2="19" y2="15" />
@@ -340,169 +291,249 @@
 
 
 
-    </div>
-    <h2 class="widget-title section-title">分类</h2>
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ol>
+    <li><a href="#ipv6同一前缀地址通信">IPv6同一前缀地址通信</a></li>
+    <li><a href="#ipv6不同前缀地址通信">IPv6不同前缀地址通信</a></li>
+    <li><a href="#ipv6-nd-proxy">IPv6 ND proxy</a></li>
+  </ol>
+</nav>
+        </div>
+    </section>
 
-    <div class="tagCloud-tags">
-        
-            <a href="/hugo-stack/categories/linux/" class="font_size_6">
-                Linux
-            </a>
-        
-            <a href="/hugo-stack/categories/%E7%AC%94%E8%AE%B0/" class="font_size_4">
-                笔记
-            </a>
-        
-            <a href="/hugo-stack/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" class="font_size_3">
-                计算机网络
-            </a>
-        
-            <a href="/hugo-stack/categories/hugo/" class="font_size_2">
-                Hugo
-            </a>
-        
-            <a href="/hugo-stack/categories/ai/" class="font_size_1">
-                AI
-            </a>
-        
-            <a href="/hugo-stack/categories/c/" class="font_size_1">
-                C
-            </a>
-        
-            <a href="/hugo-stack/categories/network/" class="font_size_1">
-                Network
-            </a>
-        
-            <a href="/hugo-stack/categories/openwrt/" class="font_size_1">
-                Openwrt
-            </a>
-        
-            <a href="/hugo-stack/categories/vpn/" class="font_size_1">
-                Vpn
-            </a>
-        
-            <a href="/hugo-stack/categories/wifi/" class="font_size_1">
-                Wifi
-            </a>
-        
-    </div>
-</section>
-
-            
-        
-            
-                <section class="widget tagCloud">
-    <div class="widget-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-tag" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-  <path stroke="none" d="M0 0h24v24H0z"/>
-  <path d="M11 3L20 12a1.5 1.5 0 0 1 0 2L14 20a1.5 1.5 0 0 1 -2 0L3 11v-4a4 4 0 0 1 4 -4h4" />
-  <circle cx="9" cy="9" r="2" />
-</svg>
-
-
-
-    </div>
-    <h2 class="widget-title section-title">标签云</h2>
-
-    <div class="tagCloud-tags">
-        
-            <a href="/hugo-stack/tags/linux/" class="font_size_5">
-                Linux<span class="tagCloud-count-main"> [5]</span>
-            </a>
-        
-            <a href="/hugo-stack/tags/ipv6/" class="font_size_3">
-                Ipv6<span class="tagCloud-count-main"> [3]</span>
-            </a>
-        
-            <a href="/hugo-stack/tags/hugo/" class="font_size_2">
-                Hugo<span class="tagCloud-count-main"> [2]</span>
-            </a>
-        
-            <a href="/hugo-stack/tags/ai/" class="font_size_1">
-                AI<span class="tagCloud-count-main"> [1]</span>
-            </a>
-        
-            <a href="/hugo-stack/tags/c/" class="font_size_1">
-                C<span class="tagCloud-count-main"> [1]</span>
-            </a>
-        
-            <a href="/hugo-stack/tags/cert/" class="font_size_1">
-                Cert<span class="tagCloud-count-main"> [1]</span>
-            </a>
-        
-            <a href="/hugo-stack/tags/imagebed/" class="font_size_1">
-                Imagebed<span class="tagCloud-count-main"> [1]</span>
-            </a>
-        
-            <a href="/hugo-stack/tags/k-means/" class="font_size_1">
-                K-Means<span class="tagCloud-count-main"> [1]</span>
-            </a>
-        
-            <a href="/hugo-stack/tags/lxc/" class="font_size_1">
-                Lxc<span class="tagCloud-count-main"> [1]</span>
-            </a>
-        
-            <a href="/hugo-stack/tags/openwrt/" class="font_size_1">
-                Openwrt<span class="tagCloud-count-main"> [1]</span>
-            </a>
-        
-    </div>
-
-</section>
             
         
     </aside>
 
 
             <main class="main full-width">
-    <header>
-        <h3 class="section-title">
-            
-                Categories
-            
-        </h3>
+    <article class="main-article">
+    <header class="article-header">
 
-        <div class="section-card">
-            <div class="section-details">
-                <h3 class="section-count">2 个页面</h3>
-                <h1 class="section-term">Hugo</h1>
-                
-            </div>
-        </div>
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/hugo-stack/categories/network/" >
+                Network
+            </a>
+        
     </header>
     
-    <section class="article-list--compact">
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/hugo-stack/p/ipv6-nd-proxy/">IPv6 ND proxy</a>
+        </h2>
+    
         
-            <article>
-    <a href="/hugo-stack/p/github--picgo-%E6%90%AD%E5%BB%BA%E5%9B%BE%E5%BA%8A/">
-        <div class="article-details">
-            <h2 class="article-title">Github &#43; PicGo 搭建图床</h2>
-            <footer class="article-time">
-                <time datetime='2025-06-12T19:33:46&#43;08:00'>2025-06-12 19:33</time>
-            </footer>
-        </div>
-    </a>
-</article>
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
         
-            <article>
-    <a href="/hugo-stack/p/hugo-stack-blog-%E6%90%AD%E5%BB%BA%E8%AE%B0%E5%BD%95/">
-        <div class="article-details">
-            <h2 class="article-title">hugo stack blog 搭建记录</h2>
-            <footer class="article-time">
-                <time datetime='2025-06-09T00:00:00Z'>2025-06-09 00:00</time>
-            </footer>
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">2025-12-29 16:28</time>
+            </div>
+        <div>
+            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-edit"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg>
+            <time class="article-lastmod">2025-12-29 16:42</time>
         </div>
-            <div class="article-image">
-                
-                    <img src="https://cdn.jsdelivr.net/gh/charles-7777/ImageBed@main/blog/hugo.png" loading="lazy" alt="Featured image of post hugo stack blog 搭建记录" />
-                
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 1 分钟
+                </time>
             </div>
         
-    </a>
-</article>
+
+        
+            <div>
+                <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-file-word"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 12l1.333 5l1.667 -4l1.667 4l1.333 -5" /></svg>
+                <time class="article-words">
+                    183 字
+                </time>
+            </div>
+        
+
+
+    </footer>
+    
+
+    
+
+
+</div>
+
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h2 id="ipv6同一前缀地址通信">IPv6同一前缀地址通信
+</h2><p>具有相同前缀的主机间互访的时候，不会查找路由表，只会发<strong>NS</strong>（Neighbor Solicitation）请求，获取目的地址对应的链路层地址，然后使用该链路层地址封装要发送的数据报文</p>
+<pre class="mermaid">
+  sequenceDiagram
+    participant PC1
+    participant Switch as 交换机（透明）
+    participant PC2
+
+    note over PC1,PC2: 统一前缀：2001:db8:1::/64
+
+    PC1-&gt;&gt;PC2: NS (请求 2001:db8:1::20 的 MAC)
+    PC2-&gt;&gt;PC1: NA (回应自己的 MAC)
+
+    PC1-&gt;&gt;Switch: 数据帧 {dst MAC = PC2 的 MAC}&lt;br/&gt;IP: src=2001:db8:1::10, dst=2001:db8:1::20
+    Switch-&gt;&gt;PC2: 转发数据帧
+</pre>
+<h2 id="ipv6不同前缀地址通信">IPv6不同前缀地址通信
+</h2><p>PC先查看目标地址，发现不在本地前缀中；查路由表 → 下一跳 = 默认网关。如果已有 默认网关的 MAC 地址， 直接封装帧发送；如果没有 ，先发 NS（Neighbor Solicitation）请求 默认网关的 MAC，要到网关的mac再封装帧发送</p>
+<pre class="mermaid">
+  sequenceDiagram
+    participant PC1
+    participant RouterA as Router (接口A)
+    participant RouterB as Router (接口B)
+    participant PC2
+
+    note right of RouterA: 2001:db8:1::1/64
+    note right of RouterB: 2001:db8:2::1/64
+
+    PC1-&gt;&gt;RouterA: NS (请求网关 2001:db8:1::1 的 MAC)
+    RouterA-&gt;&gt;PC1: NA (回应自己的 MAC)
+
+    PC1-&gt;&gt;RouterA: IP 数据包 {src=2001:db8:1::10, dst=2001:db8:2::20}
+
+    RouterA-&gt;&gt;RouterB: 路由查找，准备从接口B转发
+
+    RouterB-&gt;&gt;PC2: NS (请求 2001:db8:2::20 的 MAC)
+    PC2-&gt;&gt;RouterB: NA
+
+    RouterB-&gt;&gt;PC2: IP 数据包 {src=2001:db8:1::10, dst=2001:db8:2::20}
+</pre>
+<h2 id="ipv6-nd-proxy">IPv6 ND proxy
+</h2><p>具有相同前缀的主机间互访的时候，不会查找路由表，只会发<strong>NS</strong>（Neighbor Solicitation）请求，获取目的地址对应的链路层地址，然后使用该链路层地址封装要发送的数据报文。</p>
+<p>在实际组网中，具有相同前缀的主机可能不在一个网络广播域当中，这种情况下NS（Neighbor Solicitation）报文不能发送到目的主机，导致主机间不能互访。</p>
+<p>为了避免此问题，可以开启路由器的ND Proxy功能，用于替代目的主机回应NA（Neighbor Advertise）报文，报文中会携带路由器的链路层地址。采用这种方式，两个主机可以通过路由器设备完成互访</p>
+<pre class="mermaid">
+  sequenceDiagram
+    participant PC1
+    participant 路由器 as A-路由器-B
+    participant PC2
+
+    Note over PC1, PC2: PC1 需要向 PC2 发送数据报文
+
+    PC1-&gt;&gt;路由器: NS(请求 1234::2/64 的 MAC 地址)&lt;br&gt;通过接口A
+    路由器--&gt;&gt;PC1: NA(回应 1234::2/64 的 MAC 地址是接口A的MAC地址)
+    PC1-&gt;&gt;路由器: 目的是 1234::2/64 的数据报文&lt;br&gt;通过接口A
+
+
+    路由器-&gt;&gt;PC2: 目的是 1234::2/64 的数据报文&lt;br&gt;通过接口B
+
+    Note over PC2, PC1: PC2 需要向 PC1 发送数据报文
+
+    PC2-&gt;&gt;路由器: NS(请求 1234::1/64 的 MAC 地址)&lt;br&gt;通过接口B
+    路由器--&gt;&gt;PC2: NA(回应 1234::1/64 的 MAC 地址是接口B的MAC地址)
+    PC2-&gt;&gt;路由器: 目的是 1234::1/64 的数据报文&lt;br&gt;通过接口B
+
+    路由器-&gt;&gt;PC1: 目的是 1234::1/64 的数据报文&lt;br&gt;通过接口A
+</pre>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/hugo-stack/tags/ipv6/">Ipv6</a>
         
     </section>
-<footer class="site-footer">
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    
+
+    
+</footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI&#43;WdtXRGWt2kTvGFasHpSy3SV"crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG&#43;vnGctmUb0ZY0l8"crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"integrity="sha384-&#43;VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4&#43;/RRE05"crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+	const mainArticleElement = document.querySelector(".main-article");
+        renderMathInElement(mainArticleElement, {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ],
+            ignoredClasses: ["gist"]
+        });})
+</script>
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
     <section class="copyright">
         &copy; 
         
@@ -515,6 +546,84 @@
     </section>
 </footer>
 
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
 
             </main>
         </div>
@@ -807,3 +916,8 @@
 
     </body>
 </html>
+
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true ,look: 'handDrawn'});
+    </script>
