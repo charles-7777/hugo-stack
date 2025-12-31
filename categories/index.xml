@@ -7,7 +7,15 @@
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
         <copyright>Charles Lv</copyright>
-        <lastBuildDate>Mon, 29 Dec 2025 17:32:15 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/categories/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Wed, 31 Dec 2025 18:14:30 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/categories/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Math</title>
+        <link>https://charles-7777.github.io/hugo-stack/categories/math/</link>
+        <pubDate>Wed, 31 Dec 2025 15:17:20 +0800</pubDate>
+        
+        <guid>https://charles-7777.github.io/hugo-stack/categories/math/</guid>
+        <description></description>
+        </item>
+        <item>
         <title>Network</title>
         <link>https://charles-7777.github.io/hugo-stack/categories/network/</link>
         <pubDate>Mon, 29 Dec 2025 16:28:14 +0800</pubDate>

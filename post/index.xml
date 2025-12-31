@@ -7,7 +7,122 @@
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
         <copyright>Charles Lv</copyright>
-        <lastBuildDate>Mon, 29 Dec 2025 17:32:15 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/post/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Wed, 31 Dec 2025 18:14:30 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/post/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>样本方差</title>
+        <link>https://charles-7777.github.io/hugo-stack/p/%E6%A0%B7%E6%9C%AC%E6%96%B9%E5%B7%AE/</link>
+        <pubDate>Wed, 31 Dec 2025 15:17:20 +0800</pubDate>
+        
+        <guid>https://charles-7777.github.io/hugo-stack/p/%E6%A0%B7%E6%9C%AC%E6%96%B9%E5%B7%AE/</guid>
+        <description>&lt;h2 id=&#34;均值与期望&#34;&gt;均值与期望
+&lt;/h2&gt;&lt;h3 id=&#34;离散随机变量&#34;&gt;离散随机变量
+&lt;/h3&gt;&lt;h3 id=&#34;均值期望&#34;&gt;均值（期望）
+&lt;/h3&gt;&lt;p&gt;设离散随机变量 $X$ 的概率分布函数为 $P(X = x_i) = p_i$，则其&lt;strong&gt;数学期望&lt;/strong&gt;（均值）定义为：
+&lt;/p&gt;
+$$
+\mu = E[X] = \sum_{i=1}^{\infty} x_i p_i
+$$&lt;h3 id=&#34;方差&#34;&gt;方差
+&lt;/h3&gt;&lt;p&gt;离散随机变量 $X$ 的&lt;strong&gt;方差&lt;/strong&gt;定义为：
+&lt;/p&gt;
+$$
+\sigma^2 = Var(X) = E[(X - E[X])^2] = \sum_{i} (x_i - E[X])^2 p_i
+$$&lt;p&gt;
+也可等价表示为：
+&lt;/p&gt;
+$$
+Var(X) = E[X^2] - (E[X])^2
+$$&lt;hr&gt;
+&lt;h3 id=&#34;连续随机变量&#34;&gt;连续随机变量
+&lt;/h3&gt;&lt;h3 id=&#34;均值期望-1&#34;&gt;均值（期望）
+&lt;/h3&gt;&lt;p&gt;设连续随机变量 $X$ 的概率密度函数为 $f(x)$，则其&lt;strong&gt;期望&lt;/strong&gt;为：
+&lt;/p&gt;
+$$
+\mu = E[X] = \int_{-\infty}^{\infty} x f(x) \, dx
+$$&lt;h3 id=&#34;方差-1&#34;&gt;方差
+&lt;/h3&gt;&lt;p&gt;连续随机变量 $X$ 的&lt;strong&gt;方差&lt;/strong&gt;为：
+&lt;/p&gt;
+$$
+\sigma^2 = Var(X) = E[(X - E[X])^2] = \int_{-\infty}^{\infty} (x - E[X])^2 f(x) \, dx
+$$&lt;p&gt;
+同样有简化公式：
+&lt;/p&gt;
+$$
+Var(X) = E[X^2] - (E[X])^2
+$$&lt;hr&gt;
+&lt;h3 id=&#34;样本方差&#34;&gt;样本方差
+&lt;/h3&gt;&lt;p&gt;给定一个容量为 $n$ 的样本 $x_1, x_2, \dots, x_n$，其&lt;strong&gt;样本均值&lt;/strong&gt;为：
+&lt;/p&gt;
+$$
+\bar{X} = \frac{1}{n} \sum_{i=1}^{n} x_i
+$$&lt;p&gt;
+&lt;strong&gt;样本方差&lt;/strong&gt;（无偏估计）定义为：
+&lt;/p&gt;
+$$
+s^2 = \frac{1}{n - 1} \sum_{i=1}^{n} (x_i - \bar{X})^2
+$$&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;注&lt;/strong&gt;：分母使用 $n-1$（而非 $n$）是为了使 $s^2$ 成为总体方差 $\sigma^2$ 的无偏估计量，这一修正称为 &lt;strong&gt;贝塞尔修正&lt;/strong&gt;（Bessel&amp;rsquo;s correction）。&lt;/p&gt;&lt;/blockquote&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;无偏估计简介&#34;&gt;无偏估计简介
+&lt;/h2&gt;&lt;p&gt;在统计学中，我们常常无法获取整个总体的数据，只能通过&lt;strong&gt;样本&lt;/strong&gt;来推断总体的某些特征（如均值、方差等）。用于推断总体参数的样本函数称为&lt;strong&gt;估计量&lt;/strong&gt;。一个重要的评价标准是该估计量是否“&lt;strong&gt;无偏&lt;/strong&gt;”。&lt;/p&gt;
+&lt;p&gt;设 $\theta$ 是某个总体参数（例如总体均值 $\mu$ 或总体方差 $\sigma^2$），$\hat{\theta}$ 是基于样本构造的估计量。如果满足：
+&lt;/p&gt;
+$$
+E[\hat{\theta}] = \theta
+$$&lt;p&gt;
+则称 $\hat{\theta}$ 是 $\theta$ 的&lt;strong&gt;无偏估计量&lt;/strong&gt;（unbiased estimator）。&lt;/p&gt;
+&lt;p&gt;换句话说：&lt;strong&gt;无偏估计的期望等于它所要估计的真实参数值&lt;/strong&gt;。这意味着，如果我们反复从总体中抽样并计算该估计量，其平均值会趋近于真实参数。&lt;/p&gt;
+&lt;h3 id=&#34;无偏估计常见例子&#34;&gt;无偏估计常见例子
+&lt;/h3&gt;&lt;h4 id=&#34;样本均值是总体均值的无偏估计&#34;&gt;样本均值是总体均值的无偏估计
+&lt;/h4&gt;&lt;p&gt;设总体均值为 $\mu$，样本为 $x_1, x_2, \dots, x_n$，样本均值为：
+&lt;/p&gt;
+$$
+\bar{x} = \frac{1}{n} \sum_{i=1}^{n} x_i
+$$&lt;p&gt;
+可以证明：
+&lt;/p&gt;
+$$
+E[\bar{x}] = E[\frac{1}{n} \sum_{i=1}^{n} x_i] =\frac{1}{n} \sum_{i=1}^{n} E[x_i] = \frac{1}{n} n \mu = \mu
+$$&lt;p&gt;
+因此，$\bar{x}$ 是 $\mu$ 的无偏估计。&lt;/p&gt;
+&lt;h4 id=&#34;样本方差是总体方差的无偏估计&#34;&gt;样本方差是总体方差的无偏估计
+&lt;/h4&gt;&lt;p&gt;总体方差定义为 $\sigma^2 = E[(X - \mu)^2]$。若使用：
+&lt;/p&gt;
+$$
+s^2 = \frac{1}{n - 1} \sum_{i=1}^{n} (x_i - \bar{x})^2
+$$&lt;p&gt;
+则有：
+&lt;/p&gt;
+$$
+E[s^2] = \sigma^2
+$$&lt;p&gt;
+所以 $s^2$ 是 $\sigma^2$ 的&lt;strong&gt;无偏估计&lt;/strong&gt;。&lt;/p&gt;
+&lt;h2 id=&#34;为什么s2是总体方差的无偏估计&#34;&gt;为什么$s^2$是总体方差的无偏估计
+&lt;/h2&gt;&lt;p&gt;如果已知随机变量 $ X $ 的期望为 $ \mu $，那么可以如下计算方差 $ \sigma^2 $：
+&lt;/p&gt;
+$$
+\sigma^2 = E[(X - \mu)^2]
+$$&lt;p&gt;上面的式子需要知道 $ X $ 的具体分布是什么（在现实应用中往往不知道准确分布），计算起来也比较复杂。&lt;/p&gt;
+&lt;p&gt;所以实践中常常采样之后，用下面这个 $ S^2 $ 来近似 $ \sigma^2 $：&lt;/p&gt;
+$$
+S^2 = \frac{1}{n} \sum_{i=1}^{n} (x_i - \mu)^2
+$$&lt;p&gt;其实现实中，往往连 $ X $ 的期望 $ \mu $ 也不清楚，只知道样本的均值：&lt;/p&gt;
+$$
+\bar{X} = \frac{1}{n} \sum_{i=1}^{n} x_i
+$$&lt;p&gt;那可以这么来计算 $ s^2 $：&lt;/p&gt;
+$$
+s^2 = \frac{1}{n - 1} \sum_{i=1}^{n} (x_i - \bar{X})^2
+$$$$
+\begin{aligned}
+E(s^2) &amp;= E\left(\frac{1}{n-1} \sum_{i=1}^{n} (x_i - \bar{X})^2\right) \\
+&amp;= E\left[\frac{1}{n-1} \sum_{i=1}^{n} (x_i)^2 - \frac{2}{n-1} \sum_{i=1}^{n} (x_i)(\bar{x}) + \frac{1}{n-1} \sum_{i=1}^{n} (\bar{X})^2\right] \\
+&amp;= E\left[\frac{1}{n-1} \sum_{i=1}^{n} \left\{ (x_i)^2 - 2(\bar{X})^2 + (\bar{X})^2 \right\} \right] \\
+&amp;= E\left[\frac{1}{n-1} \sum_{i=1}^{n} \left\{ (x_i)^2 - (\bar{X})^2 \right\} \right] \\
+&amp;= E\left[\frac{1}{n-1} \sum_{i=1}^{n} \left\{ (x_i)^2 - E[(\bar{X})^2]\right\} \right] \\
+&amp;= \frac{1}{n-1} \left\{ E[(x_i)^2] - E[(\bar{x})^2] \right\} \\
+&amp;= \frac{1}{n-1} \left\{ D[(x_i)] + (E[x_i])^2 - (D[\bar{X}] + (E[\bar{X}])^2) \right\} \\
+\end{aligned}
+$$</description>
+        </item>
+        <item>
         <title>IPv6 ND proxy</title>
         <link>https://charles-7777.github.io/hugo-stack/p/ipv6-nd-proxy/</link>
         <pubDate>Mon, 29 Dec 2025 16:28:14 +0800</pubDate>
