@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="I/O 模型概览 一个输入操作通常包括两个阶段：\n等待数据准备好 从内核向进程复制数据 对于一个套接字上的输入操作，第一步通常涉及等待数据从网络中到达。当所等待数据到达时，它被复制到内核中的某个缓冲区。第二步就是把数据从内核缓冲区复制到应用进程缓冲区\nUnix 有五种 I/O 模型：\n阻塞 I/O：调用阻塞到数据复制完成。 非阻塞 I/O：立即返回，需要轮询。 I/O 复用：select/poll/epoll 等待多个 fd。 信号驱动 I/O：数据就绪时发 SIGIO，再读取。 异步 I/O：提交请求后由内核完成并通知。 实践侧重：\n阻塞模型简单，适合连接数少且延迟不敏感的 CLI/工具脚本； 非阻塞模型常与事件循环/定时器配合，否则轮询会耗 CPU； I/O 复用是高并发网络服务的基础； 信号驱动在 Linux 上使用较少，更多见于嵌入式/老项目； 异步 I/O 需要平台支持（如 Linux AIO/io_uring、Windows IOCP）。 阻塞 I/O 应用进程被阻塞，直到数据从内核缓冲区复制到应用进程缓冲区中才返回。 应该注意到，在阻塞的过程中，其它应用进程还可以执行，因此阻塞不意味着整个操作系统都被阻塞。因为其它应用进程还可以执行，所以不消耗 CPU 时间，这种模型的 CPU 利用率会比较高。 例如，recvfrom() 用于接收 Socket 传来的数据，并复制到应用进程的缓冲区 buf 中。这里把 recvfrom() 当成系统调用。\n1 ssize_t recvfrom(int sockfd, void *buf, size_t len, int flags, struct sockaddr *src_addr, socklen_t *addrlen); sequenceDiagram participant App as 应用进程 participant Kernel as 内核 App-&gt;&gt;Kernel: recvfrom() Note left of App: 调用recvform()进程阻塞 Note right of Kernel: 等待数据到达并存入内核缓冲 Kernel--&gt;&gt;App: 数据复制完成后返回 特点：实现简单，CPU 利用率高（阻塞期间不占用 CPU），但吞吐受限。\n">
+<title>Socket I/O</title>
+
+<link rel='canonical' href='https://charles-7777.github.io/hugo-stack/p/socket-i/o/'>
+
+<link rel="stylesheet" href="/hugo-stack/scss/style.min.1aedf5438eb6380946ca2f7d86c958e5adeb3c679a95ad190168d7c28b43101d.css"><meta property='og:title' content="Socket I/O">
+<meta property='og:description' content="I/O 模型概览 一个输入操作通常包括两个阶段：\n等待数据准备好 从内核向进程复制数据 对于一个套接字上的输入操作，第一步通常涉及等待数据从网络中到达。当所等待数据到达时，它被复制到内核中的某个缓冲区。第二步就是把数据从内核缓冲区复制到应用进程缓冲区\nUnix 有五种 I/O 模型：\n阻塞 I/O：调用阻塞到数据复制完成。 非阻塞 I/O：立即返回，需要轮询。 I/O 复用：select/poll/epoll 等待多个 fd。 信号驱动 I/O：数据就绪时发 SIGIO，再读取。 异步 I/O：提交请求后由内核完成并通知。 实践侧重：\n阻塞模型简单，适合连接数少且延迟不敏感的 CLI/工具脚本； 非阻塞模型常与事件循环/定时器配合，否则轮询会耗 CPU； I/O 复用是高并发网络服务的基础； 信号驱动在 Linux 上使用较少，更多见于嵌入式/老项目； 异步 I/O 需要平台支持（如 Linux AIO/io_uring、Windows IOCP）。 阻塞 I/O 应用进程被阻塞，直到数据从内核缓冲区复制到应用进程缓冲区中才返回。 应该注意到，在阻塞的过程中，其它应用进程还可以执行，因此阻塞不意味着整个操作系统都被阻塞。因为其它应用进程还可以执行，所以不消耗 CPU 时间，这种模型的 CPU 利用率会比较高。 例如，recvfrom() 用于接收 Socket 传来的数据，并复制到应用进程的缓冲区 buf 中。这里把 recvfrom() 当成系统调用。\n1 ssize_t recvfrom(int sockfd, void *buf, size_t len, int flags, struct sockaddr *src_addr, socklen_t *addrlen); sequenceDiagram participant App as 应用进程 participant Kernel as 内核 App-&gt;&gt;Kernel: recvfrom() Note left of App: 调用recvform()进程阻塞 Note right of Kernel: 等待数据到达并存入内核缓冲 Kernel--&gt;&gt;App: 数据复制完成后返回 特点：实现简单，CPU 利用率高（阻塞期间不占用 CPU），但吞吐受限。\n">
+<meta property='og:url' content='https://charles-7777.github.io/hugo-stack/p/socket-i/o/'>
+<meta property='og:site_name' content=''>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='linux' /><meta property='article:published_time' content='2026-01-08T15:51:28&#43;08:00'/><meta property='article:modified_time' content='2026-01-09T14:20:11&#43;08:00'/>
+<meta name="twitter:title" content="Socket I/O">
+<meta name="twitter:description" content="I/O 模型概览 一个输入操作通常包括两个阶段：\n等待数据准备好 从内核向进程复制数据 对于一个套接字上的输入操作，第一步通常涉及等待数据从网络中到达。当所等待数据到达时，它被复制到内核中的某个缓冲区。第二步就是把数据从内核缓冲区复制到应用进程缓冲区\nUnix 有五种 I/O 模型：\n阻塞 I/O：调用阻塞到数据复制完成。 非阻塞 I/O：立即返回，需要轮询。 I/O 复用：select/poll/epoll 等待多个 fd。 信号驱动 I/O：数据就绪时发 SIGIO，再读取。 异步 I/O：提交请求后由内核完成并通知。 实践侧重：\n阻塞模型简单，适合连接数少且延迟不敏感的 CLI/工具脚本； 非阻塞模型常与事件循环/定时器配合，否则轮询会耗 CPU； I/O 复用是高并发网络服务的基础； 信号驱动在 Linux 上使用较少，更多见于嵌入式/老项目； 异步 I/O 需要平台支持（如 Linux AIO/io_uring、Windows IOCP）。 阻塞 I/O 应用进程被阻塞，直到数据从内核缓冲区复制到应用进程缓冲区中才返回。 应该注意到，在阻塞的过程中，其它应用进程还可以执行，因此阻塞不意味着整个操作系统都被阻塞。因为其它应用进程还可以执行，所以不消耗 CPU 时间，这种模型的 CPU 利用率会比较高。 例如，recvfrom() 用于接收 Socket 传来的数据，并复制到应用进程的缓冲区 buf 中。这里把 recvfrom() 当成系统调用。\n1 ssize_t recvfrom(int sockfd, void *buf, size_t len, int flags, struct sockaddr *src_addr, socklen_t *addrlen); sequenceDiagram participant App as 应用进程 participant Kernel as 内核 App-&gt;&gt;Kernel: recvfrom() Note left of App: 调用recvform()进程阻塞 Note right of Kernel: 等待数据到达并存入内核缓冲 Kernel--&gt;&gt;App: 数据复制完成后返回 特点：实现简单，CPU 利用率高（阻塞期间不占用 CPU），但吞吐受限。\n">
+    <link rel="shortcut icon" href="/hugo-stack/favicon2.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/hugo-stack/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/hugo-stack/img/oi_compressed_hu_9c5e2ca2fe891746.gif" width="300"
+                            height="303" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/hugo-stack"></a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://www.bilibili.com/'
+                        target="_blank"
+                        title="bilibili"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-brand-bilibili"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 10a4 4 0 0 1 4 -4h10a4 4 0 0 1 4 4v6a4 4 0 0 1 -4 4h-10a4 4 0 0 1 -4 -4v-6z" /><path d="M8 3l2 3" /><path d="M16 3l-2 3" /><path d="M9 13v-2" /><path d="M15 11v2" /></svg>
+                        
+                    </a>
+                </li>
+            
+                <li>
+                    <a 
+                        href='https://www.douyin.com/'
+                        target="_blank"
+                        title="douyin"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-brand-tiktok"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M21 7.917v4.034a9.948 9.948 0 0 1 -5 -1.951v4.5a6.5 6.5 0 1 1 -8 -6.326v4.326a2.5 2.5 0 1 0 4 2v-11.5h4.083a6.005 6.005 0 0 0 4.917 4.917z" /></svg>
+                        
+                    </a>
+                </li>
+            
+                <li>
+                    <a 
+                        href='https://github.com/charles-7777/hugo-blog'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/hugo-stack/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                
+                <span>主页</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/archives/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                
+                <span>归档</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/cats-tags/' >
+                
+                
+                
+                    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-tags"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 8v4.172a2 2 0 0 0 .586 1.414l5.71 5.71a2.41 2.41 0 0 0 3.408 0l3.592 -3.592a2.41 2.41 0 0 0 0 -3.408l-5.71 -5.71a2 2 0 0 0 -1.414 -.586h-4.172a2 2 0 0 0 -2 2z" /><path d="M18 19l1.592 -1.592a4.82 4.82 0 0 0 0 -6.816l-4.592 -4.592" /><path d="M7 10h-.01" /></svg>
+                
+                <span>Cats&amp;Tags</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/%E9%93%BE%E6%8E%A5/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                
+                <span>链接</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/search/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+                
+                <span>搜索</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/%E5%85%B3%E4%BA%8E/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                
+                <span>关于</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/hugo-stack/updatelog/' >
+                
+                
+                
+                    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-logs"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 12h.01" /><path d="M4 6h.01" /><path d="M4 18h.01" /><path d="M8 18h2" /><path d="M8 12h2" /><path d="M8 6h2" /><path d="M14 6h6" /><path d="M14 12h6" /><path d="M14 18h6" /></svg>
+                
+                <span>更新日志</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>暗色模式</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ol>
+    <li><a href="#io-模型概览">I/O 模型概览</a>
+      <ol>
+        <li><a href="#阻塞-io">阻塞 I/O</a></li>
+        <li><a href="#非阻塞-io">非阻塞 I/O</a></li>
+        <li><a href="#io-复用事件驱动">I/O 复用（事件驱动）</a></li>
+        <li><a href="#信号驱动-io">信号驱动 I/O</a></li>
+        <li><a href="#异步-ioaio">异步 I/O（AIO）</a></li>
+        <li><a href="#五大模型对比">五大模型对比</a></li>
+      </ol>
+    </li>
+    <li><a href="#io-复用详解">I/O 复用详解</a>
+      <ol>
+        <li><a href="#select">select</a></li>
+        <li><a href="#poll">poll</a></li>
+        <li><a href="#select-vs-poll">select vs poll</a></li>
+        <li><a href="#epoll">epoll</a>
+          <ol>
+            <li><a href="#epoll的工作模式">epoll的工作模式</a></li>
+          </ol>
+        </li>
+        <li><a href="#select-vs-poll-vs-epoll">select vs poll vs epoll</a></li>
+      </ol>
+    </li>
+  </ol>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/hugo-stack/categories/linux/" >
+                Linux
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/hugo-stack/p/socket-i/o/">Socket I/O</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">2026-01-08 15:51</time>
+            </div>
+        <div>
+            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-edit"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg>
+            <time class="article-lastmod">2026-01-09 14:20</time>
+        </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 6 分钟
+                </time>
+            </div>
+        
+
+        
+            <div>
+                <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-file-word"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 12l1.333 5l1.667 -4l1.667 4l1.333 -5" /></svg>
+                <time class="article-words">
+                    1264 字
+                </time>
+            </div>
+        
+
+
+    </footer>
+    
+
+    
+
+
+</div>
+
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h2 id="io-模型概览">I/O 模型概览
+</h2><p>一个输入操作通常包括两个阶段：</p>
+<ul>
+<li>等待数据准备好</li>
+<li>从内核向进程复制数据</li>
+</ul>
+<p>对于一个套接字上的输入操作，第一步通常涉及等待数据从网络中到达。当所等待数据到达时，它被复制到内核中的某个缓冲区。第二步就是把数据从内核缓冲区复制到应用进程缓冲区</p>
+<p>Unix 有五种 I/O 模型：</p>
+<ul>
+<li>阻塞 I/O：调用阻塞到数据复制完成。</li>
+<li>非阻塞 I/O：立即返回，需要轮询。</li>
+<li>I/O 复用：<code>select/poll/epoll</code> 等待多个 fd。</li>
+<li>信号驱动 I/O：数据就绪时发 <code>SIGIO</code>，再读取。</li>
+<li>异步 I/O：提交请求后由内核完成并通知。</li>
+</ul>
+<p>实践侧重：</p>
+<ul>
+<li>阻塞模型简单，适合连接数少且延迟不敏感的 CLI/工具脚本；</li>
+<li>非阻塞模型常与事件循环/定时器配合，否则轮询会耗 CPU；</li>
+<li>I/O 复用是高并发网络服务的基础；</li>
+<li>信号驱动在 Linux 上使用较少，更多见于嵌入式/老项目；</li>
+<li>异步 I/O 需要平台支持（如 Linux AIO/io_uring、Windows IOCP）。</li>
+</ul>
+<h3 id="阻塞-io">阻塞 I/O
+</h3><p>应用进程被阻塞，直到数据从内核缓冲区复制到应用进程缓冲区中才返回。
+应该注意到，在阻塞的过程中，其它应用进程还可以执行，因此阻塞不意味着整个操作系统都被阻塞。因为其它应用进程还可以执行，所以不消耗 CPU 时间，这种模型的 CPU 利用率会比较高。
+例如，<code>recvfrom()</code> 用于接收 Socket 传来的数据，并复制到应用进程的缓冲区 buf 中。这里把 <code>recvfrom()</code> 当成系统调用。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">ssize_t</span> <span class="nf">recvfrom</span><span class="p">(</span><span class="kt">int</span> <span class="n">sockfd</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">len</span><span class="p">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="p">,</span> <span class="k">struct</span> <span class="n">sockaddr</span> <span class="o">*</span><span class="n">src_addr</span><span class="p">,</span> <span class="kt">socklen_t</span> <span class="o">*</span><span class="n">addrlen</span><span class="p">);</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><pre class="mermaid">
+  sequenceDiagram
+  participant App as 应用进程
+  participant Kernel as 内核
+  App-&gt;&gt;Kernel: recvfrom()
+  Note left of App: 调用recvform()进程阻塞
+  Note right of Kernel: 等待数据到达并存入内核缓冲
+  Kernel--&gt;&gt;App: 数据复制完成后返回
+</pre>
+<p>特点：实现简单，CPU 利用率高（阻塞期间不占用 CPU），但吞吐受限。</p>
+<ul>
+<li>典型用法：短连接 RPC、小工具一次性读写；</li>
+<li>隐患：若对端长时间不发数据或网络抖动，线程被长期占用，需要超时控制（如 <code>SO_RCVTIMEO</code>）；</li>
+<li>在多线程服务器中，线程数与连接数线性相关，易受线程栈内存与调度开销限制。</li>
+</ul>
+<h3 id="非阻塞-io">非阻塞 I/O
+</h3><p>应用进程执行系统调用之后，内核返回一个错误码。应用进程可以继续执行，但是需要不断的执行系统调用来获知 I/O 是否完成，这种方式称为轮询（polling）。
+由于 CPU 要处理更多的系统调用，因此这种模型的 CPU 利用率比较低。</p>
+<pre class="mermaid">
+  sequenceDiagram
+  participant App as 应用
+  participant Kernel as 内核
+  App-&gt;&gt;Kernel: recvfrom() (非阻塞)
+  Kernel--&gt;&gt;App: EWOULDBLOCK
+  App-&gt;&gt;Kernel: recvfrom() 轮询直至可读
+  Kernel--&gt;&gt;App: 数据复制完成
+</pre>
+<h3 id="io-复用事件驱动">I/O 复用（事件驱动）
+</h3><p>使用 select 或者 poll 等待数据，并且可以等待多个套接字中的任何一个变为可读。这一过程会被阻塞，当某一个套接字可读时返回，之后再使用 recvfrom 把数据从内核复制到进程中。</p>
+<p>它可以让单个进程具有处理多个 I/O 事件的能力。又被称为 Event Driven I/O，即事件驱动 I/O。</p>
+<p>如果一个 Web 服务器没有 I/O 复用，那么每一个 Socket 连接都需要创建一个线程去处理。如果同时有几万个连接，那么就需要创建相同数量的线程。相比于多进程和多线程技术，I/O 复用不需要进程线程创建和切换的开销，系统开销更小。</p>
+<pre class="mermaid">
+  sequenceDiagram
+    participant App as 应用层
+    participant Kernel as 内核
+
+    App-&gt;&gt;Kernel: select
+    Note left of App: 调用select()进程阻塞,等待某一个套接字可读
+    Kernel--&gt;&gt;App: 数据就绪
+    App-&gt;&gt;Kernel: recvfrom()
+    Note left of App: 在数据拷贝到应用的buffer的过程中，进程阻塞
+    Kernel--&gt;&gt;App: 返回数据
+    Note right of Kernel: copy data form kernel to user
+    App-&gt;&gt;App: 处理数据
+</pre>
+<p>适合单线程/单进程管理多连接，减少线程切换</p>
+<ul>
+<li>事件循环典型结构：注册 fd -&gt; 等待 -&gt; 处理就绪 -&gt; 重新注册或继续等待；</li>
+<li>需要把 fd 设置为<em>非阻塞</em>，避免单个 read/write 卡住事件循环；</li>
+<li>回调里要尽量快，耗时任务应投递到工作线程池；</li>
+<li>要关注粘包/拆包，事件驱动只告诉“可读/可写”，应用层需处理协议边界。</li>
+</ul>
+<h3 id="信号驱动-io">信号驱动 I/O
+</h3><p>应用进程使用 sigaction 系统调用，内核立即返回，应用进程可以继续执行，也就是说等待数据阶段应用进程是非阻塞的。内核在数据到达时向应用进程发送 SIGIO 信号，应用进程收到之后在信号处理程序中调用 recvfrom 将数据从内核复制到应用进程中。</p>
+<p>相比于非阻塞式 I/O 的轮询方式，信号驱动 I/O 的 CPU 利用率更高。</p>
+<pre class="mermaid">
+  sequenceDiagram
+  participant App as 应用
+  participant Kernel as 内核
+  App-&gt;&gt;Kernel: sigaction(SIGIO)
+  Kernel--&gt;&gt;App: return
+  App--&gt;&gt;App: 继续执行其他逻辑
+  Kernel--&gt;&gt;App: 发送SIGIO
+  App-&gt;&gt;Kernel: recvfrom()
+  Note left of App: blocked
+  Kernel--&gt;&gt;App: data copy 完成
+</pre>
+<p>减少轮询开销，但信号处理需谨慎。</p>
+<ul>
+<li>需设置 <code>F_SETOWN</code>/<code>F_SETSIG</code> 等，且信号处理函数中能做的事情有限（不可重入操作要避免）；</li>
+<li>可与 <code>signalfd</code> 结合在 Linux 上统一为 fd 事件，但通用性较差；</li>
+<li>在复杂网络服务中通常被 epoll 等方案取代。</li>
+</ul>
+<h3 id="异步-ioaio">异步 I/O（AIO）
+</h3><p>应用进程执行 aio_read 系统调用会立即返回，应用进程可以继续执行，不会被阻塞，内核会在所有操作完成之后向应用进程发送信号。</p>
+<p>异步 I/O 与信号驱动 I/O 的区别在于，异步 I/O 的信号是通知应用进程 I/O 完成，而信号驱动 I/O 的信号是通知应用进程可以开始 I/O</p>
+<pre class="mermaid">
+  sequenceDiagram
+  participant App as 应用
+  participant Kernel as 内核
+  App-&gt;&gt;Kernel: aio_read()
+  Kernel--&gt;&gt;App: return
+  App--&gt;&gt;App: 继续执行
+  Kernel--&gt;&gt;Kernel: copy data from kernel to user
+  Kernel--&gt;&gt;App: deliver signal specified in aio_read            
+  App--&gt;&gt;App: signal handler处理data
+</pre>
+<ul>
+<li>Linux 传统 AIO 限制较多，推荐现代接口如 io_uring；</li>
+<li>Windows IOCP、.NET async/await、Node.js libuv 都属于异步完成通知模型；</li>
+<li>适合高吞吐文件 I/O 或网络 I/O，减少上下文切换和拷贝。</li>
+</ul>
+<h3 id="五大模型对比">五大模型对比
+</h3><ul>
+<li>
+<p>同步 vs 异步：同步在“数据复制到用户缓冲”阶段会阻塞；异步不会。</p>
+</li>
+<li>
+<p>阻塞/非阻塞/I/O 复用/信号驱动：都属同步 I/O，本质差别在“等待数据”阶段是否阻塞。</p>
+</li>
+<li>
+<p>CPU 利用率：阻塞高、非阻塞低、复用和信号介于其间、AIO 最优但实现/平台支持差异大。</p>
+</li>
+<li>
+<p>拷贝次数：经典模型仍需用户态/内核态拷贝；部分异步框架支持零拷贝（如 <code>sendfile</code>, <code>splice</code>）。</p>
+</li>
+<li>
+<p>编程复杂度：阻塞 &lt; 非阻塞 &lt; I/O 复用 &lt; 异步 AIO；</p>
+</li>
+<li>
+<p>适用连接规模：阻塞/非阻塞适合少量连接；复用/异步适合大量连接。</p>
+</li>
+</ul>
+<h2 id="io-复用详解">I/O 复用详解
+</h2><p>select/poll/epoll 都是 I/O 多路复用的具体实现，select 出现的最早，之后是 poll，再是 epoll</p>
+<h3 id="select">select
+</h3><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">select</span><span class="p">(</span><span class="kt">int</span> <span class="n">n</span><span class="p">,</span> <span class="n">fd_set</span> <span class="o">*</span><span class="n">readfds</span><span class="p">,</span> <span class="n">fd_set</span> <span class="o">*</span><span class="n">writefds</span><span class="p">,</span> <span class="n">fd_set</span> <span class="o">*</span><span class="n">exceptfds</span><span class="p">,</span> <span class="k">struct</span> <span class="n">timeval</span> <span class="o">*</span><span class="n">timeout</span><span class="p">);</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>select 允许应用程序监视一组文件描述符，等待一个或者多个描述符成为就绪状态，从而完成 I/O 操作。</p>
+<ul>
+<li>
+<p>fd_set 使用数组实现，数组大小使用 FD_SETSIZE 定义，所以只能监听少于 FD_SETSIZE 数量的描述符。有三种类型的描述符类型：readset、writeset、exceptset，分别对应读、写、异常条件的描述符集合。</p>
+</li>
+<li>
+<p>timeout 为超时参数，调用 select 会一直阻塞直到有描述符的事件到达或者等待的时间超过 timeout。</p>
+</li>
+<li>
+<p>成功调用返回结果大于 0，出错返回结果为 -1，超时返回结果为 0</p>
+</li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="n">fd_set</span> <span class="n">fd_in</span><span class="p">,</span> <span class="n">fd_out</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="k">struct</span> <span class="n">timeval</span> <span class="n">tv</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// Reset the sets
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="nf">FD_ZERO</span><span class="p">(</span> <span class="o">&amp;</span><span class="n">fd_in</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="nf">FD_ZERO</span><span class="p">(</span> <span class="o">&amp;</span><span class="n">fd_out</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// Monitor sock1 for input events
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="nf">FD_SET</span><span class="p">(</span> <span class="n">sock1</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">fd_in</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// Monitor sock2 for output events
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="nf">FD_SET</span><span class="p">(</span> <span class="n">sock2</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">fd_out</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// Find out which socket has the largest numeric value as select requires it
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">int</span> <span class="n">largest_sock</span> <span class="o">=</span> <span class="n">sock1</span> <span class="o">&gt;</span> <span class="n">sock2</span> <span class="o">?</span> <span class="nl">sock1</span> <span class="p">:</span> <span class="n">sock2</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// Wait up to 10 seconds
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">tv</span><span class="p">.</span><span class="n">tv_sec</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="n">tv</span><span class="p">.</span><span class="n">tv_usec</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// Call the select
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">int</span> <span class="n">ret</span> <span class="o">=</span> <span class="nf">select</span><span class="p">(</span> <span class="n">largest_sock</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">fd_in</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">fd_out</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tv</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// Check if select actually succeed
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">if</span> <span class="p">(</span> <span class="n">ret</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// report error and abort
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">else</span> <span class="k">if</span> <span class="p">(</span> <span class="n">ret</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// timeout; no event detected
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">else</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span> <span class="nf">FD_ISSET</span><span class="p">(</span> <span class="n">sock1</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">fd_in</span> <span class="p">)</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="c1">// input event on sock1
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span> <span class="nf">FD_ISSET</span><span class="p">(</span> <span class="n">sock2</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">fd_out</span> <span class="p">)</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="c1">// output event on sock2
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="poll">poll
+</h3><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">poll</span><span class="p">(</span><span class="k">struct</span> <span class="n">pollfd</span> <span class="o">*</span><span class="n">fds</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">nfds</span><span class="p">,</span> <span class="kt">int</span> <span class="n">timeout</span><span class="p">);</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>poll 的功能与 select 类似，也是等待一组描述符中的一个成为就绪状态。
+poll 中的描述符是 pollfd 类型的数组，pollfd 的定义如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">struct</span> <span class="n">pollfd</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">               <span class="kt">int</span>   <span class="n">fd</span><span class="p">;</span>         <span class="cm">/* file descriptor */</span>
+</span></span><span class="line"><span class="cl">               <span class="kt">short</span> <span class="n">events</span><span class="p">;</span>     <span class="cm">/* requested events */</span>
+</span></span><span class="line"><span class="cl">               <span class="kt">short</span> <span class="n">revents</span><span class="p">;</span>    <span class="cm">/* returned events */</span>
+</span></span><span class="line"><span class="cl">           <span class="p">};</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// The structure for two events
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">struct</span> <span class="n">pollfd</span> <span class="n">fds</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// Monitor sock1 for input
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">fds</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">fd</span> <span class="o">=</span> <span class="n">sock1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="n">fds</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">events</span> <span class="o">=</span> <span class="n">POLLIN</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// Monitor sock2 for output
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">fds</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">fd</span> <span class="o">=</span> <span class="n">sock2</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="n">fds</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">events</span> <span class="o">=</span> <span class="n">POLLOUT</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// Wait 10 seconds
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">int</span> <span class="n">ret</span> <span class="o">=</span> <span class="nf">poll</span><span class="p">(</span> <span class="o">&amp;</span><span class="n">fds</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">10000</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// Check if poll actually succeed
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">if</span> <span class="p">(</span> <span class="n">ret</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// report error and abort
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">else</span> <span class="k">if</span> <span class="p">(</span> <span class="n">ret</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// timeout; no event detected
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">else</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// If we detect the event, zero it out so we can reuse the structure
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span> <span class="n">fds</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">revents</span> <span class="o">&amp;</span> <span class="n">POLLIN</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">fds</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">revents</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="c1">// input event on sock1
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span> <span class="n">fds</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">revents</span> <span class="o">&amp;</span> <span class="n">POLLOUT</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">fds</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">revents</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="c1">// output event on sock2
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="select-vs-poll">select vs poll
+</h3><ul>
+<li>功能:
+select 和 poll 的功能基本相同，不过在一些实现细节上有所不同。
+<ul>
+<li>select 会修改描述符，而 poll 不会；</li>
+<li>select 的描述符类型使用数组实现，FD_SETSIZE 大小默认为 1024，因此默认只能监听少于 1024 个描述符。
+如果要监听更描述符的话，需要修改 FD_SETSIZE 之后重新编译；而 poll 没有描述符数量的限制；</li>
+<li>poll 提供了更多的事件类型，并且对描述符的重复利用上比 select 高。</li>
+<li>如果一个线程对某个描述符调用了 select 或者 poll，另一个线程关闭了该描述符，会导致调用结果不确定。</li>
+</ul>
+</li>
+<li>速度:
+select 和 poll 速度都比较慢，每次调用都需要将全部描述符从应用进程缓冲区复制到内核缓冲区。</li>
+<li>可移植性:
+几乎所有的系统都支持 select，但是只有比较新的系统支持 poll。</li>
+</ul>
+<h3 id="epoll">epoll
+</h3><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">epoll_create</span><span class="p">(</span><span class="kt">int</span> <span class="n">size</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">epoll_ctl</span><span class="p">(</span><span class="kt">int</span> <span class="n">epfd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">op</span><span class="p">,</span> <span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="k">struct</span> <span class="n">epoll_event</span> <span class="o">*</span><span class="n">event</span><span class="p">)</span><span class="err">；</span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">epoll_wait</span><span class="p">(</span><span class="kt">int</span> <span class="n">epfd</span><span class="p">,</span> <span class="k">struct</span> <span class="n">epoll_event</span> <span class="o">*</span> <span class="n">events</span><span class="p">,</span> <span class="kt">int</span> <span class="n">maxevents</span><span class="p">,</span> <span class="kt">int</span> <span class="n">timeout</span><span class="p">);</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><code>epoll_ctl()</code> 用于向内核注册新的描述符或者是改变某个文件描述符的状态。已注册的描述符在内核中会被维护在一棵红黑树上，通过回调函数内核会将 I/O 准备好的描述符加入到一个链表中管理，进程调用 <code>epoll_wait()</code> 便可以得到事件完成的描述符。</p>
+<p>从上面的描述可以看出，epoll 只需要将描述符从进程缓冲区向内核缓冲区拷贝一次，并且进程不需要通过轮询来获得事件完成的描述符。</p>
+<p>epoll 仅适用于 Linux OS。</p>
+<p>epoll 比 select 和 poll 更加灵活而且没有描述符数量限制。</p>
+<p>epoll 对多线程编程更有友好，一个线程调用了 epoll_wait() 另一个线程关闭了同一个描述符也不会产生像 select 和 poll 的不确定情况。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// Create the epoll descriptor. Only one is needed per app, and is used to monitor all sockets.
+</span></span></span><span class="line"><span class="cl"><span class="c1">// The function argument is ignored (it was not before, but now it is), so put your favorite number here
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">int</span> <span class="n">pollingfd</span> <span class="o">=</span> <span class="nf">epoll_create</span><span class="p">(</span> <span class="mh">0xCAFE</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span> <span class="n">pollingfd</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl"> <span class="c1">// report error
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl"><span class="c1">// Initialize the epoll structure in case more members are added in future
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">struct</span> <span class="n">epoll_event</span> <span class="n">ev</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">0</span> <span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// Associate the connection class instance with the event. You can associate anything
+</span></span></span><span class="line"><span class="cl"><span class="c1">// you want, epoll does not use this information. We store a connection class pointer, pConnection1
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">ev</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">pConnection1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// Monitor for input, and do not automatically rearm the descriptor after the event
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">ev</span><span class="p">.</span><span class="n">events</span> <span class="o">=</span> <span class="n">EPOLLIN</span> <span class="o">|</span> <span class="n">EPOLLONESHOT</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// Add the descriptor into the monitoring list. We can do it even if another thread is
+</span></span></span><span class="line"><span class="cl"><span class="c1">// waiting in epoll_wait - the descriptor will be properly added
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">if</span> <span class="p">(</span> <span class="nf">epoll_ctl</span><span class="p">(</span> <span class="n">epollfd</span><span class="p">,</span> <span class="n">EPOLL_CTL_ADD</span><span class="p">,</span> <span class="n">pConnection1</span><span class="o">-&gt;</span><span class="nf">getSocket</span><span class="p">(),</span> <span class="o">&amp;</span><span class="n">ev</span> <span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// report error
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl"><span class="c1">// Wait for up to 20 events (assuming we have added maybe 200 sockets before that it may happen)
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">struct</span> <span class="n">epoll_event</span> <span class="n">pevents</span><span class="p">[</span> <span class="mi">20</span> <span class="p">];</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// Wait for 10 seconds, and retrieve less than 20 epoll_event and store them into epoll_event array
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">int</span> <span class="n">ready</span> <span class="o">=</span> <span class="nf">epoll_wait</span><span class="p">(</span> <span class="n">pollingfd</span><span class="p">,</span> <span class="n">pevents</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">10000</span> <span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// Check if epoll actually succeed
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">if</span> <span class="p">(</span> <span class="n">ret</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// report error and abort
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">else</span> <span class="k">if</span> <span class="p">(</span> <span class="n">ret</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// timeout; no event detected
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">else</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// Check if any events detected
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">for</span> <span class="p">(</span> <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">ready</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span> <span class="n">pevents</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">events</span> <span class="o">&amp;</span> <span class="n">EPOLLIN</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="c1">// Get back our connection pointer
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>            <span class="n">Connection</span> <span class="o">*</span> <span class="n">c</span> <span class="o">=</span> <span class="p">(</span><span class="n">Connection</span><span class="o">*</span><span class="p">)</span> <span class="n">pevents</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">data</span><span class="p">.</span><span class="n">ptr</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="n">c</span><span class="o">-&gt;</span><span class="nf">handleReadEvent</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">         <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h4 id="epoll的工作模式">epoll的工作模式
+</h4><p>epoll 的描述符事件有两种触发模式：LT（level trigger）和 ET（edge trigger）。</p>
+<ul>
+<li>LT（Level Trigger，默认）：当 epoll_wait() 检测到描述符事件到达时，将此事件通知进程，进程可以不立即处理该事件，下次调用 epoll_wait() 会再次通知进程。是默认的一种模式，并且同时支持 Blocking 和 No-Blocking。</li>
+<li>ET（Edge Trigger）：和 LT 模式不同的是，通知之后进程必须立即处理事件，下次再调用 epoll_wait() 时不会再得到事件到达的通知。很大程度上减少了 epoll 事件被重复触发的次数，因此效率要比 LT 模式高。只支持 No-Blocking，以避免由于一个文件句柄的阻塞读/阻塞写操作把处理多个文件描述符的任务饿死。。</li>
+</ul>
+<h3 id="select-vs-poll-vs-epoll">select vs poll vs epoll
+</h3><ul>
+<li>
+<p>select: timeout 参数精度为微秒，而 poll 和 epoll 为毫秒，因此 select 更加适用于实时性要求比较高的场景，比如核
+反应堆的控制。select 可移植性更好，几乎被所有主流平台所支持。</p>
+</li>
+<li>
+<p>poll: 没有最大描述符数量的限制，如果平台支持并且对实时性要求不高，应该使用 poll 而不是 select。</p>
+</li>
+<li>
+<p>epoll: 只需要运行在 Linux 平台上，有大量的描述符需要同时轮询，并且这些连接最好是长连接。
+需要同时监控小于 1000 个描述符，就没有必要使用 epoll，因为这个应用场景下并不能体现 epoll 的优势。
+需要监控的描述符状态变化多，而且都是非常短暂的，也没有必要使用 epoll。因为 epoll 中的所有描述符都存储在内核中，造成  每次需要对描述符的状态改变都需要通过 epoll_ctl() 进行系统调用，频繁系统调用降低效率。并且 epoll 的描述符存储在内  核，不容易调试。</p>
+</li>
+</ul>
+<blockquote>
+<p>copy from<br>
+<a class="link" href="https://github.com/CyC2018/CS-Notes/blob/master/notes/Socket.md"  target="_blank" rel="noopener"
+    >https://github.com/CyC2018/CS-Notes/blob/master/notes/Socket.md</a></p></blockquote>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/hugo-stack/tags/linux/">Linux</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    
+
+    
+</footer>
+
+
+    
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="">
+    <a href="/hugo-stack/p/linux%E6%9D%82%E8%AE%B0/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">Linux杂记</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/hugo-stack/p/linux-%E7%BD%91%E6%A1%A5/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">Linux 网桥</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/hugo-stack/p/linux%E8%99%9A%E6%8B%9F%E7%BD%91%E5%8D%A1tun%E5%92%8Ctap/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">Linux虚拟网卡TUN和TAP</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/hugo-stack/p/linux-%E4%BD%9C%E4%B8%9A%E6%8E%A7%E5%88%B6%E8%BF%9B%E7%A8%8B%E7%BB%84%E5%92%8C%E4%BC%9A%E8%AF%9D/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">Linux 作业控制、进程组和会话</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/hugo-stack/p/%E8%BF%9B%E7%A8%8B%E5%8E%9F%E8%AF%ADfork-exceve-waitpid/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">进程原语fork exceve waitpid</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2025 - 
+        
+        2026 Charles Lv
+    </section>
+    
+    <section class="powerby">
+        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/hugo-stack/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+<script src=https://charles-7777.github.io/hugo-stack/background/sakura.js></script>
+
+
+
+
+
+
+<style>
+    .highlight {
+         
+        max-height: 400px;
+        overflow: hidden;
+    }
+
+    .code-show {
+        max-height: none !important;
+    }
+
+    .code-more-box {
+        width: 100%;
+        padding-top: 78px;
+        background-image: -webkit-gradient(linear, left top, left bottom, from(rgba(255, 255, 255, 0)), to(#fff));
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1;
+    }
+
+    .code-more-btn {
+        display: block;
+        margin: auto;
+        width: 44px;
+        height: 22px;
+        background: #f0f0f5;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+        padding-top: 6px;
+        cursor: pointer;
+    }
+
+    .code-more-img {
+        cursor: pointer !important;
+        display: block;
+        margin: auto;
+        width: 22px;
+        height: 16px;
+    }
+</style>
+
+<script>
+  function initCodeMoreBox() {
+    let codeBlocks = document.querySelectorAll(".highlight");
+    if (!codeBlocks) {
+      return;
+    }
+    codeBlocks.forEach(codeBlock => {
+      
+      if (codeBlock.scrollHeight <= codeBlock.clientHeight) {
+        return;
+      }
+      
+      
+      let codeMoreBox = document.createElement('div');
+      codeMoreBox.classList.add('code-more-box');
+      
+      let codeMoreBtn = document.createElement('span');
+      codeMoreBtn.classList.add('code-more-btn');
+      codeMoreBtn.addEventListener('click', () => {
+        codeBlock.classList.add('code-show');
+        codeMoreBox.style.display = 'none';
+        
+        window.dispatchEvent(new Event('resize'))
+      })
+      
+      let img = document.createElement('img');
+      img.classList.add('code-more-img');
+      img.src = "https://charles-7777.github.io/hugo-stack/icons/codeMore.png"
+      
+      codeMoreBtn.appendChild(img);
+      codeMoreBox.appendChild(codeMoreBtn);
+      codeBlock.appendChild(codeMoreBox)
+    })
+  }
+  
+  initCodeMoreBox();
+</script>
+
+
+
+<style>
+    #backTopBtn {
+        display: none;
+        position: fixed;
+        bottom: 30px;
+        z-index: 99;
+        cursor: pointer;
+        width: 30px;
+        height: 30px;
+        background-image: url(https://charles-7777.github.io/hugo-stack/icons/backTop.svg);
+    }
+</style>
+
+<script>
+    
+
+    function initScrollTop() {
+        let rightSideBar = document.querySelector(".right-sidebar");
+        if (!rightSideBar) {
+            return;
+        }
+        
+        let btn = document.createElement("div");
+        btn.id = "backTopBtn";
+        btn.onclick = backToTop
+        rightSideBar.appendChild(btn)
+        
+        window.onscroll = function() {
+            
+            if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+                btn.style.display = "block";
+            } else {
+                btn.style.display = "none";
+            }
+        };
+    }
+
+    
+
+    function backToTop(){
+        window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+
+    initScrollTop();
+</script>
+
+
+<style>
+    #TableOfContents > ul, ol {
+        ul, ol {
+            display: none;
+        }
+        .open {
+            display: block;
+        }
+    }
+</style>
+
+<script>
+    function initTocHide() {
+        
+        let toc = document.querySelector(".widget--toc");
+        if (!toc) {
+            return;
+        }
+        
+        window.addEventListener('scroll', function() {
+            
+            let openUl = document.querySelectorAll(".open");
+            if (openUl.length > 0) {
+              openUl.forEach((ul) => {
+                ul.classList.remove("open")
+              })
+            }
+            
+            let currentLi = document.querySelector(".active-class");
+            if (!currentLi) {
+                return
+            }
+            
+            if (currentLi.children.length > 1) {
+                currentLi.children[1].classList.add("open")
+            }
+            
+            let ul = currentLi.parentElement;
+            do {
+                ul.classList.add("open");
+                ul = ul.parentElement.parentElement
+            } while (ul !== undefined && (ul.localName === 'ul' || ul.localName === 'ol'))
+        });
+    }
+    initTocHide()
+</script>
+
+
+
+
+
+
+
+    </body>
+</html>
+
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true ,look: 'handDrawn'});
+    </script>

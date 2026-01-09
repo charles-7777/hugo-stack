@@ -3,18 +3,27 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://charles-7777.github.io/hugo-stack/categories/</loc>
-    <lastmod>2026-01-04T16:43:03+08:00</lastmod>
+    <lastmod>2026-01-09T14:20:11+08:00</lastmod>
+  </url><url>
+    <loc>https://charles-7777.github.io/hugo-stack/categories/linux/</loc>
+    <lastmod>2026-01-09T14:20:11+08:00</lastmod>
+  </url><url>
+    <loc>https://charles-7777.github.io/hugo-stack/tags/linux/</loc>
+    <lastmod>2026-01-09T14:20:11+08:00</lastmod>
+  </url><url>
+    <loc>https://charles-7777.github.io/hugo-stack/post/</loc>
+    <lastmod>2026-01-09T14:20:11+08:00</lastmod>
+  </url><url>
+    <loc>https://charles-7777.github.io/hugo-stack/p/socket-i/o/</loc>
+    <lastmod>2026-01-09T14:20:11+08:00</lastmod>
+  </url><url>
+    <loc>https://charles-7777.github.io/hugo-stack/tags/</loc>
+    <lastmod>2026-01-09T14:20:11+08:00</lastmod>
   </url><url>
     <loc>https://charles-7777.github.io/hugo-stack/categories/math/</loc>
     <lastmod>2026-01-04T16:43:03+08:00</lastmod>
   </url><url>
     <loc>https://charles-7777.github.io/hugo-stack/tags/math/</loc>
-    <lastmod>2026-01-04T16:43:03+08:00</lastmod>
-  </url><url>
-    <loc>https://charles-7777.github.io/hugo-stack/post/</loc>
-    <lastmod>2026-01-04T16:43:03+08:00</lastmod>
-  </url><url>
-    <loc>https://charles-7777.github.io/hugo-stack/tags/</loc>
     <lastmod>2026-01-04T16:43:03+08:00</lastmod>
   </url><url>
     <loc>https://charles-7777.github.io/hugo-stack/p/%E6%A0%B7%E6%9C%AC%E6%96%B9%E5%B7%AE/</loc>
@@ -61,12 +70,6 @@
   </url><url>
     <loc>https://charles-7777.github.io/hugo-stack/tags/ai/</loc>
     <lastmod>2025-11-24T14:57:10+08:00</lastmod>
-  </url><url>
-    <loc>https://charles-7777.github.io/hugo-stack/categories/linux/</loc>
-    <lastmod>2025-09-28T16:45:05+08:00</lastmod>
-  </url><url>
-    <loc>https://charles-7777.github.io/hugo-stack/tags/linux/</loc>
-    <lastmod>2025-09-28T16:45:05+08:00</lastmod>
   </url><url>
     <loc>https://charles-7777.github.io/hugo-stack/p/linux%E6%9D%82%E8%AE%B0/</loc>
     <lastmod>2025-09-28T16:45:05+08:00</lastmod>
