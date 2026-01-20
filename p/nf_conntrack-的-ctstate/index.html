@@ -1,23 +1,24 @@
 <!DOCTYPE html>
 <html lang="zh-cn" dir="ltr">
-    <head>
-	<meta name="generator" content="Hugo 0.147.7"><meta charset='utf-8'>
-<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="">
-<title>Pager 2 - </title>
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="ctstate ctstate 是 conntrack 对“当前报文相对连接跟踪条目”的分类标签（用于规则匹配），主要依据：\n是否绕过跟踪（raw 表 NOTRACK / nftables bypass）\n是否命中 conntrack 条目（original/reply 方向）\n是否已见 reply（常见关键位：SEEN_REPLY）\n是否命中 expectation 或可被关联（helper / ICMP 错误嵌套头）\n协议跟踪器是否接受该报文（否则可能是 INVALID）\nctstate 含义（策略视角） 典型判定要点 NEW 新流量/新建条目 查表未命中但允许创建；或条目存在但尚未见 reply（UDP 常见） ESTABLISHED 已有双向迹象 命中条目且已见 reply（常见依据：SEEN_REPLY=1） RELATED 与既有连接相关 命中 expectation（helper 预告）或 ICMP 错误可关联回已有条目 INVALID 无法可靠追踪/归属 解析失败/状态机不接受/分片校验问题/不可匹配等 UNTRACKED 明确不走 conntrack raw 表命中 NOTRACK 或 nftables bypass iptables/ebtables 示例 iptables：\n1 2 3 4 5 iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT iptables -A INPUT -m conntrack --ctstate INVALID -j DROP iptables -A INPUT -p tcp --dport 22 -m conntrack --ctstate NEW -j ACCEPT nftables：\n">
+<title>nf_conntrack 的 ctstate</title>
 
-<link rel='canonical' href='https://charles-7777.github.io/hugo-stack/'>
+<link rel='canonical' href='https://charles-7777.github.io/hugo-stack/p/nf_conntrack-%E7%9A%84-ctstate/'>
 
-<link rel="stylesheet" href="/hugo-stack/scss/style.min.1aedf5438eb6380946ca2f7d86c958e5adeb3c679a95ad190168d7c28b43101d.css"><meta property='og:title' content="">
-<meta property='og:description' content="">
-<meta property='og:url' content='https://charles-7777.github.io/hugo-stack/'>
+<link rel="stylesheet" href="/hugo-stack/scss/style.min.1aedf5438eb6380946ca2f7d86c958e5adeb3c679a95ad190168d7c28b43101d.css"><meta property='og:title' content="nf_conntrack 的 ctstate">
+<meta property='og:description' content="ctstate ctstate 是 conntrack 对“当前报文相对连接跟踪条目”的分类标签（用于规则匹配），主要依据：\n是否绕过跟踪（raw 表 NOTRACK / nftables bypass）\n是否命中 conntrack 条目（original/reply 方向）\n是否已见 reply（常见关键位：SEEN_REPLY）\n是否命中 expectation 或可被关联（helper / ICMP 错误嵌套头）\n协议跟踪器是否接受该报文（否则可能是 INVALID）\nctstate 含义（策略视角） 典型判定要点 NEW 新流量/新建条目 查表未命中但允许创建；或条目存在但尚未见 reply（UDP 常见） ESTABLISHED 已有双向迹象 命中条目且已见 reply（常见依据：SEEN_REPLY=1） RELATED 与既有连接相关 命中 expectation（helper 预告）或 ICMP 错误可关联回已有条目 INVALID 无法可靠追踪/归属 解析失败/状态机不接受/分片校验问题/不可匹配等 UNTRACKED 明确不走 conntrack raw 表命中 NOTRACK 或 nftables bypass iptables/ebtables 示例 iptables：\n1 2 3 4 5 iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT iptables -A INPUT -m conntrack --ctstate INVALID -j DROP iptables -A INPUT -p tcp --dport 22 -m conntrack --ctstate NEW -j ACCEPT nftables：\n">
+<meta property='og:url' content='https://charles-7777.github.io/hugo-stack/p/nf_conntrack-%E7%9A%84-ctstate/'>
 <meta property='og:site_name' content=''>
-<meta property='og:type' content='website'><meta property='og:updated_time' content=' 2026-01-20T17:09:47&#43;08:00 '/>
-<meta name="twitter:title" content="">
-<meta name="twitter:description" content=""><link rel="alternate" type="application/rss&#43;xml" href="https://charles-7777.github.io/hugo-stack/index.xml">
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='linux' /><meta property='article:published_time' content='2026-01-19T17:42:15&#43;08:00'/><meta property='article:modified_time' content='2026-01-20T17:09:47&#43;08:00'/>
+<meta name="twitter:title" content="nf_conntrack 的 ctstate">
+<meta name="twitter:description" content="ctstate ctstate 是 conntrack 对“当前报文相对连接跟踪条目”的分类标签（用于规则匹配），主要依据：\n是否绕过跟踪（raw 表 NOTRACK / nftables bypass）\n是否命中 conntrack 条目（original/reply 方向）\n是否已见 reply（常见关键位：SEEN_REPLY）\n是否命中 expectation 或可被关联（helper / ICMP 错误嵌套头）\n协议跟踪器是否接受该报文（否则可能是 INVALID）\nctstate 含义（策略视角） 典型判定要点 NEW 新流量/新建条目 查表未命中但允许创建；或条目存在但尚未见 reply（UDP 常见） ESTABLISHED 已有双向迹象 命中条目且已见 reply（常见依据：SEEN_REPLY=1） RELATED 与既有连接相关 命中 expectation（helper 预告）或 ICMP 错误可关联回已有条目 INVALID 无法可靠追踪/归属 解析失败/状态机不接受/分片校验问题/不可匹配等 UNTRACKED 明确不走 conntrack raw 表命中 NOTRACK 或 nftables bypass iptables/ebtables 示例 iptables：\n1 2 3 4 5 iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT iptables -A INPUT -m conntrack --ctstate INVALID -j DROP iptables -A INPUT -p tcp --dport 22 -m conntrack --ctstate NEW -j ACCEPT nftables：\n">
     <link rel="shortcut icon" href="/hugo-stack/favicon2.ico" />
 
     </head>
-    <body class="">
+    <body class="
+    article-page
+    ">
     <script>
         (function() {
             const colorSchemeKey = 'StackColorScheme';
@@ -119,7 +120,7 @@
         
         
         
-        <li  class='current' >
+        <li >
             <a href='/hugo-stack/' >
                 
                 
@@ -271,69 +272,10 @@
     <aside class="sidebar right-sidebar sticky">
         
             
-                <form action="/hugo-stack/search/" class="search-form widget" >
-        <p>
-            <label>搜索</label>
-            <input name="keyword" required placeholder="输入关键词..." />
-        
-            <button title="搜索">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-  <path stroke="none" d="M0 0h24v24H0z"/>
-  <circle cx="10" cy="10" r="7" />
-  <line x1="21" y1="21" x2="15" y2="15" />
-</svg>
-
-
-
-            </button>
-        </p>
-    </form>
-            
-        
-            
-                <section class="widget archives">
+                
+    <section class="widget archives">
         <div class="widget-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-infinity" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-  <path stroke="none" d="M0 0h24v24H0z"/>
-  <path d="M9.828 9.172a4 4 0 1 0 0 5.656 a10 10 0 0 0 2.172 -2.828a10 10 0 0 1 2.172 -2.828 a4 4 0 1 1 0 5.656a10 10 0 0 1 -2.172 -2.828a10 10 0 0 0 -2.172 -2.828" />
-</svg>
-
-
-
-        </div>
-        <h2 class="widget-title section-title">归档</h2>
-
-        
-        
-        
-        
-        
-        <div class="widget-archive--list">
-            <div class="archives-year">
-                    <a href="/hugo-stack/archives/#2026">
-                        
-                            <span class="year">2026</span>
-                            <span class="count">2</span>
-                        
-                    </a> 
-                </div>
-            <div class="archives-year">
-                    <a href="/hugo-stack/archives/#2025">
-                        
-                            <span class="year">2025</span>
-                            <span class="count">24</span>
-                        
-                    </a> 
-                </div>
-            
-        </div>
-    </section>
-            
-        
-            
-                <section class="widget tagCloud">
-    <div class="widget-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
   <path stroke="none" d="M0 0h24v24H0z"/>
   <line x1="5" y1="9" x2="19" y2="9" />
   <line x1="5" y1="15" x2="19" y2="15" />
@@ -343,138 +285,35 @@
 
 
 
-    </div>
-    <h2 class="widget-title section-title">分类</h2>
+        </div>
+        <h2 class="widget-title section-title">目录</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ol>
+    <li><a href="#ctstate">ctstate</a></li>
+    <li><a href="#iptablesebtables-示例">iptables/ebtables 示例</a></li>
+    <li><a href="#快速验证">快速验证</a></li>
+  </ol>
+</nav>
+        </div>
+    </section>
 
-    <div class="tagCloud-tags">
-        
-            <a href="/hugo-stack/categories/linux/" class="font_size_8">
-                Linux
-            </a>
-        
-            <a href="/hugo-stack/categories/%E7%AC%94%E8%AE%B0/" class="font_size_4">
-                笔记
-            </a>
-        
-            <a href="/hugo-stack/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" class="font_size_3">
-                计算机网络
-            </a>
-        
-            <a href="/hugo-stack/categories/hugo/" class="font_size_2">
-                Hugo
-            </a>
-        
-            <a href="/hugo-stack/categories/ai/" class="font_size_1">
-                AI
-            </a>
-        
-            <a href="/hugo-stack/categories/c/" class="font_size_1">
-                C
-            </a>
-        
-            <a href="/hugo-stack/categories/math/" class="font_size_1">
-                Math
-            </a>
-        
-            <a href="/hugo-stack/categories/network/" class="font_size_1">
-                Network
-            </a>
-        
-            <a href="/hugo-stack/categories/openwrt/" class="font_size_1">
-                Openwrt
-            </a>
-        
-            <a href="/hugo-stack/categories/vpn/" class="font_size_1">
-                Vpn
-            </a>
-        
-    </div>
-</section>
-
-            
-        
-            
-                <section class="widget tagCloud">
-    <div class="widget-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-tag" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-  <path stroke="none" d="M0 0h24v24H0z"/>
-  <path d="M11 3L20 12a1.5 1.5 0 0 1 0 2L14 20a1.5 1.5 0 0 1 -2 0L3 11v-4a4 4 0 0 1 4 -4h4" />
-  <circle cx="9" cy="9" r="2" />
-</svg>
-
-
-
-    </div>
-    <h2 class="widget-title section-title">标签云</h2>
-
-    <div class="tagCloud-tags">
-        
-            <a href="/hugo-stack/tags/linux/" class="font_size_7">
-                Linux<span class="tagCloud-count-main"> [7]</span>
-            </a>
-        
-            <a href="/hugo-stack/tags/ipv6/" class="font_size_3">
-                Ipv6<span class="tagCloud-count-main"> [3]</span>
-            </a>
-        
-            <a href="/hugo-stack/tags/hugo/" class="font_size_2">
-                Hugo<span class="tagCloud-count-main"> [2]</span>
-            </a>
-        
-            <a href="/hugo-stack/tags/ai/" class="font_size_1">
-                AI<span class="tagCloud-count-main"> [1]</span>
-            </a>
-        
-            <a href="/hugo-stack/tags/c/" class="font_size_1">
-                C<span class="tagCloud-count-main"> [1]</span>
-            </a>
-        
-            <a href="/hugo-stack/tags/cert/" class="font_size_1">
-                Cert<span class="tagCloud-count-main"> [1]</span>
-            </a>
-        
-            <a href="/hugo-stack/tags/imagebed/" class="font_size_1">
-                Imagebed<span class="tagCloud-count-main"> [1]</span>
-            </a>
-        
-            <a href="/hugo-stack/tags/k-means/" class="font_size_1">
-                K-Means<span class="tagCloud-count-main"> [1]</span>
-            </a>
-        
-            <a href="/hugo-stack/tags/lxc/" class="font_size_1">
-                Lxc<span class="tagCloud-count-main"> [1]</span>
-            </a>
-        
-            <a href="/hugo-stack/tags/math/" class="font_size_1">
-                Math<span class="tagCloud-count-main"> [1]</span>
-            </a>
-        
-    </div>
-
-</section>
             
         
     </aside>
 
 
             <main class="main full-width">
-    
-    
-    
-    
-
-    <section class="article-list">
-        
-            
-<article class="">
+    <article class="main-article">
     <header class="article-header">
 
     <div class="article-details">
     
     <header class="article-category">
         
-            <a href="/hugo-stack/categories/network/" >
-                Network
+            <a href="/hugo-stack/categories/linux/" >
+                Linux
             </a>
         
     </header>
@@ -482,7 +321,7 @@
 
     <div class="article-title-wrapper">
         <h2 class="article-title">
-            <a href="/hugo-stack/p/ipv6-nd-proxy/">IPv6 ND proxy</a>
+            <a href="/hugo-stack/p/nf_conntrack-%E7%9A%84-ctstate/">nf_conntrack 的 ctstate</a>
         </h2>
     
         
@@ -504,11 +343,11 @@
   <path d="M3 11h16" />
   <path d="M18 16.496v1.504l1 1" />
 </svg>
-                <time class="article-time--published">2025-12-29 16:28</time>
+                <time class="article-time--published">2026-01-19 17:42</time>
             </div>
         <div>
             <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-edit"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg>
-            <time class="article-lastmod">2025-12-29 16:42</time>
+            <time class="article-lastmod">2026-01-20 17:09</time>
         </div>
         
 
@@ -532,7 +371,7 @@
             <div>
                 <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-file-word"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 12l1.333 5l1.667 -4l1.667 4l1.333 -5" /></svg>
                 <time class="article-words">
-                    183 字
+                    180 字
                 </time>
             </div>
         
@@ -548,226 +387,240 @@
 
 
 </header>
-</article>
-        
-            
-<article class="">
-    <header class="article-header">
 
-    <div class="article-details">
-    
-    <header class="article-category">
-        
-            <a href="/hugo-stack/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" >
-                计算机网络
-            </a>
-        
-    </header>
-    
-
-    <div class="article-title-wrapper">
-        <h2 class="article-title">
-            <a href="/hugo-stack/p/dhcpv6-address-lifecycle/">DHCPv6 Address Lifecycle</a>
-        </h2>
-    
-        
-    </div>
-
+    <section class="article-content">
     
     
-    
-    
-    <footer class="article-time">
-        
-            <div>
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-  <path stroke="none" d="M0 0h24v24H0z"/>
-  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
-  <circle cx="18" cy="18" r="4" />
-  <path d="M15 3v4" />
-  <path d="M7 3v4" />
-  <path d="M3 11h16" />
-  <path d="M18 16.496v1.504l1 1" />
-</svg>
-                <time class="article-time--published">2025-12-24 11:39</time>
-            </div>
-        <div>
-            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-edit"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg>
-            <time class="article-lastmod">2025-12-26 14:58</time>
-        </div>
-        
-
-        
-            <div>
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-  <path stroke="none" d="M0 0h24v24H0z"/>
-  <circle cx="12" cy="12" r="9" />
-  <polyline points="12 7 12 12 15 15" />
-</svg>
-
-
-
-                <time class="article-time--reading">
-                    阅读时长: 2 分钟
-                </time>
-            </div>
-        
-
-        
-            <div>
-                <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-file-word"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 12l1.333 5l1.667 -4l1.667 4l1.333 -5" /></svg>
-                <time class="article-words">
-                    215 字
-                </time>
-            </div>
-        
-
-
-    </footer>
-    
-
-    
-
-
+    <h2 id="ctstate">ctstate
+</h2><p><code>ctstate</code> 是 conntrack 对“当前报文相对连接跟踪条目”的分类标签（用于规则匹配），主要依据：</p>
+<ul>
+<li>
+<p>是否绕过跟踪（raw 表 <code>NOTRACK</code> / nftables bypass）</p>
+</li>
+<li>
+<p>是否命中 conntrack 条目（original/reply 方向）</p>
+</li>
+<li>
+<p>是否已见 reply（常见关键位：<code>SEEN_REPLY</code>）</p>
+</li>
+<li>
+<p>是否命中 expectation 或可被关联（helper / ICMP 错误嵌套头）</p>
+</li>
+<li>
+<p>协议跟踪器是否接受该报文（否则可能是 <code>INVALID</code>）</p>
+</li>
+</ul>
+<div class="table-wrapper"><table>
+  <thead>
+      <tr>
+          <th>ctstate</th>
+          <th>含义（策略视角）</th>
+          <th>典型判定要点</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>NEW</code></td>
+          <td>新流量/新建条目</td>
+          <td>查表未命中但允许创建；或条目存在但尚未见 reply（UDP 常见）</td>
+      </tr>
+      <tr>
+          <td><code>ESTABLISHED</code></td>
+          <td>已有双向迹象</td>
+          <td>命中条目且已见 reply（常见依据：<code>SEEN_REPLY=1</code>）</td>
+      </tr>
+      <tr>
+          <td><code>RELATED</code></td>
+          <td>与既有连接相关</td>
+          <td>命中 expectation（helper 预告）或 ICMP 错误可关联回已有条目</td>
+      </tr>
+      <tr>
+          <td><code>INVALID</code></td>
+          <td>无法可靠追踪/归属</td>
+          <td>解析失败/状态机不接受/分片校验问题/不可匹配等</td>
+      </tr>
+      <tr>
+          <td><code>UNTRACKED</code></td>
+          <td>明确不走 conntrack</td>
+          <td>raw 表命中 <code>NOTRACK</code> 或 nftables bypass</td>
+      </tr>
+  </tbody>
+</table></div>
+<h2 id="iptablesebtables-示例">iptables/ebtables 示例
+</h2><p>iptables：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">iptables -A INPUT -m conntrack --ctstate INVALID -j DROP
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">iptables -A INPUT -p tcp --dport <span class="m">22</span> -m conntrack --ctstate NEW -j ACCEPT
+</span></span></code></pre></td></tr></table>
 </div>
-
-
-</header>
-</article>
-        
-            
-<article class="">
-    <header class="article-header">
-
-    <div class="article-details">
-    
-    <header class="article-category">
-        
-            <a href="/hugo-stack/categories/wifi/" >
-                Wifi
-            </a>
-        
-    </header>
-    
-
-    <div class="article-title-wrapper">
-        <h2 class="article-title">
-            <a href="/hugo-stack/p/wi-fi-%E9%80%9F%E7%8E%87%E8%AE%A1%E7%AE%97/">Wi-Fi 速率计算</a>
-        </h2>
-    
-        
-    </div>
-
-    
-    
-    
-    
-    <footer class="article-time">
-        
-            <div>
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-  <path stroke="none" d="M0 0h24v24H0z"/>
-  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
-  <circle cx="18" cy="18" r="4" />
-  <path d="M15 3v4" />
-  <path d="M7 3v4" />
-  <path d="M3 11h16" />
-  <path d="M18 16.496v1.504l1 1" />
-</svg>
-                <time class="article-time--published">2025-12-12 15:25</time>
-            </div>
-        <div>
-            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-edit"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" /><path d="M16 5l3 3" /></svg>
-            <time class="article-lastmod">2025-12-29 17:32</time>
-        </div>
-        
-
-        
-            <div>
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-  <path stroke="none" d="M0 0h24v24H0z"/>
-  <circle cx="12" cy="12" r="9" />
-  <polyline points="12 7 12 12 15 15" />
-</svg>
-
-
-
-                <time class="article-time--reading">
-                    阅读时长: 3 分钟
-                </time>
-            </div>
-        
-
-        
-            <div>
-                <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-file-word"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" /><path d="M9 12l1.333 5l1.667 -4l1.667 4l1.333 -5" /></svg>
-                <time class="article-words">
-                    520 字
-                </time>
-            </div>
-        
-
-
-    </footer>
-    
-
-    
-
-
+</div><p>nftables：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl"># 如果你的系统还没有 filter 表/INPUT 链
+</span></span><span class="line"><span class="cl">nft add table inet filter
+</span></span><span class="line"><span class="cl">nft &#39;add chain inet filter input { type filter hook input priority 0; policy accept; }&#39;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"># 添加规则
+</span></span><span class="line"><span class="cl">nft add rule inet filter input ct state established,related accept
+</span></span><span class="line"><span class="cl">nft add rule inet filter input ct state invalid drop
+</span></span><span class="line"><span class="cl">nft add rule inet filter input tcp dport 22 ct state new accept
+</span></span></code></pre></td></tr></table>
 </div>
+</div><h2 id="快速验证">快速验证
+</h2><ul>
+<li>
+<p><code>conntrack -L</code>：看是否存在条目/超时</p>
+</li>
+<li>
+<p><code>conntrack -E</code>：实时看是否创建、何时出现 reply</p>
+</li>
+<li>
+<p><code>/proc/net/nf_conntrack</code>：内核导出</p>
+</li>
+</ul>
+<blockquote>
+<p>ctstate vs ctstatus</p>
+<p><code>ctstate</code>：对当前报文的分类
+<code>ctstatus</code>：条目内部标志位（如 <code>SEEN_REPLY</code>、<code>EXPECTED</code> 等），<code>ctstate</code> 通常由这些标志位综合得出</p></blockquote>
+
+</section>
 
 
-</header>
-</article>
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/hugo-stack/tags/linux/">Linux</a>
         
     </section>
-    <nav class='pagination'>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    
+
+    
+</footer>
+
+
+    
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="">
+    <a href="/hugo-stack/p/socket-i/o/">
         
         
 
-        
-            
-                    <a class='page-link' href='/hugo-stack/'>1</a>
-                
-            
-            
-                <span class='page-link current'>2</span>
-                
-            
-            
-                    <a class='page-link' href='/hugo-stack/page/3/'>3</a>
-                
-            
-            
-                    
-                        
-                        <span class='page-link dots'>&hellip;</span>
-                    
-                
-            
-            
-                    
-                
-            
-            
-                    
-                
-            
-            
-                    
-                
-            
-            
-                    
-                
-            
-            
-                    <a class='page-link' href='/hugo-stack/page/9/'>9</a>
-                
-            
-    </nav>
+        <div class="article-details">
+            <h2 class="article-title">Socket I/O</h2>
+        </div>
+    </a>
+</article>
 
-<footer class="site-footer">
+            
+                
+<article class="">
+    <a href="/hugo-stack/p/linux%E6%9D%82%E8%AE%B0/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">Linux杂记</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/hugo-stack/p/linux-%E7%BD%91%E6%A1%A5/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">Linux 网桥</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/hugo-stack/p/linux%E8%99%9A%E6%8B%9F%E7%BD%91%E5%8D%A1tun%E5%92%8Ctap/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">Linux虚拟网卡TUN和TAP</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/hugo-stack/p/linux-%E4%BD%9C%E4%B8%9A%E6%8E%A7%E5%88%B6%E8%BF%9B%E7%A8%8B%E7%BB%84%E5%92%8C%E4%BC%9A%E8%AF%9D/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">Linux 作业控制、进程组和会话</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
     <section class="copyright">
         &copy; 
         
@@ -781,6 +634,85 @@
         主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
     </section>
 </footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
 
             </main>
         </div>

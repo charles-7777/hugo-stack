@@ -7,7 +7,127 @@
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
         <copyright>Charles Lv</copyright>
-        <lastBuildDate>Fri, 09 Jan 2026 14:20:11 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/categories/linux/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Tue, 20 Jan 2026 17:09:47 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/categories/linux/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>nf_conntrack 的 ctstate</title>
+        <link>https://charles-7777.github.io/hugo-stack/p/nf_conntrack-%E7%9A%84-ctstate/</link>
+        <pubDate>Mon, 19 Jan 2026 17:42:15 +0800</pubDate>
+        
+        <guid>https://charles-7777.github.io/hugo-stack/p/nf_conntrack-%E7%9A%84-ctstate/</guid>
+        <description>&lt;h2 id=&#34;ctstate&#34;&gt;ctstate
+&lt;/h2&gt;&lt;p&gt;&lt;code&gt;ctstate&lt;/code&gt; 是 conntrack 对“当前报文相对连接跟踪条目”的分类标签（用于规则匹配），主要依据：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;是否绕过跟踪（raw 表 &lt;code&gt;NOTRACK&lt;/code&gt; / nftables bypass）&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;是否命中 conntrack 条目（original/reply 方向）&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;是否已见 reply（常见关键位：&lt;code&gt;SEEN_REPLY&lt;/code&gt;）&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;是否命中 expectation 或可被关联（helper / ICMP 错误嵌套头）&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;协议跟踪器是否接受该报文（否则可能是 &lt;code&gt;INVALID&lt;/code&gt;）&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;table&gt;
+  &lt;thead&gt;
+      &lt;tr&gt;
+          &lt;th&gt;ctstate&lt;/th&gt;
+          &lt;th&gt;含义（策略视角）&lt;/th&gt;
+          &lt;th&gt;典型判定要点&lt;/th&gt;
+      &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;NEW&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;新流量/新建条目&lt;/td&gt;
+          &lt;td&gt;查表未命中但允许创建；或条目存在但尚未见 reply（UDP 常见）&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;ESTABLISHED&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;已有双向迹象&lt;/td&gt;
+          &lt;td&gt;命中条目且已见 reply（常见依据：&lt;code&gt;SEEN_REPLY=1&lt;/code&gt;）&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;RELATED&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;与既有连接相关&lt;/td&gt;
+          &lt;td&gt;命中 expectation（helper 预告）或 ICMP 错误可关联回已有条目&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;INVALID&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;无法可靠追踪/归属&lt;/td&gt;
+          &lt;td&gt;解析失败/状态机不接受/分片校验问题/不可匹配等&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+          &lt;td&gt;&lt;code&gt;UNTRACKED&lt;/code&gt;&lt;/td&gt;
+          &lt;td&gt;明确不走 conntrack&lt;/td&gt;
+          &lt;td&gt;raw 表命中 &lt;code&gt;NOTRACK&lt;/code&gt; 或 nftables bypass&lt;/td&gt;
+      &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id=&#34;iptablesebtables-示例&#34;&gt;iptables/ebtables 示例
+&lt;/h2&gt;&lt;p&gt;iptables：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;3
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;4
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;5
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;iptables -A INPUT -m conntrack --ctstate INVALID -j DROP
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;iptables -A INPUT -p tcp --dport &lt;span class=&#34;m&#34;&gt;22&lt;/span&gt; -m conntrack --ctstate NEW -j ACCEPT
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;nftables：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;3
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;4
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;5
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;6
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;7
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;8
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-fallback&#34; data-lang=&#34;fallback&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;# 如果你的系统还没有 filter 表/INPUT 链
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;nft add table inet filter
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;nft &amp;#39;add chain inet filter input { type filter hook input priority 0; policy accept; }&amp;#39;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;# 添加规则
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;nft add rule inet filter input ct state established,related accept
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;nft add rule inet filter input ct state invalid drop
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;nft add rule inet filter input tcp dport 22 ct state new accept
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;h2 id=&#34;快速验证&#34;&gt;快速验证
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;conntrack -L&lt;/code&gt;：看是否存在条目/超时&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;conntrack -E&lt;/code&gt;：实时看是否创建、何时出现 reply&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;/proc/net/nf_conntrack&lt;/code&gt;：内核导出&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;ctstate vs ctstatus&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;ctstate&lt;/code&gt;：对当前报文的分类
+&lt;code&gt;ctstatus&lt;/code&gt;：条目内部标志位（如 &lt;code&gt;SEEN_REPLY&lt;/code&gt;、&lt;code&gt;EXPECTED&lt;/code&gt; 等），&lt;code&gt;ctstate&lt;/code&gt; 通常由这些标志位综合得出&lt;/p&gt;&lt;/blockquote&gt;
+</description>
+        </item>
+        <item>
         <title>Socket I/O</title>
         <link>https://charles-7777.github.io/hugo-stack/p/socket-i/o/</link>
         <pubDate>Thu, 08 Jan 2026 15:51:28 +0800</pubDate>
