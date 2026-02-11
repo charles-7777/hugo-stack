@@ -7,7 +7,18 @@
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
         <copyright>Charles Lv</copyright>
-        <lastBuildDate>Mon, 24 Nov 2025 14:57:10 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/categories/ai/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Wed, 11 Feb 2026 16:50:08 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/categories/ai/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Agent Skill</title>
+        <link>https://charles-7777.github.io/hugo-stack/p/agent-skill/</link>
+        <pubDate>Wed, 11 Feb 2026 11:19:50 +0800</pubDate>
+        
+        <guid>https://charles-7777.github.io/hugo-stack/p/agent-skill/</guid>
+        <description>&lt;blockquote&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://zhuanlan.zhihu.com/p/1992272492392380044&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Agent Skills 终极指南：入门、精通、预测&lt;/a&gt;&lt;/p&gt;&lt;/blockquote&gt;
+</description>
+        </item>
+        <item>
         <title>Agent、MCP与LLM</title>
         <link>https://charles-7777.github.io/hugo-stack/p/agentmcp%E4%B8%8Ellm/</link>
         <pubDate>Mon, 24 Nov 2025 14:44:59 +0800</pubDate>
