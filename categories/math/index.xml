@@ -7,7 +7,138 @@
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
         <copyright>Charles Lv</copyright>
-        <lastBuildDate>Sun, 04 Jan 2026 16:43:03 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/categories/math/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Tue, 24 Feb 2026 20:04:24 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/categories/math/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>变分法</title>
+        <link>https://charles-7777.github.io/hugo-stack/p/%E5%8F%98%E5%88%86%E6%B3%95/</link>
+        <pubDate>Tue, 24 Feb 2026 19:57:13 +0800</pubDate>
+        
+        <guid>https://charles-7777.github.io/hugo-stack/p/%E5%8F%98%E5%88%86%E6%B3%95/</guid>
+        <description>&lt;h2 id=&#34;变分法的由来&#34;&gt;变分法的由来
+&lt;/h2&gt;&lt;p&gt;变分法（Calculus of Variations）的历史可以追溯到 17 世纪末的一个著名数学挑战。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;1696 年的挑战&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;瑞士数学家&lt;strong&gt;约翰·伯努利 (Johann Bernoulli)&lt;/strong&gt; 向全欧洲的数学家提出了著名的“&lt;strong&gt;最速降线问题 (Brachistochrone problem)&lt;/strong&gt;”：&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;设在垂直平面内有两点 $A$ 和 $B$（$A$ 高于 $B$，且不在同一铅垂线上）。一个质点只受重力作用，从 $A$ 点沿曲线下滑到 $B$ 点，问沿什么曲线下滑所需的时间最短？&lt;/p&gt;&lt;/blockquote&gt;
+&lt;p&gt;当时，伽利略曾错误地认为是圆弧，而约翰·伯努利期待着从他的同行那里得到解答。牛顿、莱布尼茨、洛必达和约翰的哥哥雅各布·伯努利都解决了这个问题（答案是旋轮线/摆线）。这个问题的解决标志着变分法的诞生——它不再是求函数的极值（如微积分中的 $dy/dx=0$），而是求&lt;strong&gt;泛函&lt;/strong&gt;的极值（即寻找一个函数，使得某个积分量达到极值）。&lt;/p&gt;
+&lt;p&gt;随后，欧拉和拉格朗日将这些特例推广为一般性的理论，形成了今天的变分法。&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;变分法的基本原理&#34;&gt;变分法的基本原理
+&lt;/h2&gt;&lt;h3 id=&#34;泛函-functional&#34;&gt;泛函 (Functional)
+&lt;/h3&gt;&lt;p&gt;普通微积分处理的是&lt;strong&gt;函数&lt;/strong&gt; $y=f(x)$，输入一个数 $x$，输出一个数 $y$。&lt;/p&gt;
+&lt;p&gt;变分法处理的是&lt;strong&gt;泛函&lt;/strong&gt; $J[y]$，输入一个&lt;strong&gt;函数&lt;/strong&gt; $y(x)$，输出一个&lt;strong&gt;数&lt;/strong&gt; $J$。&lt;/p&gt;
+&lt;p&gt;[泛函]：Functional  [算子]：Operator  [变换]：Transformation  [函数]：Function  [映射]：Mapping&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;函数 (Function)&lt;/strong&gt; 是一种特殊的&lt;strong&gt;映射&lt;/strong&gt;，要求定义域中的&lt;strong&gt;每一个&lt;/strong&gt;元素都对应值域中的&lt;strong&gt;唯一一个&lt;/strong&gt;元素。在现代数学中，&lt;strong&gt;函数&lt;/strong&gt;和&lt;strong&gt;映射&lt;/strong&gt;常常被视为同义词，可以互换使用。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;泛函 (Functional)&lt;/strong&gt; 是一种特殊的&lt;strong&gt;函数&lt;/strong&gt;，其定义域是一个&lt;strong&gt;函数空间&lt;/strong&gt;（即元素是函数），值域是&lt;strong&gt;数域&lt;/strong&gt;（实数或复数）。&lt;/p&gt;
+&lt;p&gt;eg:$F[f] = \int_{0}^{1} f(x)\ ; $ $L[y] = \int_{x_1}^{x_2} \sqrt{1 + (y&amp;rsquo;)^2} , dx$(弧长)&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;算子 (Operator)&lt;/strong&gt; 是一种特殊的&lt;strong&gt;函数&lt;/strong&gt;或&lt;strong&gt;映射&lt;/strong&gt;，其定义域和值域通常都是&lt;strong&gt;函数空间&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;变换 (Transformation)&lt;/strong&gt; 这个词的含义非常广泛，通常指&lt;strong&gt;同一个空间内&lt;/strong&gt;的映射，或者指一种具体的映射&lt;strong&gt;过程&lt;/strong&gt;或&lt;strong&gt;操作&lt;/strong&gt;。 它常常可以与&lt;strong&gt;映射&lt;/strong&gt;和&lt;strong&gt;算子&lt;/strong&gt;互换使用，但更强调“改变”或“转换”的动作本身。&lt;/p&gt;
+&lt;p&gt;最常见的泛函形式是积分型泛函：&lt;/p&gt;
+$$
+J[y] = \int_{x_1}^{x_2} F(x, y, y&#39;) \, dx 
+$$&lt;p&gt;其中：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;  $x$ 是自变量。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;  $y = y(x)$ 是我们要寻找的未知函数。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;  $y&amp;rsquo; = \frac{dy}{dx}$ 是 $y$ 的导数。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;  $F(x, y, y&amp;rsquo;)$ 是已知的函数形式（称为拉格朗日量）。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;  边界条件通常固定为 $y(x_1) = y_1$ 和 $y(x_2) = y_2$。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;欧拉-拉格朗日方程-euler-lagrange-equation&#34;&gt;欧拉-拉格朗日方程 (Euler-Lagrange Equation)
+&lt;/h3&gt;&lt;p&gt;为了找到使泛函 $J[y]$ 取得极值（极大值或极小值）的函数 $y(x)$，该函数必须满足一个微分方程。这个方程被称为&lt;strong&gt;欧拉-拉格朗日方程&lt;/strong&gt;：&lt;/p&gt;
+$$
+\frac{\partial F}{\partial y} - \frac{d}{dx} \left( \frac{\partial F}{\partial y&#39;} \right) = 0
+$$&lt;p&gt;&lt;strong&gt;直观理解&lt;/strong&gt;：这相当于微积分中求极值的条件 $f&amp;rsquo;(x)=0$ 在无限维函数空间中的推广。凡是能使作用量（积分）取极值的路径，都必须满足在这个方程。&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;计算实例&#34;&gt;计算实例
+&lt;/h2&gt;&lt;h3 id=&#34;例子一两点之间直线最短&#34;&gt;例子一：两点之间直线最短
+&lt;/h3&gt;&lt;p&gt;&lt;strong&gt;问题&lt;/strong&gt;：在平面上，求连接两点 $(x_1, y_1)$ 和 $(x_2, y_2)$ 的曲线中，长度最短的那条。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;1. 建立泛函&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;平面上微元长度为 $ds = \sqrt{dx^2 + dy^2} = \sqrt{1 + (y&amp;rsquo;)^2} , dx$。&lt;/p&gt;
+&lt;p&gt;总长度 $L$ 为：&lt;/p&gt;
+&lt;p&gt;$ L[y] = \int_{x_1}^{x_2} \sqrt{1 + (y&amp;rsquo;)^2} , dx $&lt;/p&gt;
+&lt;p&gt;这里被积函数 $F(x, y, y&amp;rsquo;) = \sqrt{1 + (y&amp;rsquo;)^2}$。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;2. 应用 E-L 方程&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;  $\frac{\partial F}{\partial y} = 0$ （因为 $F$ 中不显含 $y$）&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;  $\frac{\partial F}{\partial y&amp;rsquo;} = \frac{1}{2\sqrt{1 + (y&amp;rsquo;)^2}} \cdot 2y&amp;rsquo; = \frac{y&amp;rsquo;}{\sqrt{1 + (y&amp;rsquo;)^2}}$&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;代入方程 $\frac{\partial F}{\partial y} - \frac{d}{dx} (\frac{\partial F}{\partial y&amp;rsquo;}) = 0$：&lt;/p&gt;
+&lt;p&gt;$ 0 - \frac{d}{dx} \left( \frac{y&amp;rsquo;}{\sqrt{1 + (y&amp;rsquo;)^2}} \right) = 0 $&lt;/p&gt;
+&lt;p&gt;这意味着括号内的项是常数 $C$：&lt;/p&gt;
+&lt;p&gt;$ \frac{y&amp;rsquo;}{\sqrt{1 + (y&amp;rsquo;)^2}} = C $&lt;/p&gt;
+&lt;p&gt;这意味着 $y&amp;rsquo;$ 必须是常数（记为 $a$）。&lt;/p&gt;
+&lt;p&gt;$ y&amp;rsquo; = a \implies y = ax + b $&lt;/p&gt;
+&lt;p&gt;这正是&lt;strong&gt;直线&lt;/strong&gt;的方程。&lt;/p&gt;
+&lt;hr&gt;
+&lt;h3 id=&#34;例子二最速降线问题-brachistochrone&#34;&gt;例子二：最速降线问题 (Brachistochrone)
+&lt;/h3&gt;&lt;p&gt;&lt;strong&gt;问题&lt;/strong&gt;：质点在重力作用下从 $(0,0)$ 滑到 $(x_2, y_2)$，求时间最短的路径。设向下为 $y$ 轴正方向。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;1. 建立泛函&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;根据能量守恒 $\frac{1}{2}mv^2 = mgy \implies v = \sqrt{2gy}$。&lt;/p&gt;
+&lt;p&gt;时间 $t = \int \frac{ds}{v} = \int \frac{\sqrt{1+(y&amp;rsquo;)^2}dx}{\sqrt{2gy}}$。&lt;/p&gt;
+&lt;p&gt;忽略常数 $\frac{1}{\sqrt{2g}}$，我们要极小化的泛函为：&lt;/p&gt;
+&lt;p&gt;$ J[y] = \int_{0}^{x_2} \sqrt{\frac{1 + (y&amp;rsquo;)^2}{y}} , dx $&lt;/p&gt;
+&lt;p&gt;这里 $F = \sqrt{\frac{1 + (y&amp;rsquo;)^2}{y}}$。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;2. 应用 E-L 方程（贝尔特拉米恒等式）&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;由于 $F$ 不显含 $x$（即 $\frac{\partial F}{\partial x} = 0$），我们可以使用 E-L 方程的一个简化形式 —— &lt;strong&gt;贝尔特拉米恒等式 (Beltrami Identity)&lt;/strong&gt;：&lt;/p&gt;
+&lt;p&gt;$ F - y&amp;rsquo; \frac{\partial F}{\partial y&amp;rsquo;} = C $&lt;/p&gt;
+&lt;p&gt;代入 $F$：&lt;/p&gt;
+&lt;p&gt;$ \sqrt{\frac{1 + (y&amp;rsquo;)^2}{y}} - y&amp;rsquo; \cdot \left( \frac{1}{\sqrt{y(1 + (y&amp;rsquo;)^2)}} \cdot y&amp;rsquo; \right) = C $&lt;/p&gt;
+&lt;p&gt;$ \sqrt{\frac{1 + (y&amp;rsquo;)^2}{y}} - \frac{(y&amp;rsquo;)^2}{\sqrt{y(1 + (y&amp;rsquo;)^2)}} = C $&lt;/p&gt;
+&lt;p&gt;通分整理得到（分子变为 $1+(y&amp;rsquo;)^2 - (y&amp;rsquo;)^2 = 1$）：&lt;/p&gt;
+&lt;p&gt;$ \frac{1}{\sqrt{y(1 + (y&amp;rsquo;)^2)}} = C $&lt;/p&gt;
+&lt;p&gt;平方整理：&lt;/p&gt;
+&lt;p&gt;$ y(1 + (y&amp;rsquo;)^2) = K \quad (\text{令 } K = 1/C^2) $&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;3. 求解微分方程&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;令 $y&amp;rsquo; = \cot \theta$（三角换元法）：&lt;/p&gt;
+&lt;p&gt;$ y(1 + \cot^2 \theta) = K \implies y = K \sin^2 \theta = \frac{K}{2}(1 - \cos 2\theta) $&lt;/p&gt;
+&lt;p&gt;由 $dy/dx = \cot \theta$，得 $dx = dy / \cot \theta = \tan \theta , dy$。&lt;/p&gt;
+&lt;p&gt;将 $y$ 的表达式微分代入积分可得 $x$ 的参数方程。最终得到&lt;strong&gt;旋轮线 (Cycloid)&lt;/strong&gt; 方程：&lt;/p&gt;
+$$
+\begin{cases}
+x = R (\phi - \sin \phi) \\
+y = R (1 - \cos \phi)
+\end{cases}
+$$&lt;hr&gt;
+&lt;h3 id=&#34;例子三费马原理-fermats-principle---光路最短&#34;&gt;例子三：费马原理 (Fermat&amp;rsquo;s Principle - 光路最短)
+&lt;/h3&gt;&lt;p&gt;&lt;strong&gt;原理&lt;/strong&gt;：光线在两点间传播时，总是沿着&lt;strong&gt;光程 (Optical Path Length)&lt;/strong&gt; 极值的路径传播。&lt;/p&gt;
+&lt;p&gt;光程 $L = \int n(x, y) , ds$。&lt;/p&gt;
+&lt;p&gt;其中 $n(x,y)$ 是折射率。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;问题&lt;/strong&gt;：证明在折射率 $n$ 随 $y$ 变化的介质中，光线遵循斯涅尔定律 (Snell&amp;rsquo;s Law)。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;1. 建立泛函&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;$ J[y] = \int n(y) , ds = \int_{x_1}^{x_2} n(y) \sqrt{1 + (y&amp;rsquo;)^2} , dx $&lt;/p&gt;
+&lt;p&gt;这里 $F(y, y&amp;rsquo;) = n(y) \sqrt{1 + (y&amp;rsquo;)^2}$。注意 $n$ 是 $y$ 的函数。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;2. 应用 E-L 方程&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;因为 $F$ 不显含 $x$，再次使用&lt;strong&gt;贝尔特拉米恒等式&lt;/strong&gt;：&lt;/p&gt;
+&lt;p&gt;$ F - y&amp;rsquo; \frac{\partial F}{\partial y&amp;rsquo;} = C $&lt;/p&gt;
+&lt;p&gt;$ n(y)\sqrt{1+(y&amp;rsquo;)^2} - y&amp;rsquo; \left( n(y) \frac{y&amp;rsquo;}{\sqrt{1+(y&amp;rsquo;)^2}} \right) = C $&lt;/p&gt;
+&lt;p&gt;提取公因式 $\frac{n(y)}{\sqrt{1+(y&amp;rsquo;)^2}}$ 并整理：&lt;/p&gt;
+&lt;p&gt;$ \frac{n(y) [1+(y&amp;rsquo;)^2 - (y&amp;rsquo;)^2]}{\sqrt{1+(y&amp;rsquo;)^2}} = C \implies \frac{n(y)}{\sqrt{1+(y&amp;rsquo;)^2}} = C $&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;3. 物理诠释&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;在几何上，导数 $y&amp;rsquo; = \tan \phi$（切线斜率），其中 $\phi$ 是切线与 x 轴夹角。&lt;/p&gt;
+&lt;p&gt;则 $\sqrt{1+(y&amp;rsquo;)^2} = \sqrt{1+\tan^2 \phi} = \sec \phi = \frac{1}{\cos \phi}$。&lt;/p&gt;
+&lt;p&gt;代入上式：&lt;/p&gt;
+&lt;p&gt;$ n(y) \cos \phi = C $&lt;/p&gt;
+&lt;p&gt;如果我们定义入射角 $i$ 为光线与&lt;strong&gt;法线&lt;/strong&gt;（垂直于 x 轴，即 y 轴方向）的夹角，那么 $\phi = 90^\circ - i$，此时 $\cos\phi = \sin i$。&lt;/p&gt;
+&lt;p&gt;方程变为：&lt;/p&gt;
+&lt;p&gt;$ n(y) \sin i = \text{Constant} $&lt;/p&gt;
+&lt;p&gt;这正是著名的&lt;strong&gt;斯涅尔折射定律&lt;/strong&gt; ($n_1 \sin i_1 = n_2 \sin i_2$) 的连续介质形式。&lt;/p&gt;
+</description>
+        </item>
+        <item>
         <title>样本方差</title>
         <link>https://charles-7777.github.io/hugo-stack/p/%E6%A0%B7%E6%9C%AC%E6%96%B9%E5%B7%AE/</link>
         <pubDate>Wed, 31 Dec 2025 15:17:20 +0800</pubDate>
