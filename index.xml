@@ -7,6 +7,135 @@
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
         <copyright>Charles Lv</copyright><atom:link href="https://charles-7777.github.io/hugo-stack/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>变分法证明等周问题</title>
+        <link>https://charles-7777.github.io/hugo-stack/p/%E5%8F%98%E5%88%86%E6%B3%95%E8%AF%81%E6%98%8E%E7%AD%89%E5%91%A8%E9%97%AE%E9%A2%98/</link>
+        <pubDate>Sat, 28 Feb 2026 20:47:04 +0800</pubDate>
+        
+        <guid>https://charles-7777.github.io/hugo-stack/p/%E5%8F%98%E5%88%86%E6%B3%95%E8%AF%81%E6%98%8E%E7%AD%89%E5%91%A8%E9%97%AE%E9%A2%98/</guid>
+        <description>&lt;h2 id=&#34;问题描述&#34;&gt;问题描述
+&lt;/h2&gt;&lt;p&gt;等周问题是变分法中的一个经典问题：&lt;strong&gt;在平面上，给定周长 $L$ 的所有闭合曲线中，哪一条曲线围成的面积最大？&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;直观上我们知道答案是圆，下面我们将使用变分法（Variational Calculus）严格推导这一结论。&lt;/p&gt;
+&lt;h2 id=&#34;数学建模&#34;&gt;数学建模
+&lt;/h2&gt;&lt;p&gt;假设平面闭合曲线由参数方程表示：
+&lt;/p&gt;
+$$
+\begin{cases}
+x = x(t) \\
+y = y(t)
+\end{cases}
+\quad t \in [t_0, t_1]
+$$&lt;p&gt;
+且 $x(t_0) = x(t_1), y(t_0) = y(t_1)$。&lt;/p&gt;
+&lt;h3 id=&#34;目标泛函面积-a&#34;&gt;目标泛函：面积 $A$
+&lt;/h3&gt;&lt;p&gt;根据&lt;strong&gt;格林公式 (Green&amp;rsquo;s Theorem)&lt;/strong&gt;，闭合曲线围成的面积 $A$ 可以表示为：
+&lt;/p&gt;
+$$
+A = \frac{1}{2} \oint (x dy - y dx) = \frac{1}{2} \int_{t_0}^{t_1} (x y&#39; - y x&#39;) \, dt
+$$&lt;p&gt;
+其中 $x&amp;rsquo; = \frac{dx}{dt}, y&amp;rsquo; = \frac{dy}{dt}$。&lt;/p&gt;
+&lt;h3 id=&#34;约束条件周长-l&#34;&gt;约束条件：周长 $L$
+&lt;/h3&gt;&lt;p&gt;曲线的弧长（周长）固定为 $L$：
+&lt;/p&gt;
+$$
+L = \int_{t_0}^{t_1} \sqrt{x&#39;^2 + y&#39;^2} \, dt
+$$&lt;h2 id=&#34;拉格朗日乘子法&#34;&gt;拉格朗日乘子法
+&lt;/h2&gt;&lt;p&gt;这是一个&lt;strong&gt;等周变分问题&lt;/strong&gt;（Isoperimetric Problem），我们需要在约束条件 $L$ 下求泛函 $A$ 的极值。
+通过引入拉格朗日乘子，将原本复杂的多约束优化问题转化为无约束优化问题，从而简化求解过程。
+引入&lt;strong&gt;拉格朗日乘子 (Lagrange Multiplier)&lt;/strong&gt; $\lambda$，构造新的辅助泛函 $J$：
+&lt;/p&gt;
+$$
+J = A + \lambda L = \int_{t_0}^{t_1} \left[ \frac{1}{2}(x y&#39; - y x&#39;) + \lambda \sqrt{x&#39;^2 + y&#39;^2} \right] \, dt
+$$&lt;p&gt;定义被积函数（Lagrangian）为 $F$：
+&lt;/p&gt;
+$$
+F(x, y, x&#39;, y&#39;) = \frac{1}{2}(x y&#39; - y x&#39;) + \lambda \sqrt{x&#39;^2 + y&#39;^2}
+$$&lt;h2 id=&#34;欧拉-拉格朗日方程-euler-lagrange-equation&#34;&gt;欧拉-拉格朗日方程 (Euler-Lagrange Equation)
+&lt;/h2&gt;&lt;p&gt;为了使 $J$ 取得极值，$x(t)$ 和 $y(t)$ 必须同时满足欧拉-拉格朗日方程组：&lt;/p&gt;
+$$
+\begin{cases}
+\frac{\partial F}{\partial x} - \frac{d}{dt} \left( \frac{\partial F}{\partial x&#39;} \right) = 0 \\[10pt]
+\frac{\partial F}{\partial y} - \frac{d}{dt} \left( \frac{\partial F}{\partial y&#39;} \right) = 0
+\end{cases}
+$$&lt;h3 id=&#34;计算偏导数&#34;&gt;计算偏导数
+&lt;/h3&gt;&lt;p&gt;对于 $x$ 的方程：
+&lt;/p&gt;
+$$
+\frac{\partial F}{\partial x} = \frac{1}{2}y&#39;
+$$&lt;p&gt;
+&lt;/p&gt;
+$$
+\frac{\partial F}{\partial x&#39;} = -\frac{1}{2}y + \lambda \frac{x&#39;}{\sqrt{x&#39;^2 + y&#39;^2}}
+$$&lt;p&gt;对于 $y$ 的方程：
+&lt;/p&gt;
+$$
+\frac{\partial F}{\partial y} = -\frac{1}{2}x&#39;
+$$&lt;p&gt;
+&lt;/p&gt;
+$$
+\frac{\partial F}{\partial y&#39;} = \frac{1}{2}x + \lambda \frac{y&#39;}{\sqrt{x&#39;^2 + y&#39;^2}}
+$$&lt;h3 id=&#34;代入-e-l-方程&#34;&gt;代入 E-L 方程
+&lt;/h3&gt;&lt;p&gt;&lt;strong&gt;方程 1 (关于 $x$):&lt;/strong&gt;
+&lt;/p&gt;
+$$
+\frac{1}{2}y&#39; - \frac{d}{dt} \left( -\frac{1}{2}y + \lambda \frac{x&#39;}{\sqrt{x&#39;^2 + y&#39;^2}} \right) = 0
+$$&lt;p&gt;
+&lt;/p&gt;
+$$
+\frac{1}{2}y&#39; - \left( -\frac{1}{2}y&#39; + \frac{d}{dt} \left( \lambda \frac{x&#39;}{\sqrt{x&#39;^2 + y&#39;^2}} \right) \right) = 0
+$$&lt;p&gt;
+&lt;/p&gt;
+$$
+y&#39; - \lambda \frac{d}{dt} \left( \frac{x&#39;}{\sqrt{x&#39;^2 + y&#39;^2}} \right) = 0 \quad \text{......(1)}
+$$&lt;p&gt;&lt;strong&gt;方程 2 (关于 $y$):&lt;/strong&gt;
+&lt;/p&gt;
+$$
+-\frac{1}{2}x&#39; - \frac{d}{dt} \left( \frac{1}{2}x + \lambda \frac{y&#39;}{\sqrt{x&#39;^2 + y&#39;^2}} \right) = 0
+$$&lt;p&gt;
+&lt;/p&gt;
+$$
+-\frac{1}{2}x&#39; - \left( \frac{1}{2}x&#39; + \frac{d}{dt} \left( \lambda \frac{y&#39;}{\sqrt{x&#39;^2 + y&#39;^2}} \right) \right) = 0
+$$&lt;p&gt;
+&lt;/p&gt;
+$$
+-x&#39; - \lambda \frac{d}{dt} \left( \frac{y&#39;}{\sqrt{x&#39;^2 + y&#39;^2}} \right) = 0 \quad \text{......(2)}
+$$&lt;h2 id=&#34;积分求解&#34;&gt;积分求解
+&lt;/h2&gt;&lt;p&gt;对 (1) 式关于 $t$ 积分：
+&lt;/p&gt;
+$$
+y - \lambda \frac{x&#39;}{\sqrt{x&#39;^2 + y&#39;^2}} = C_1 \quad \Rightarrow \quad y - C_1 = \lambda \frac{x&#39;}{\sqrt{x&#39;^2 + y&#39;^2}}
+$$&lt;p&gt;对 (2) 式关于 $t$ 积分：
+&lt;/p&gt;
+$$
+-x - \lambda \frac{y&#39;}{\sqrt{x&#39;^2 + y&#39;^2}} = -C_2 \quad \Rightarrow \quad x - C_2 = -\lambda \frac{y&#39;}{\sqrt{x&#39;^2 + y&#39;^2}}
+$$&lt;p&gt;
+(这里为了形式统一，积分常数设为 $-C_2$)&lt;/p&gt;
+&lt;p&gt;我们得到了两个方程：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;$y - C_1 = \lambda \frac{x&amp;rsquo;}{\sqrt{x&amp;rsquo;^2 + y&amp;rsquo;^2}}$&lt;/li&gt;
+&lt;li&gt;$x - C_2 = -\lambda \frac{y&amp;rsquo;}{\sqrt{x&amp;rsquo;^2 + y&amp;rsquo;^2}}$&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;将两式平方并相加：
+&lt;/p&gt;
+$$
+(x - C_2)^2 + (y - C_1)^2 = \lambda^2 \left( \frac{y&#39;^2}{x&#39;^2 + y&#39;^2} + \frac{x&#39;^2}{x&#39;^2 + y&#39;^2} \right)
+$$&lt;p&gt;
+&lt;/p&gt;
+$$
+(x - C_2)^2 + (y - C_1)^2 = \lambda^2 \left( \frac{x&#39;^2 + y&#39;^2}{x&#39;^2 + y&#39;^2} \right)
+$$&lt;p&gt;最终得到：
+&lt;/p&gt;
+$$
+(x - C_2)^2 + (y - C_1)^2 = \lambda^2
+$$&lt;h2 id=&#34;结论&#34;&gt;结论
+&lt;/h2&gt;&lt;p&gt;方程 $(x - C_2)^2 + (y - C_1)^2 = \lambda^2$ 正是一个&lt;strong&gt;圆&lt;/strong&gt;的方程。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;圆心坐标为 $(C_2, C_1)$&lt;/li&gt;
+&lt;li&gt;半径为 $R = |\lambda|$&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;因此，在周长固定的闭合曲线中，围成面积最大的曲线是圆。&lt;/strong&gt;&lt;/p&gt;
+</description>
+        </item>
+        <item>
         <title>变分法</title>
         <link>https://charles-7777.github.io/hugo-stack/p/%E5%8F%98%E5%88%86%E6%B3%95/</link>
         <pubDate>Tue, 24 Feb 2026 19:57:13 +0800</pubDate>
