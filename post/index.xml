@@ -7,7 +7,37 @@
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
         <copyright>Charles Lv</copyright>
-        <lastBuildDate>Sat, 28 Feb 2026 20:53:28 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/post/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Fri, 06 Mar 2026 13:38:55 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/post/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Ramsey问题</title>
+        <link>https://charles-7777.github.io/hugo-stack/p/ramsey%E9%97%AE%E9%A2%98/</link>
+        <pubDate>Fri, 06 Mar 2026 13:23:46 +0800</pubDate>
+        
+        <guid>https://charles-7777.github.io/hugo-stack/p/ramsey%E9%97%AE%E9%A2%98/</guid>
+        <description>&lt;p&gt;拉姆齐理论（Ramsey Theory）是组合数学中的一个分支，它的核心思想可以概括为：&lt;strong&gt;“完全的无序是不可能的”&lt;/strong&gt;。无论一个系统有多么庞大和混乱，只要系统足够大，其中必定包含某种高度有序的子结构。&lt;/p&gt;
+&lt;p&gt;拉姆齐问题最著名的通俗表达是&lt;strong&gt;派对问题&lt;/strong&gt;（六人集会问题）：
+假设在一个派对上有 6 个人，这 6 个人中，要么必定有 3 个人互相认识，要么必定有 3 个人互相都不认识。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;我们需要证明：对于 6 个顶点的完全图 $K_6$，如果将其边涂成红色或蓝色，必然存在一个红色三角形或蓝色三角形。
+&lt;strong&gt;证明过程：&lt;/strong&gt;&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;在图 $K_6$ 中任意选择一个顶点，记为 $v$。&lt;/li&gt;
+&lt;li&gt;除去 $v$ 之外，还有 5 个顶点，因此 $v$ 必然连接着 5 条边。&lt;/li&gt;
+&lt;li&gt;根据&lt;strong&gt;抽屉原理（鸽巢原理）&lt;/strong&gt;，在这 5 条边中，至少有 $\lceil 5/2 \rceil = 3$ 条边是相同颜色的。不妨假设有 3 条边是红色的。&lt;/li&gt;
+&lt;li&gt;假设这 3 条红边分别连接顶点 $A$、$B$ 和 $C$。&lt;/li&gt;
+&lt;li&gt;现在考察顶点 $A, B, C$ 之间的 3 条边（边 $AB, BC, CA$）：&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;如果这 3 条边中&lt;strong&gt;有一条&lt;/strong&gt;是红色的（例如 $AB$ 是红色），那么顶点 $v, A, B$ 就构成了一个&lt;strong&gt;红色三角形&lt;/strong&gt;。&lt;/li&gt;
+&lt;li&gt;如果这 3 条边&lt;strong&gt;全都是&lt;/strong&gt;蓝色的，那么顶点 $A, B, C$ 本身就构成了一个&lt;strong&gt;蓝色三角形&lt;/strong&gt;。&lt;/li&gt;
+&lt;/ul&gt;&lt;/blockquote&gt;
+&lt;p&gt;在图论的语言中，拉姆齐定理可以表述为：对于给定的任意整数 $r$ 和 $s$，存在一个最小的正整数 $N$，使得对于完全图 $K_N$（即 $N$ 个顶点，且任意两个顶点之间都有边相连的图）的每一条边任意涂上红色或蓝色，必然能找到一个由 $r$ 个顶点组成的完全图（其所有边都是红色），或者找到一个由 $s$ 个顶点组成的完全图（其所有边都是蓝色）。&lt;/p&gt;
+&lt;p&gt;这个最小的整数 $N$ 就被称为&lt;strong&gt;拉姆齐数（Ramsey Number）&lt;/strong&gt;，记作 $R(r, s)$。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://zhuanlan.zhihu.com/p/682320458&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Ramsey定理&lt;/a&gt;&lt;/p&gt;&lt;/blockquote&gt;
+</description>
+        </item>
+        <item>
         <title>变分法证明等周问题</title>
         <link>https://charles-7777.github.io/hugo-stack/p/%E5%8F%98%E5%88%86%E6%B3%95%E8%AF%81%E6%98%8E%E7%AD%89%E5%91%A8%E9%97%AE%E9%A2%98/</link>
         <pubDate>Sat, 28 Feb 2026 20:47:04 +0800</pubDate>
