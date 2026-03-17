@@ -7,7 +7,15 @@
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
         <copyright>Charles Lv</copyright>
-        <lastBuildDate>Fri, 06 Mar 2026 13:38:55 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/categories/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Tue, 17 Mar 2026 19:31:18 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/categories/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Wifi</title>
+        <link>https://charles-7777.github.io/hugo-stack/categories/wifi/</link>
+        <pubDate>Tue, 17 Mar 2026 19:27:21 +0800</pubDate>
+        
+        <guid>https://charles-7777.github.io/hugo-stack/categories/wifi/</guid>
+        <description></description>
+        </item>
+        <item>
         <title>Math</title>
         <link>https://charles-7777.github.io/hugo-stack/categories/math/</link>
         <pubDate>Fri, 06 Mar 2026 13:23:46 +0800</pubDate>
@@ -45,14 +53,6 @@
         <pubDate>Wed, 24 Dec 2025 11:39:28 +0800</pubDate>
         
         <guid>https://charles-7777.github.io/hugo-stack/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/</guid>
-        <description></description>
-        </item>
-        <item>
-        <title>Wifi</title>
-        <link>https://charles-7777.github.io/hugo-stack/categories/wifi/</link>
-        <pubDate>Fri, 12 Dec 2025 15:25:55 +0800</pubDate>
-        
-        <guid>https://charles-7777.github.io/hugo-stack/categories/wifi/</guid>
         <description></description>
         </item>
         <item>

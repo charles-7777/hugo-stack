@@ -7,7 +7,97 @@
         <generator>Hugo -- gohugo.io</generator>
         <language>zh-cn</language>
         <copyright>Charles Lv</copyright>
-        <lastBuildDate>Mon, 29 Dec 2025 17:32:15 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/categories/wifi/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Tue, 17 Mar 2026 19:31:18 +0800</lastBuildDate><atom:link href="https://charles-7777.github.io/hugo-stack/categories/wifi/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Wi-Fi Protected Setup (WPS) 协议介绍</title>
+        <link>https://charles-7777.github.io/hugo-stack/p/wi-fi-protected-setup-wps-%E5%8D%8F%E8%AE%AE%E4%BB%8B%E7%BB%8D/</link>
+        <pubDate>Tue, 17 Mar 2026 19:27:21 +0800</pubDate>
+        
+        <guid>https://charles-7777.github.io/hugo-stack/p/wi-fi-protected-setup-wps-%E5%8D%8F%E8%AE%AE%E4%BB%8B%E7%BB%8D/</guid>
+        <description>&lt;blockquote&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://www.wi-fi.org/system/files/Wi-Fi%20Protected%20Setup%20Specification%20v2.0.9.pdf&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;参考文件：Wi-Fi Protected Setup Specification v2.0.9, Wi-Fi Alliance, 2024&lt;/a&gt;&lt;/p&gt;&lt;/blockquote&gt;
+&lt;pre class=&#34;mermaid&#34;&gt;
+  graph LR
+    Registrar[Registrar]
+    Enrollee[Enrollee]
+    AP[AP]
+
+    Registrar -- &amp;#34;E&amp;#34; --- Enrollee
+    Registrar -- &amp;#34;M&amp;#34; --- AP
+    Enrollee -- &amp;#34;A&amp;#34; --- AP
+&lt;/pre&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Registrar可能是独⽴的设备或是与AP在同⼀设备上的逻辑功能模块。如果Registrar是独⽴的设备，则与AP可以通过WiFi或以太⽹进⾏连接。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Enrollee是wifi STA设备。与AP的接⼝A是基于WiFi连接实现的。这⾥所说的WiFi连接，是WPS协议定义的特殊的WiFi连接过程，其⽬的是传递配置参数。当参数传递完毕后，这个连接将会断开。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Enrollee和Registrar之间的接⼝E，是认证和配置传递的接⼝。认证是通过PIN码实现的。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Registrar和AP之间的接⼝M，原理和接⼝E类似，实现Registrar对AP的配置，这时的AP⾓⾊与Enrollee类似&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Standalone AP&lt;/strong&gt; (APs with built-in Registrar capabilities)&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Enternal Registrar&lt;/strong&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;p&gt;在 WPS 中，PIN 是设备的身份凭证，每个支持 WPS 的设备（无论是 Enrollee 还是 Registrar）都有一个 PIN：
+Enrollee PIN：印在设备标签上或显示在屏幕上（如打印机、摄像头）。
+Registrar PIN：如果 Registrar 支持“主动输入模式”，它也可能有一个 PIN（常见于 AP 内置的 Web 界面中）。&lt;/p&gt;
+&lt;p&gt;🧩 &lt;strong&gt;场景分析&lt;/strong&gt;：&lt;strong&gt;当使用 外部 Registrar 时，PIN 如何工作？&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;假设：
+Enrollee：一台新 Wi-Fi 打印机（有固定 PIN，比如 12345670）。
+AP：一个普通的无线路由器（可能没有内置 Registrar，或用户选择不用）。
+外部 Registrar：用户的智能手机（运行 WPS 管理 App）。&lt;/p&gt;
+&lt;p&gt;✅ 正确流程如下：
+用户操作外部 Registrar（手机）：
+打开手机上的 WPS App。
+选择“添加新设备” → “通过 PIN 方式”。
+手动输入打印机（Enrollee）的 PIN 码（12345670）到手机 App 中。
+手机（外部 Registrar）通过 UPnP 告诉 AP：
+“我要开始一个 PIN 注册流程，Enrollee 的 PIN 是 12345670。”
+AP 启动 WPS 监听模式，等待 Enrollee 连接。
+打印机（Enrollee）发起连接：
+用户按下打印机上的 WPS 按钮（或启动配网模式）。
+打印机广播 WPS 请求，与 AP 建立 EAP-WSC 交换。
+AP 充当代理，转发消息：
+AP 收到打印机的 WPS 消息后，不自己验证 PIN，而是通过 UPnP 将消息转发给手机（外部 Registrar）。
+手机使用之前输入的 PIN (12345670) 与打印机协商密钥、验证身份。
+凭证下发：
+验证成功后，手机生成网络凭证（SSID + PSK），通过 UPnP 发给 AP。
+AP 再将凭证通过 WPS 协议发送给打印机。&lt;/p&gt;
+&lt;p&gt;❌ &lt;strong&gt;常见误解：“在 AP 上输入外部设备的 PIN”&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;这种说法通常是以下两种情况的混淆：&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;情况 1&lt;/strong&gt;：&lt;strong&gt;你其实用的是 内部 Registrar&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;很多家用路由器 Web 界面里有个 “WPS PIN 添加设备” 的输入框。
+这时 AP 自己就是 Registrar！你是在 内部 Registrar 中输入 Enrollee 的 PIN。
+这 不是 外部 Registrar 场景。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;情况 2&lt;/strong&gt;：&lt;strong&gt;误以为 AP 是操作主体&lt;/strong&gt;
+在外部 Registrar 模式下，所有用户交互（包括输入 PIN）都发生在外部设备（如手机/PC）上。
+AP 只是默默转发数据，不会弹出任何 PIN 输入界面（除非它同时启用了内部 Registrar，但这会造成冲突，规范不推荐）。&lt;/p&gt;
+&lt;p&gt;🔐 补充：AP 有 PIN 吗？&lt;/p&gt;
+&lt;p&gt;有的！但用途不同：
+AP 的 PIN 通常用于 当 AP 作为 Enrollee 时（例如：将一个新 AP 加入现有 Mesh 网络）。
+或者，当 内部 Registrar 被外部 Enrollee 主动连接时，外部设备需要输入 AP 的 PIN 来完成配对（较少见）。&lt;/p&gt;
+&lt;p&gt;但在 外部 Registrar 管理其他 Enrollee 的场景中，AP 的 PIN 不参与流程。&lt;/p&gt;
+&lt;p&gt;✅ 总结
+“谁是 Registrar，谁就管 PIN。”&lt;/p&gt;
+&lt;p&gt;外部 Registrar 在手机上？那就在手机输 PIN。
+内部 Registrar 在路由器里？那就在路由器 Web 界面输 PIN。&lt;/p&gt;
+&lt;p&gt;这样设计保证了灵活性：你可以用体验更好的手机 App 来管理配网，而不需要去记路由器的管理地址和密码。&lt;/p&gt;
+&lt;hr&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://raw.gitcode.com/Open-source-documentation-tutorial/3c3e7/raw/main/WiFi-WPS%E8%AF%A6%E7%BB%86%E4%BA%A4%E4%BA%92%E8%BF%87%E7%A8%8B.pdf&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;WiFi-WPS详细交互过程.pdf&lt;/a&gt;&lt;/p&gt;&lt;/blockquote&gt;
+</description>
+        </item>
+        <item>
         <title>Wi-Fi 速率计算</title>
         <link>https://charles-7777.github.io/hugo-stack/p/wi-fi-%E9%80%9F%E7%8E%87%E8%AE%A1%E7%AE%97/</link>
         <pubDate>Fri, 12 Dec 2025 15:25:55 +0800</pubDate>
